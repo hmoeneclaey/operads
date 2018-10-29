@@ -6,7 +6,6 @@ open import Agda.Primitive
 
 --Composition and identity
 
---Is it useful ?
 Id : ∀ {k} {A : Set k} → A → A
 Id x = x
 
@@ -113,12 +112,26 @@ record _≅_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
     isoFun : A → B
     isIso : iso isoFun
 
+
+
+--Basic results about isomorphisms
+
 isoId : ∀ {k} {A : Set k} → iso (λ (x : A) → x)
 isoId = record { inv = Id ; invLeft = λ b → refl ; invRight = λ a → refl }
 
-isoEq : ∀ {k} {A : Set k} → A ≅ A
-isoEq = record { isoFun = Id ; isIso = isoId }
+isoRefl : ∀ {k} {A : Set k} → A ≅ A
+isoRefl = record { isoFun = Id ; isIso = isoId }
 
+isoComp : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → B} {g : B → C} → iso f → iso g → iso (g o f)
+isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight = invf₂ } record { inv = g₂ ; invLeft = invg₁ ; invRight = invg₂ } = 
+        record { inv = f₂ o g₂ ; 
+                 invLeft = λ b → equalTrans (g₁ (g₂ b)) (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
+                 invRight = λ a → equalTrans (f₂ (f₁ a)) (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
+
+isoTrans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ≅ B → B ≅ C → A ≅ C
+isoTrans B record { isoFun = f₁ ; isIso = isof₁ } 
+           record { isoFun = f₂ ; isIso = isof₂ }
+         = record { isoFun = f₂ o f₁ ; isIso = isoComp isof₁ isof₂ }
 
 
 

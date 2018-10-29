@@ -41,7 +41,7 @@ open FOSet {{...}} public
 --Defining canonical FOSet
 instance 
   canonicalFOSet : {n : ℕ} → FOSet (Fin n)
-  canonicalFOSet {n} = record { cardinal = n ; isFinite = isoEq }
+  canonicalFOSet {n} = record { cardinal = n ; isFinite = isoRefl }
 
 
 --We show that finite sets are stable by Σ
