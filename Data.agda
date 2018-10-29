@@ -37,6 +37,7 @@ data _∨_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
   left : A → A ∨ B
   right : B → A ∨ B
 
+infix 36 _∨_
 
 
 
@@ -46,9 +47,12 @@ data ℕ : Set where
   O : ℕ
   s : ℕ → ℕ
 
+_+_ : ℕ → ℕ → ℕ
+O + n = n
+s m + n = s(m + n)
 
 
---Equality
+--Strict equality
 
 data _≡_ {k} {A : Set k} : A → A → Set k where
      refl : {a : A} → a ≡ a
@@ -89,6 +93,8 @@ transportEqualPaths refl = refl
 
 
 --Results about Σ and equality
+
+--QUESTION : is Eq necessary
 
 equalΣfibre : ∀ {k l} {A : Set k} {B : A → Set l} {a : A} {b₁ b₂ : B a} → b₁ ≡ b₂ → Eq (Σ A B) (a , b₁) (a , b₂)
 equalΣfibre refl = refl
@@ -135,17 +141,30 @@ isoTrans B record { isoFun = f₁ ; isIso = isof₁ }
 
 
 
+--Results about ⊥ and isomorphism
+--QUESTION : Am I forced to use efql ?
+efql : ∀ {k} {A : Set k} → ⊥ → A
+efql () 
 
+iso⊥ : ∀ {k l} {A : Set k} {B : Set l} → (A → ⊥) → (B → ⊥) → A ≅ B
+iso⊥ A⊥ B⊥ = record { isoFun = λ a → efql (A⊥ a) ; 
+                      isIso = record { inv = λ b → efql (B⊥ b) ; 
+                                       invLeft = λ b → efql (B⊥ b) ; 
+                                       invRight = λ a → efql (A⊥ a) } }
 
---Some results about Σ, isomorphisms and equalities, needed to do the Σ of finite sets.
+iso∨⊥ : ∀ {k l} {A : Set k} {B : Set l} → (A → ⊥) → B ≅ A ∨ B
+iso∨⊥ A⊥ = record { isoFun = right ; 
+                    isIso = record { inv = λ { (left a) → efql (A⊥ a) ; (right b) → b} ; 
+                                     invLeft = λ { (left a) → efql (A⊥ a) ; (right b) → refl} ; 
+                                     invRight = λ b → refl } }  
+
+--Results about Σ and isomorphisms.
 
 isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} (isoB : (a : A) → B₁ a ≅ B₂ a ) → Σ A B₁ ≅ Σ A B₂
 isoΣfibre isoB = record { isoFun = λ {(a , b₁) → a , (_≅_.isoFun (isoB a) b₁)} ; 
                           isIso = record { inv = λ {(a , b₂) → a , iso.inv (_≅_.isIso (isoB a)) b₂} ; 
                                            invLeft = λ {(a , b₂) → equalΣfibre (iso.invLeft (_≅_.isIso (isoB a)) b₂)} ; 
-                                           invRight = λ {(a , b₁) → equalΣfibre (iso.invRight (_≅_.isIso (isoB a)) b₁)} 
-                                         } 
-                        }
+                                           invRight = λ {(a , b₁) → equalΣfibre (iso.invRight (_≅_.isIso (isoB a)) b₁)} } }
 
 isoΣbase : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {B : A₂ → Set m} 
            (f : A₁ → A₂) → iso f → Σ A₁ (B o f) ≅ Σ A₂ B
@@ -156,7 +175,5 @@ isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight }
                                    invRight = λ {(a₁ , b) → equalΣ (invRight a₁) 
                                             ( equalTrans (transport B (ap f (invRight a₁)) b) 
                                               ( transportComp (invRight a₁)) 
-                                              ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  ))}
-                                 }
-                }
+                                              ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  )) } } }
 
