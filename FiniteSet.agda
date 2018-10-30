@@ -90,10 +90,11 @@ isoCanonicalΣ {s n} f = isoTrans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsu
                                (iso∨ isoRefl (isoCanonicalΣ (f o fsucc n)))
                                (isoCanonicalΣAux f))
 
-{-module presumablyNotTheCleanestWay {k} {A : Set k} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
-  instance
-    pointwiseFO : (a : A) → FOSet (B a)
-    pointwiseFO = Bfinite  
+{- Brings lot of problems
+--module presumablyNotTheCleanestWay {k} {A : Set k} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
+instance
+  pointwiseFO : ∀ {k} {A : Set k} {B : A → Set} {a : A} → {{Bfinite : (a : A) → FOSet (B a)}} → FOSet (B a)
+  pointwiseFO {a = a} {{Bfinite}} = Bfinite a  
 -}
 
 
@@ -106,11 +107,13 @@ instance
                             in record { cardinal = finiteSum S ; 
                                         isFinite = isoTrans (Σ (Fin |A|) (B o f)) 
                                             (isoTrans (Σ (Fin |A|) (λ a → Fin (S a))) 
-                                                      (isoCanonicalΣ S) (isoΣfibre {B₂ = B o f} (λ a → isFinite {B (f a)} {{Bfinite (f a)}}))) --weird
+                                            (isoCanonicalΣ S) 
+                                            (isoΣfibre (λ {a} → _≅_.isoFun (isFinite {B (f a)} {{Bfinite (f a)}})) 
+                                                        λ a → _≅_.isIso (isFinite {B (f a)} {{Bfinite (f a)}}))) --weird
                                             (isoΣbase f isof) }
 
 
-
+{-
 --The test seems to work
 module testInstance where
   test1 : ℕ
@@ -118,7 +121,7 @@ module testInstance where
 
   test2 : test1 ≡ s (s O)
   test2 = refl
-
+-}
 
 
 
@@ -149,7 +152,7 @@ instance
 
 
 
-
+{-
 module moreTests {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
   instance 
     test76 : {a : A} → FOSet (B a)
@@ -159,4 +162,4 @@ module moreTests {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : (a 
   test2 = isoFOId
 
 open moreTests
-
+-}

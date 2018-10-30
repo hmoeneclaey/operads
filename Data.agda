@@ -224,22 +224,22 @@ iso∨⊥right {A = A} {B = B} B⊥ = isoTrans (B ∨ A) (iso∨⊥left B⊥) �
 
 --Results about Σ and isomorphisms.
 
-Σfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} (B₂ : A₂ → Set n) 
-       (f : A₁ → A₂) → ((a : A₁) → B₁ a → B₂ (f a))
+Σfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} 
+       (f : A₁ → A₂) → ({a : A₁} → B₁ a → B₂ (f a))
        → Σ A₁ B₁ → Σ A₂ B₂
-Σfun _ f F (a , b) = (f a , F _ b)
+Σfun f F (a , b) = (f a , F b)
 
 isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} 
-            (isoB : (a : A) → B₁ a ≅ B₂ a ) → Σ A B₁ ≅ Σ A B₂
-isoΣfibre isoB = record { isoFun = λ {(a , b₁) → a , (_≅_.isoFun (isoB a) b₁)} ; 
-                          isIso = record { inv = λ {(a , b₂) → a , iso.inv (_≅_.isIso (isoB a)) b₂} ; 
-                                           invLeft = λ {(a , b₂) → equalΣfibre (iso.invLeft (_≅_.isIso (isoB a)) b₂)} ; 
-                                           invRight = λ {(a , b₁) → equalΣfibre (iso.invRight (_≅_.isIso (isoB a)) b₁)} } }
+            (F : {a : A} → B₁ a → B₂ a ) → ((a : A) → iso (F {a})) → Σ A B₁ ≅ Σ A B₂
+isoΣfibre {B₂ = B₂} F isoF = record { isoFun = Σfun Id F ; 
+                          isIso = record { inv = λ {(a , b₂) → a , iso.inv (isoF a) b₂} ; 
+                                           invLeft = λ {(a , b₂) → equalΣfibre (iso.invLeft (isoF a) b₂)} ; 
+                                           invRight = λ {(a , b₁) → equalΣfibre (iso.invRight (isoF a) b₁)} } }
 
 isoΣbase : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {B : A₂ → Set m} 
            (f : A₁ → A₂) → iso f → Σ A₁ (B o f) ≅ Σ A₂ B
 isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight } = 
-         record { isoFun = λ {(a₁ , b) → (f a₁) , b} ; 
+         record { isoFun = Σfun f Id ; 
                   isIso = record { inv = λ {(a₂ , b) → g a₂ , transport B (invLeft a₂) b} ; 
                                    invLeft = λ {(a₂ , b) → equalΣ (invLeft a₂) refl} ; 
                                    invRight = λ {(a₁ , b) → equalΣ (invRight a₁) 
@@ -247,7 +247,10 @@ isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight }
                                               ( transportComp (invRight a₁)) 
                                               ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  )) } } }
 
+{-
 isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n}
-          (f : A₁ → A₂) (F : (a : A₁) → B₁ a → B₂ (f a) ) → iso f → ((a : A₁) → iso (F a))
-          → iso (Σfun B₂ f F)
-isoΣfun f F isof isoF = {!!}
+          (f : A₁ → A₂) (F : {a : A₁} → B₁ a → B₂ (f a) ) → iso f → ((a : A₁) → iso (F {a}))
+          → iso (Σfun {B₂ = B₂} f F)
+isoΣfun f F isof isoF = {!isoComp {f = Σfun Id F} {g = Σfun f Id}!}
+-}
+
