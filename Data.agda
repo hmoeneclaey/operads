@@ -41,6 +41,7 @@ infix 36 _∨_
 
 
 
+
 --Natural numbers
 
 data ℕ : Set where
@@ -50,6 +51,8 @@ data ℕ : Set where
 _+_ : ℕ → ℕ → ℕ
 O + n = n
 s m + n = s(m + n)
+
+
 
 
 --Strict equality
@@ -85,8 +88,7 @@ transportComp : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B
                 (p : x ≡ y) → transport (B o f) p b ≡ transport B (ap f p) b 
 transportComp refl = refl
 
-transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x}
-                      {p q : x ≡ y} {b : B x} 
+transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} {p q : x ≡ y} {b : B x} 
                       → p ≡ q → transport B p b ≡ transport B q b
 transportEqualPaths refl = refl
 
@@ -128,9 +130,11 @@ isoId = record { inv = Id ; invLeft = λ b → refl ; invRight = λ a → refl }
 isoRefl : ∀ {k} {A : Set k} → A ≅ A
 isoRefl = record { isoFun = Id ; isIso = isoId }
 
-isoComp : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → B} {g : B → C} → iso f → iso g → iso (g o f)
-isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight = invf₂ } record { inv = g₂ ; invLeft = invg₁ ; invRight = invg₂ } = 
-        record { inv = f₂ o g₂ ; 
+isoComp : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} 
+          {f : A → B} {g : B → C} → iso f → iso g → iso (g o f)
+isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight = invf₂ } 
+                          record { inv = g₂ ; invLeft = invg₁ ; invRight = invg₂ } 
+        = record { inv = f₂ o g₂ ; 
                  invLeft = λ b → equalTrans (g₁ (g₂ b)) (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
                  invRight = λ a → equalTrans (f₂ (f₁ a)) (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
 
@@ -139,6 +143,58 @@ isoTrans B record { isoFun = f₁ ; isIso = isof₁ }
            record { isoFun = f₂ ; isIso = isof₂ }
          = record { isoFun = f₂ o f₁ ; isIso = isoComp isof₁ isof₂ }
 
+isoSym : ∀ {k l} {A : Set k} {B : Set l} → A ≅ B → B ≅ A
+isoSym record { isoFun = f ; 
+                isIso = record { inv = g ; 
+                                 invLeft = invLeft ; 
+                                 invRight = invRight } } 
+       = record { isoFun = g ; 
+                  isIso = record { inv = f ; 
+                                   invLeft = invRight ; 
+                                   invRight = invLeft } }
+
+
+--Results about ∨ and isomorphisms
+
+--∨Flip : 
+
+∨Sym : ∀ {k l} {A : Set k} {B : Set l} 
+       → A ∨ B ≅ B ∨ A
+∨Sym = record { isoFun = λ { (left a) → right a ; (right b) → left b} ; 
+                isIso = record { inv = λ { (left b) → right b ; (right a) → left a} ; 
+                                 invLeft = λ { (left b) → refl ; (right a) → refl} ; 
+                                 invRight = λ { (left a) → refl ; (right b) → refl} } }
+
+∨Assoc : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} 
+         → A ∨ (B ∨ C) ≅ (A ∨ B) ∨ C
+∨Assoc = record { isoFun = λ { (left a) → left (left a) ; (right (left b)) → left (right b) ; (right (right c)) → right c} ; 
+                  isIso = record { inv = λ { (left (left a)) → left a ; (left (right b)) → right (left b) ; (right c) → right (right c)} ; 
+                                   invLeft = λ { (left (left a)) → refl ; (left (right b)) → refl ; (right c) → refl} ; 
+                                   invRight = λ { (left a) → refl ; (right (left b)) → refl ; (right (right c)) → refl} } }
+
+iso∨ : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : Set m} {B₂ : Set n} 
+       → A₁ ≅ A₂ → B₁ ≅ B₂ → A₁ ∨ B₁ ≅ A₂ ∨ B₂
+iso∨ record { isoFun = f₁ ;
+              isIso = record { inv = g₁ ;
+                               invLeft = invLeft₁ ;
+                               invRight = invRight₁ } }
+     record { isoFun = f₂ ;
+              isIso = record { inv = g₂ ;
+                               invLeft = invLeft₂ ;
+                               invRight = invRight₂ } } 
+     = record { isoFun = λ { (left a₁) → left (f₁ a₁) ; (right b₁) → right (f₂ b₁)} ; 
+                isIso = record { inv = λ { (left a₂) → left (g₁ a₂) ; (right b₂) → right (g₂ b₂)} ; 
+                                 invLeft = λ { (left a₂) → ap left (invLeft₁ a₂) ; (right b₂) → ap right (invLeft₂ b₂)} ; 
+                                 invRight = λ { (left a₁) → ap left (invRight₁ a₁) ; (right b₁) → ap right (invRight₂ b₁)} } }
+
+
+--Results about ⊤ and isomorphism
+
+iso⊤ : ∀ {k} {A : Set k} (y : A) → ((x : A) → x ≡ y) → A ≅ ⊤
+iso⊤ = λ y f → record { isoFun = λ _ → * ; 
+                        isIso = record { inv = λ _ → y ; 
+                                         invLeft = λ { * → refl} ; 
+                                         invRight = f } }
 
 
 --Results about ⊥ and isomorphism
@@ -152,15 +208,21 @@ iso⊥ A⊥ B⊥ = record { isoFun = λ a → efql (A⊥ a) ;
                                        invLeft = λ b → efql (B⊥ b) ; 
                                        invRight = λ a → efql (A⊥ a) } }
 
-iso∨⊥ : ∀ {k l} {A : Set k} {B : Set l} → (A → ⊥) → B ≅ A ∨ B
-iso∨⊥ A⊥ = record { isoFun = right ; 
+iso∨⊥left : ∀ {k l} {A : Set k} {B : Set l} → (A → ⊥) → B ≅ A ∨ B
+iso∨⊥left A⊥ = record { isoFun = right ; 
                     isIso = record { inv = λ { (left a) → efql (A⊥ a) ; (right b) → b} ; 
                                      invLeft = λ { (left a) → efql (A⊥ a) ; (right b) → refl} ; 
                                      invRight = λ b → refl } }  
 
+iso∨⊥right : ∀ {k l} {A : Set k} {B : Set l} → (B → ⊥) → A ≅ A ∨ B
+iso∨⊥right {A = A} {B = B} B⊥ = isoTrans (B ∨ A) (iso∨⊥left B⊥) ∨Sym 
+
+
+
 --Results about Σ and isomorphisms.
 
-isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} (isoB : (a : A) → B₁ a ≅ B₂ a ) → Σ A B₁ ≅ Σ A B₂
+isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} 
+            (isoB : (a : A) → B₁ a ≅ B₂ a ) → Σ A B₁ ≅ Σ A B₂
 isoΣfibre isoB = record { isoFun = λ {(a , b₁) → a , (_≅_.isoFun (isoB a) b₁)} ; 
                           isIso = record { inv = λ {(a , b₂) → a , iso.inv (_≅_.isIso (isoB a)) b₂} ; 
                                            invLeft = λ {(a , b₂) → equalΣfibre (iso.invLeft (_≅_.isIso (isoB a)) b₂)} ; 
