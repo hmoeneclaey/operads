@@ -74,7 +74,6 @@ finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
 finiteSum {O} _ = O
 finiteSum {s n} f = f (fzero n) + finiteSum (f o fsucc n)
 
---The main lemma
 
 isoCanonicalΣAux : {n : ℕ} (f : Fin (s n) → ℕ) 
                  → (Fin (f (fzero n)) ∨ Σ (Fin n) (λ a → Fin (f (fsucc n a)))) 
@@ -91,10 +90,13 @@ isoCanonicalΣ {s n} f = isoTrans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsu
                                (iso∨ isoRefl (isoCanonicalΣ (f o fsucc n)))
                                (isoCanonicalΣAux f))
 
+{-module presumablyNotTheCleanestWay {k} {A : Set k} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
+  instance
+    pointwiseFO : (a : A) → FOSet (B a)
+    pointwiseFO = Bfinite  
+-}
 
 
---Stabilitiy by Sigma
---QUESTION What should I use instead of {{a : A → Bfinite (B a)}} ?
 instance 
   finiteΣ : {A : Set} (Afinite : FOSet A) {B : A → Set} (Bfinite : (a : A) → FOSet (B a)) → FOSet (Σ A B)
   finiteΣ {A} record { cardinal = |A| ; 
@@ -109,20 +111,52 @@ instance
 
 
 
+--The test seems to work
+module testInstance where
+  test1 : ℕ
+  test1 = cardinal {Σ (Fin (s O)) λ _ → Fin (s (s O))}
+
+  test2 : test1 ≡ s (s O)
+  test2 = refl
+
+
+
+
 
 --Morphisms between FOSet
 
---We encounter a problem
 
-{-
-isoAux : {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} {f : A → B} → iso f → Fin (cardinal {A}) → Fin (cardinal {B}) 
-isoAux = {!!}
+--We define the order on FOSet
+_<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
+_<<_ {A} {{Afinite}} x y = let g : A → Fin (cardinal {A})
+                               g = iso.inv (_≅_.isIso (isFinite {A})) 
+                           in g x < g y
 
-record HomFOSet {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
+--The larger the number, the more binding
+infix 56 _<<_
+
+record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
   field
-    isIsoFOSet : iso f
-    orderPreserving : let ψA = _≅_.isoFun (isFinite {A} {{Afinite}}) in 
-                      let ψB = _≅_.isoFun (isFinite {B} {{Bfinite}}) in 
-                      (a : Fin (cardinal {A})) → f (ψA a) ≡ ψB (isoAux isIsoFOSet a) 
--}
+    isIsoFO : iso f
+    orderPreserving : {x y : A} → x << y ↔ f x << f y
+
+open HomFO {{...}} public
+
+instance
+  isoFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
+  isoFOId = record { isIsoFO = isoId ; orderPreserving = (λ p → p) , (λ q → q) }
+
+
+
+
+
+module moreTests {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
+  instance 
+    test76 : {a : A} → FOSet (B a)
+    test76 {a} = Bfinite a
+
+  test2 : HomFO (λ (x : Σ A B) → x)
+  test2 = isoFOId
+
+open moreTests
 

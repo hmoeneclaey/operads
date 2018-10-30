@@ -39,7 +39,10 @@ data _∨_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
 
 infix 36 _∨_
 
+_↔_ : ∀ {k l} (A : Set l) (B : Set k) → Set (k ⊔ l)
+A ↔ B = (A → B) ∧ (B → A)
 
+infix 46 _↔_
 
 
 --Natural numbers
@@ -221,6 +224,11 @@ iso∨⊥right {A = A} {B = B} B⊥ = isoTrans (B ∨ A) (iso∨⊥left B⊥) �
 
 --Results about Σ and isomorphisms.
 
+Σfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} (B₂ : A₂ → Set n) 
+       (f : A₁ → A₂) → ((a : A₁) → B₁ a → B₂ (f a))
+       → Σ A₁ B₁ → Σ A₂ B₂
+Σfun _ f F (a , b) = (f a , F _ b)
+
 isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} 
             (isoB : (a : A) → B₁ a ≅ B₂ a ) → Σ A B₁ ≅ Σ A B₂
 isoΣfibre isoB = record { isoFun = λ {(a , b₁) → a , (_≅_.isoFun (isoB a) b₁)} ; 
@@ -239,3 +247,7 @@ isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight }
                                               ( transportComp (invRight a₁)) 
                                               ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  )) } } }
 
+isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n}
+          (f : A₁ → A₂) (F : (a : A₁) → B₁ a → B₂ (f a) ) → iso f → ((a : A₁) → iso (F a))
+          → iso (Σfun B₂ f F)
+isoΣfun f F isof isoF = {!!}
