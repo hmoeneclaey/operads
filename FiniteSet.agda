@@ -15,7 +15,6 @@ data Fin : ℕ → Set where
   fzero : (n : ℕ) → Fin (s n)
   fsucc : (n : ℕ) → Fin n → Fin (s n)
 
---NOT USED FOR NOW
 _<_ : {n : ℕ} → Fin n → Fin n → Set
 t < fzero n = ⊥
 fzero n < fsucc n t = ⊤
@@ -38,7 +37,7 @@ open FOSet {{...}} public
 --Defining canonical FOSet
 instance 
   canonicalFOSet : {n : ℕ} → FOSet (Fin n)
-  canonicalFOSet {n} = record { cardinal = n ; isFinite = isoRefl }
+  canonicalFOSet {n} = record { cardinal = n ; isFinite = ≅Refl }
 
 
 --We show that finite sets are stable by Σ
@@ -52,7 +51,6 @@ instance
 Fin⊥ : Fin O → ⊥
 Fin⊥ ()
 
---NOT USED FOR NOW
 Fin⊤ : (x : Fin (s O)) → x ≡ fzero O
 Fin⊤ (fzero .O) = refl
 Fin⊤ (fsucc .O x) = efql (Fin⊥ x)
@@ -65,9 +63,9 @@ FinSucc {m} = record { isoFun = λ { (fzero n) → left * ; (fsucc n x) → righ
 
 Fin+ : {m n : ℕ} → Fin (m + n) ≅ Fin m ∨ Fin n
 Fin+ {O} {n} = iso∨⊥left Fin⊥
-Fin+ {s m} {n} = isoTrans (⊤ ∨ Fin (m + n)) FinSucc 
-                 (isoTrans (⊤ ∨ (Fin m ∨ Fin n)) (iso∨ isoRefl (Fin+ {m})) 
-                 (isoTrans ((⊤ ∨ Fin m) ∨ Fin n) ∨Assoc (iso∨ (isoSym FinSucc) isoRefl)))
+Fin+ {s m} {n} = ≅Trans (⊤ ∨ Fin (m + n)) FinSucc 
+                 (≅Trans (⊤ ∨ (Fin m ∨ Fin n)) (iso∨ ≅Refl (Fin+ {m})) 
+                 (≅Trans ((⊤ ∨ Fin m) ∨ Fin n) ∨Assoc (iso∨ (≅Sym FinSucc) ≅Refl)))
 
 
 finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
@@ -85,58 +83,52 @@ isoCanonicalΣAux {n} f = record { isoFun = λ { (left x) → fzero n , x ; (rig
 
 isoCanonicalΣ : {n : ℕ} (f : Fin n → ℕ) → Fin (finiteSum f) ≅ Σ (Fin n) (λ x → Fin (f x))
 isoCanonicalΣ {O} _ = iso⊥ Fin⊥ (λ { (a , _) → Fin⊥ a}) 
-isoCanonicalΣ {s n} f = isoTrans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsucc n))) 
-                        Fin+ (isoTrans (Fin (f (fzero n)) ∨ Σ (Fin n) (Fin o (f o fsucc n)))
-                               (iso∨ isoRefl (isoCanonicalΣ (f o fsucc n)))
+isoCanonicalΣ {s n} f = ≅Trans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsucc n))) 
+                        Fin+ (≅Trans (Fin (f (fzero n)) ∨ Σ (Fin n) (Fin o (f o fsucc n)))
+                               (iso∨ ≅Refl (isoCanonicalΣ (f o fsucc n)))
                                (isoCanonicalΣAux f))
-
-{- Brings lot of problems
---module presumablyNotTheCleanestWay {k} {A : Set k} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
-instance
-  pointwiseFO : ∀ {k} {A : Set k} {B : A → Set} {a : A} → {{Bfinite : (a : A) → FOSet (B a)}} → FOSet (B a)
-  pointwiseFO {a = a} {{Bfinite}} = Bfinite a  
--}
 
 
 instance 
-  finiteΣ : {A : Set} (Afinite : FOSet A) {B : A → Set} (Bfinite : (a : A) → FOSet (B a)) → FOSet (Σ A B)
-  finiteΣ {A} record { cardinal = |A| ; 
-                       isFinite = record { isoFun = f ; isIso = isof } } 
-          {B} Bfinite = let S : Fin |A| → ℕ
-                            S = λ (a : Fin |A|)  → cardinal {B (f a)} {{Bfinite (f a)}}  --weird
+  finiteΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
+  finiteΣ {A} {{ record { cardinal = |A| ; 
+                          isFinite = record { isoFun = f ; isIso = isof } } }}
+          {B} {{Bfinite}} = let S : Fin |A| → ℕ
+                                S = λ (a : Fin |A|)  → cardinal {B (f a)}
                             in record { cardinal = finiteSum S ; 
-                                        isFinite = isoTrans (Σ (Fin |A|) (B o f)) 
-                                            (isoTrans (Σ (Fin |A|) (λ a → Fin (S a))) 
+                                        isFinite = ≅Trans (Σ (Fin |A|) (B o f)) 
+                                            (≅Trans (Σ (Fin |A|) (λ a → Fin (S a))) 
                                             (isoCanonicalΣ S) 
-                                            (isoΣfibre (λ {a} → _≅_.isoFun (isFinite {B (f a)} {{Bfinite (f a)}})) 
-                                                        λ a → _≅_.isIso (isFinite {B (f a)} {{Bfinite (f a)}}))) --weird
+                                            (isoΣfibre (λ {a} → _≅_.isoFun (isFinite {B (f a)})) 
+                                                        λ a → _≅_.isIso (isFinite {B (f a)})))
                                             (isoΣbase f isof) }
 
 
-{-
---The test seems to work
-module testInstance where
-  test1 : ℕ
-  test1 = cardinal {Σ (Fin (s O)) λ _ → Fin (s (s O))}
 
-  test2 : test1 ≡ s (s O)
-  test2 = refl
--}
+--About on the order on FOSet
 
+_<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
+_<<_ {A} {{Afinite}} x y = let g : A → Fin (cardinal {A})
+                               g = iso.inv (_≅_.isIso (isFinite {A}))
+                           in g x < g y
+
+--The larger the number, the more binding
+infix 56 _<<_
+
+
+--We want an explicit description of the order on Σ types
+
+Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
+         → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
+         → (a₁ , b₁) << (a₂ , b₂) ↔ (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
+Σorder = {!!}
+
+--{A = A} ⦃ record { cardinal = |A| ; isFinite = record { isoFun = f ; isIso = record { inv = g ; invLeft = invLeft ; invRight = invRight } } } ⦄ {a₁ = a₁} {a₂ = a₂} = {!!}
 
 
 
 --Morphisms between FOSet
 
-
---We define the order on FOSet
-_<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
-_<<_ {A} {{Afinite}} x y = let g : A → Fin (cardinal {A})
-                               g = iso.inv (_≅_.isIso (isFinite {A})) 
-                           in g x < g y
-
---The larger the number, the more binding
-infix 56 _<<_
 
 record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
   field
@@ -145,21 +137,22 @@ record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → 
 
 open HomFO {{...}} public
 
+
+--We construct the examples of morphisms  we need for the definition of operads
+
+η₁ : (B : Fin (s O) → Set) {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → B(fzero O) → Σ (Fin (s O)) B
+η₁ B = λ x → (fzero O) , x 
+
 instance
-  isoFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
-  isoFOId = record { isIsoFO = isoId ; orderPreserving = (λ p → p) , (λ q → q) }
+  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
+  HomFOId = record { isIsoFO = isoId ; orderPreserving = (λ p → p) , (λ q → q) }
+
+  HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
+  HomFOη₁ {B} = record { isIsoFO = record { inv = λ {(x , b) → transport B (Fin⊤ x) b} ; 
+                                            invLeft = λ { (fzero .O , b) → refl ; (fsucc .O x , b) → efql (Fin⊥ x)} ; 
+                                            invRight = λ x → refl } ; 
+                         orderPreserving =  {!!} } 
+
+  --HomFOη₂ : {A : Set} {{Afinite : FOSet A}} → HomFO 
 
 
-
-
-{-
-module moreTests {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : (a : A) → FOSet (B a)}} where
-  instance 
-    test76 : {a : A} → FOSet (B a)
-    test76 {a} = Bfinite a
-
-  test2 : HomFO (λ (x : Σ A B) → x)
-  test2 = isoFOId
-
-open moreTests
--}

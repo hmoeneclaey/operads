@@ -81,11 +81,11 @@ transport B refl x = x
 ap : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
 ap f refl = refl 
 
-equalSym : ∀ {k} {A : Set k} {x y : A} → x ≡ y → y ≡ x
-equalSym refl = refl
+≡Sym : ∀ {k} {A : Set k} {x y : A} → x ≡ y → y ≡ x
+≡Sym refl = refl
 
-equalTrans : ∀ {k} {A : Set k} {x z : A} (y : A) → x ≡ y → y ≡ z → x ≡ z
-equalTrans y refl p = p
+≡Trans : ∀ {k} {A : Set k} {x z : A} (y : A) → x ≡ y → y ≡ z → x ≡ z
+≡Trans y refl p = p
 
 transportComp : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B : A₂ → Set m} {x y : A₁} {b : B (f x)} 
                 (p : x ≡ y) → transport (B o f) p b ≡ transport B (ap f p) b 
@@ -130,24 +130,24 @@ record _≅_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
 isoId : ∀ {k} {A : Set k} → iso (λ (x : A) → x)
 isoId = record { inv = Id ; invLeft = λ b → refl ; invRight = λ a → refl }
 
-isoRefl : ∀ {k} {A : Set k} → A ≅ A
-isoRefl = record { isoFun = Id ; isIso = isoId }
+≅Refl : ∀ {k} {A : Set k} → A ≅ A
+≅Refl = record { isoFun = Id ; isIso = isoId }
 
 isoComp : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} 
           {f : A → B} {g : B → C} → iso f → iso g → iso (g o f)
 isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight = invf₂ } 
                           record { inv = g₂ ; invLeft = invg₁ ; invRight = invg₂ } 
         = record { inv = f₂ o g₂ ; 
-                 invLeft = λ b → equalTrans (g₁ (g₂ b)) (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
-                 invRight = λ a → equalTrans (f₂ (f₁ a)) (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
+                 invLeft = λ b → ≡Trans (g₁ (g₂ b)) (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
+                 invRight = λ a → ≡Trans (f₂ (f₁ a)) (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
 
-isoTrans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ≅ B → B ≅ C → A ≅ C
-isoTrans B record { isoFun = f₁ ; isIso = isof₁ } 
+≅Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ≅ B → B ≅ C → A ≅ C
+≅Trans B record { isoFun = f₁ ; isIso = isof₁ } 
            record { isoFun = f₂ ; isIso = isof₂ }
          = record { isoFun = f₂ o f₁ ; isIso = isoComp isof₁ isof₂ }
 
-isoSym : ∀ {k l} {A : Set k} {B : Set l} → A ≅ B → B ≅ A
-isoSym record { isoFun = f ; 
+≅Sym : ∀ {k l} {A : Set k} {B : Set l} → A ≅ B → B ≅ A
+≅Sym record { isoFun = f ; 
                 isIso = record { inv = g ; 
                                  invLeft = invLeft ; 
                                  invRight = invRight } } 
@@ -218,7 +218,7 @@ iso∨⊥left A⊥ = record { isoFun = right ;
                                      invRight = λ b → refl } }  
 
 iso∨⊥right : ∀ {k l} {A : Set k} {B : Set l} → (B → ⊥) → A ≅ A ∨ B
-iso∨⊥right {A = A} {B = B} B⊥ = isoTrans (B ∨ A) (iso∨⊥left B⊥) ∨Sym 
+iso∨⊥right {A = A} {B = B} B⊥ = ≅Trans (B ∨ A) (iso∨⊥left B⊥) ∨Sym 
 
 
 
@@ -243,7 +243,7 @@ isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight }
                   isIso = record { inv = λ {(a₂ , b) → g a₂ , transport B (invLeft a₂) b} ; 
                                    invLeft = λ {(a₂ , b) → equalΣ (invLeft a₂) refl} ; 
                                    invRight = λ {(a₁ , b) → equalΣ (invRight a₁) 
-                                            ( equalTrans (transport B (ap f (invRight a₁)) b) 
+                                            ( ≡Trans (transport B (ap f (invRight a₁)) b) 
                                               ( transportComp (invRight a₁)) 
                                               ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  )) } } }
 
