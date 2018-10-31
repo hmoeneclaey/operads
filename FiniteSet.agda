@@ -29,25 +29,23 @@ fsucc n t₁ < fsucc n t₂ = t₁ < t₂
 record FOSet (A : Set) : Set where
   field
     cardinal : ℕ
-    isFinite : Fin cardinal ≅ A  
+    funFO : A → Fin cardinal
+    isIsoFO : iso funFO  
 
 open FOSet {{...}} public
-
 
 --Defining canonical FOSet
 instance 
   canonicalFOSet : {n : ℕ} → FOSet (Fin n)
-  canonicalFOSet {n} = record { cardinal = n ; isFinite = ≅Refl }
+  canonicalFOSet {n} = record { cardinal = n ; funFO = Id ; isIsoFO = isoId }
 
 
 --We show that finite sets are stable by Σ
 
 
 
---Some arithmetic with canonical finite sets
+--Some arithmetic with canonical finite sets THIS SECTION SHOULD BE HEVILY CHANGED AT SOME POINTS
 
-
---QUESTION : should I define this
 Fin⊥ : Fin O → ⊥
 Fin⊥ ()
 
@@ -55,75 +53,97 @@ Fin⊤ : (x : Fin (s O)) → x ≡ fzero O
 Fin⊤ (fzero .O) = refl
 Fin⊤ (fsucc .O x) = efql (Fin⊥ x)
 
-FinSucc : {m : ℕ} → Fin(s m) ≅ ⊤ ∨ Fin m
-FinSucc {m} = record { isoFun = λ { (fzero n) → left * ; (fsucc n x) → right x} ; 
-                   isIso = record { inv = λ { (left x) → fzero m ; (right x) → fsucc m x} ; 
-                                    invLeft = λ { (left *) → refl ; (right x) → refl} ; 
-                                    invRight = λ { (fzero n) → refl ; (fsucc n x) → refl} } }
-
-Fin+ : {m n : ℕ} → Fin (m + n) ≅ Fin m ∨ Fin n
-Fin+ {O} {n} = iso∨⊥left Fin⊥
-Fin+ {s m} {n} = ≅Trans (⊤ ∨ Fin (m + n)) FinSucc 
-                 (≅Trans (⊤ ∨ (Fin m ∨ Fin n)) (iso∨ ≅Refl (Fin+ {m})) 
-                 (≅Trans ((⊤ ∨ Fin m) ∨ Fin n) ∨Assoc (iso∨ (≅Sym FinSucc) ≅Refl)))
-
-
 finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
 finiteSum {O} _ = O
 finiteSum {s n} f = f (fzero n) + finiteSum (f o fsucc n)
 
 
-isoCanonicalΣAux : {n : ℕ} (f : Fin (s n) → ℕ) 
+module CanonicalIsoForSigma where
+
+  FinSucc : {m : ℕ} → Fin(s m) ≅ ⊤ ∨ Fin m
+  FinSucc {m} = record { isoFun = λ { (fzero n) → left * ; (fsucc n x) → right x} ; 
+                         isIso = record { inv = λ { (left x) → fzero m ; (right x) → fsucc m x} ; 
+                                    invLeft = λ { (left *) → refl ; (right x) → refl} ; 
+                                    invRight = λ { (fzero n) → refl ; (fsucc n x) → refl} } }
+
+  Fin+ : {m n : ℕ} → Fin (m + n) ≅ Fin m ∨ Fin n
+  Fin+ {O} {n} = iso∨⊥left Fin⊥
+  Fin+ {s m} {n} = ≅Trans (⊤ ∨ Fin (m + n)) FinSucc 
+                 (≅Trans (⊤ ∨ (Fin m ∨ Fin n)) (iso∨ ≅Refl (Fin+ {m})) 
+                 (≅Trans ((⊤ ∨ Fin m) ∨ Fin n) ∨Assoc (iso∨ (≅Sym FinSucc) ≅Refl)))
+
+  isoCanonicalΣAux : {n : ℕ} (f : Fin (s n) → ℕ) 
                  → (Fin (f (fzero n)) ∨ Σ (Fin n) (λ a → Fin (f (fsucc n a)))) 
                  ≅ Σ (Fin (s n)) (λ x → Fin (f x))
-isoCanonicalΣAux {n} f = record { isoFun = λ { (left x) → fzero n , x ; (right (k , x)) → (fsucc n k) , x} ; 
+  isoCanonicalΣAux {n} f = record { isoFun = λ { (left x) → fzero n , x ; (right (k , x)) → (fsucc n k) , x} ; 
                               isIso = record { inv = λ { (fzero n , x) → left x ; (fsucc n k , x) → right (k , x)} ; 
                                                invLeft = λ { (fzero n , x) → refl ; (fsucc n k , x) → refl} ; 
                                                invRight = λ { (left x) → refl ; (right (k , x)) → refl} } }
 
-isoCanonicalΣ : {n : ℕ} (f : Fin n → ℕ) → Fin (finiteSum f) ≅ Σ (Fin n) (λ x → Fin (f x))
-isoCanonicalΣ {O} _ = iso⊥ Fin⊥ (λ { (a , _) → Fin⊥ a}) 
-isoCanonicalΣ {s n} f = ≅Trans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsucc n))) 
+  isoCanonicalΣ : {n : ℕ} (f : Fin n → ℕ) → Fin (finiteSum f) ≅ Σ (Fin n) (λ x → Fin (f x))
+  isoCanonicalΣ {O} _ = iso⊥ Fin⊥ (λ { (a , _) → Fin⊥ a}) 
+  isoCanonicalΣ {s n} f = ≅Trans (Fin (f (fzero n)) ∨ Fin (finiteSum (f o fsucc n))) 
                         Fin+ (≅Trans (Fin (f (fzero n)) ∨ Σ (Fin n) (Fin o (f o fsucc n)))
                                (iso∨ ≅Refl (isoCanonicalΣ (f o fsucc n)))
                                (isoCanonicalΣAux f))
+
+--Those are the two we need for the moment
+  canonicalΣ : {n : ℕ} (f : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (f x)) → Fin (finiteSum f)
+  canonicalΣ f = iso.inv (_≅_.isIso (isoCanonicalΣ f))
+
+  dumbAux : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso (iso.inv isof)
+  dumbAux {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } = record { inv = f ; invLeft = invRight ; invRight = invLeft }
+
+  isIsoCanonicalΣ : {n : ℕ} (f : Fin n → ℕ) → iso (canonicalΣ f)
+  isIsoCanonicalΣ f = dumbAux (_≅_.isIso (isoCanonicalΣ f))
+
+
+open CanonicalIsoForSigma using (canonicalΣ) 
+open CanonicalIsoForSigma using (isIsoCanonicalΣ) 
+
+
+
 
 
 instance 
   finiteΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
   finiteΣ {A} {{ record { cardinal = |A| ; 
-                          isFinite = record { isoFun = f ; isIso = isof } } }}
-          {B} {{Bfinite}} = let S : Fin |A| → ℕ
-                                S = λ (a : Fin |A|)  → cardinal {B (f a)}
-                            in record { cardinal = finiteSum S ; 
-                                        isFinite = ≅Trans (Σ (Fin |A|) (B o f)) 
-                                            (≅Trans (Σ (Fin |A|) (λ a → Fin (S a))) 
-                                            (isoCanonicalΣ S) 
-                                            (isoΣfibre (λ {a} → _≅_.isoFun (isFinite {B (f a)})) 
-                                                        λ a → _≅_.isIso (isFinite {B (f a)})))
-                                            (isoΣbase f isof) }
+                          funFO = f ; 
+                          isIsoFO = record {inv = g ; invLeft = invLeft ; invRight = invRight} } }} {B} {{Bfinite}} 
+              = let S : Fin |A| → ℕ 
+                    S = λ (n : Fin |A|) → cardinal {B (g n)} 
+                in
+                let F : {a : A} → B a → Fin (cardinal {B (g(f a))} )
+                    F = λ {a} b → transport (λ a → Fin (cardinal {B a})) (invRight a) (funFO {B a} b) 
+                in
+                   record { cardinal = finiteSum S ; 
+                            funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} f F) ;
+                            isIsoFO = isoComp 
+                                      (isoΣfun (record { inv = g ; invLeft = invLeft ; invRight = invRight }) 
+                                      λ a → isoComp (isIsoFO {B a}) (isoTransport _ (invRight a))) 
+                                      (isIsoCanonicalΣ S) }
+                 
 
-
-
---About on the order on FOSet
+--About the order on FOSet
 
 _<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
-_<<_ {A} {{Afinite}} x y = let g : A → Fin (cardinal {A})
-                               g = iso.inv (_≅_.isIso (isFinite {A}))
-                           in g x < g y
+_<<_ {A} {{Afinite}} x y = funFO x < funFO y
 
 --The larger the number, the more binding
 infix 56 _<<_
 
 
+
+{-
 --We want an explicit description of the order on Σ types
 
 Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
          → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
          → (a₁ , b₁) << (a₂ , b₂) ↔ (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
 Σorder = {!!}
+-}
 
---{A = A} ⦃ record { cardinal = |A| ; isFinite = record { isoFun = f ; isIso = record { inv = g ; invLeft = invLeft ; invRight = invRight } } } ⦄ {a₁ = a₁} {a₂ = a₂} = {!!}
+
 
 
 
@@ -137,6 +157,8 @@ record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → 
 
 open HomFO {{...}} public
 
+
+{-
 
 --We construct the examples of morphisms  we need for the definition of operads
 
@@ -156,3 +178,4 @@ instance
   --HomFOη₂ : {A : Set} {{Afinite : FOSet A}} → HomFO 
 
 
+-}

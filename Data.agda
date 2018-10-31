@@ -87,13 +87,20 @@ ap f refl = refl
 ≡Trans : ∀ {k} {A : Set k} {x z : A} (y : A) → x ≡ y → y ≡ z → x ≡ z
 ≡Trans y refl p = p
 
+{-
 transportComp : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B : A₂ → Set m} {x y : A₁} {b : B (f x)} 
                 (p : x ≡ y) → transport (B o f) p b ≡ transport B (ap f p) b 
 transportComp refl = refl
+-}
 
-transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} {p q : x ≡ y} {b : B x} 
+transportComp : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} {x y : A₁}
+                      (p : x ≡ y) (F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)) {b : B₁ x}
+                      → F (transport B₁ p b) ≡ transport B₂ (ap f p) (F b)
+transportComp refl F = refl
+
+transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} (p q : x ≡ y) {b : B x} 
                       → p ≡ q → transport B p b ≡ transport B q b
-transportEqualPaths refl = refl
+transportEqualPaths p q refl = refl
 
 
 
@@ -156,6 +163,8 @@ isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight
                                    invLeft = invRight ; 
                                    invRight = invLeft } }
 
+isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
+isoTransport B refl = isoId
 
 --Results about ∨ and isomorphisms
 
@@ -229,28 +238,18 @@ iso∨⊥right {A = A} {B = B} B⊥ = ≅Trans (B ∨ A) (iso∨⊥left B⊥) �
        → Σ A₁ B₁ → Σ A₂ B₂
 Σfun f F (a , b) = (f a , F b)
 
-isoΣfibre : ∀ {k l m} {A : Set k} {B₁ : A → Set l} {B₂ : A → Set m} 
-            (F : {a : A} → B₁ a → B₂ a ) → ((a : A) → iso (F {a})) → Σ A B₁ ≅ Σ A B₂
-isoΣfibre {B₂ = B₂} F isoF = record { isoFun = Σfun Id F ; 
-                          isIso = record { inv = λ {(a , b₂) → a , iso.inv (isoF a) b₂} ; 
-                                           invLeft = λ {(a , b₂) → equalΣfibre (iso.invLeft (isoF a) b₂)} ; 
-                                           invRight = λ {(a , b₁) → equalΣfibre (iso.invRight (isoF a) b₁)} } }
+isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} 
+          {f : A₁ → A₂} {F : {a : A₁} → B₁ a → B₂ (f a) } 
+          → iso f → ((a : A₁) → iso (F {a})) → iso (Σfun {B₂ = B₂} f F)
+isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLeft ; invRight = invRight } isoF 
+          = record { inv = λ {(a₂ , b₂) → (g a₂) , (iso.inv (isoF (g a₂)) (transport B₂ (invLeft a₂) b₂))} ; 
+                     invLeft = λ {(a₂ , b₂) → equalΣ (invLeft a₂) (iso.invLeft (isoF (g a₂)) _) } ; 
+                     invRight = λ {(a₁ , b₁) → equalΣ (invRight a₁) (≡Trans
+                                                 (iso.inv (isoF (g (f a₁))) (F (transport B₁ (invRight a₁) b₁))) 
+                                                 (iso.invRight (isoF (g (f a₁))) _)
+                                                 (ap (iso.inv (isoF (g (f a₁)))) 
+                                                 (≡Trans (transport B₂ (ap f (invRight a₁)) (F b₁)) 
+                                                         (transportComp (invRight a₁) F) 
+                                                         (transportEqualPaths {b = F b₁}(ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
-isoΣbase : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {B : A₂ → Set m} 
-           (f : A₁ → A₂) → iso f → Σ A₁ (B o f) ≅ Σ A₂ B
-isoΣbase {B = B} f record { inv = g ; invLeft = invLeft ; invRight = invRight } = 
-         record { isoFun = Σfun f Id ; 
-                  isIso = record { inv = λ {(a₂ , b) → g a₂ , transport B (invLeft a₂) b} ; 
-                                   invLeft = λ {(a₂ , b) → equalΣ (invLeft a₂) refl} ; 
-                                   invRight = λ {(a₁ , b) → equalΣ (invRight a₁) 
-                                            ( ≡Trans (transport B (ap f (invRight a₁)) b) 
-                                              ( transportComp (invRight a₁)) 
-                                              ( transportEqualPaths {b = b} {p = ap f (invRight a₁)} {q = invLeft (f a₁)} UIP  )) } } }
-
-{-
-isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n}
-          (f : A₁ → A₂) (F : {a : A₁} → B₁ a → B₂ (f a) ) → iso f → ((a : A₁) → iso (F {a}))
-          → iso (Σfun {B₂ = B₂} f F)
-isoΣfun f F isof isoF = {!isoComp {f = Σfun Id F} {g = Σfun f Id}!}
--}
 
