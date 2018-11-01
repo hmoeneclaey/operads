@@ -49,6 +49,9 @@ infix 46 _↔_
 
 --Some logical properties
 
+efql : ∀ {k} {A : Set k} → ⊥ → A
+efql ()
+
 ↔Refl : ∀ {k} {A : Set k} → A ↔ A
 ↔Refl = (λ a → a) , λ a → a
 
@@ -58,6 +61,12 @@ infix 46 _↔_
 ↔natural∨ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → A ↔ C → B ↔ D → (A ∨ B) ↔ (C ∨ D)  
 ↔natural∨ (f₁ , g₁) (f₂ , g₂) = (λ { (left a) → left (f₁ a) ; (right b) → right (f₂ b)}) , 
                                    λ { (left c) → left (g₁ c) ; (right d) → right (g₂ d)}
+
+∧left : ∀ {k l} {A : Set k} {B : Set l} → A ∧ B → A
+∧left (a , b) = a
+
+∧right : ∀ {k l} {A : Set k} {B : Set l} → A ∧ B → B
+∧right (a , b) = b
 
 
 
@@ -100,14 +109,8 @@ ap f refl = refl
 ≡Sym : ∀ {k} {A : Set k} {x y : A} → x ≡ y → y ≡ x
 ≡Sym refl = refl
 
-≡Trans : ∀ {k} {A : Set k} {x z : A} (y : A) → x ≡ y → y ≡ z → x ≡ z
-≡Trans y refl p = p
-
-{-
-transportComp : ∀ {k l m} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B : A₂ → Set m} {x y : A₁} {b : B (f x)} 
-                (p : x ≡ y) → transport (B o f) p b ≡ transport B (ap f p) b 
-transportComp refl = refl
--}
+≡Trans : ∀ {k} {A : Set k} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+≡Trans refl p = p
 
 transportComp : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} {x y : A₁}
                       (p : x ≡ y) (F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)) {b : B₁ x}
@@ -122,10 +125,8 @@ transportEqualPaths p q refl = refl
 
 --Results about Σ and equality
 
---QUESTION : is Eq necessary
-
-equalΣfibre : ∀ {k l} {A : Set k} {B : A → Set l} {a : A} {b₁ b₂ : B a} → b₁ ≡ b₂ → Eq (Σ A B) (a , b₁) (a , b₂)
-equalΣfibre refl = refl
+--equalΣfibre : ∀ {k l} {A : Set k} {B : A → Set l} {a : A} {b₁ b₂ : B a} → b₁ ≡ b₂ → Eq (Σ A B) (a , b₁) (a , b₂)
+--equalΣfibre refl = refl
 
 equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} 
          (p : a₁ ≡ a₂) → transport B p b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂) 
@@ -150,19 +151,32 @@ record _≅_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
 
 --Basic results about isomorphisms
 
+
 isoId : ∀ {k} {A : Set k} → iso (λ (x : A) → x)
 isoId = record { inv = Id ; invLeft = λ b → refl ; invRight = λ a → refl }
-
-≅Refl : ∀ {k} {A : Set k} → A ≅ A
-≅Refl = record { isoFun = Id ; isIso = isoId }
 
 isoComp : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} 
           {f : A → B} {g : B → C} → iso f → iso g → iso (g o f)
 isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight = invf₂ } 
                           record { inv = g₂ ; invLeft = invg₁ ; invRight = invg₂ } 
         = record { inv = f₂ o g₂ ; 
-                 invLeft = λ b → ≡Trans (g₁ (g₂ b)) (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
-                 invRight = λ a → ≡Trans (f₂ (f₁ a)) (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
+                 invLeft = λ b → ≡Trans {y = g₁ (g₂ b)} (invg₁ b) (ap g₁ (invf₁ (g₂ b))) ; 
+                 invRight = λ a → ≡Trans {y = f₂ (f₁ a)} (invf₂ a) (ap f₂ (invg₂ (f₁ a))) }
+
+isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
+isoTransport B refl = isoId
+
+isoAp : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → {x y : A} →  iso (ap f {x = x} {y = y})
+isoAp {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y}
+      = record { inv = λ p → ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y))) ; 
+                 invLeft = λ q → UIP ; 
+                 invRight = λ p → UIP }
+
+
+--Finally we do not use _≅_ that much
+{-
+≅Refl : ∀ {k} {A : Set k} → A ≅ A
+≅Refl = record { isoFun = Id ; isIso = isoId }
 
 ≅Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ≅ B → B ≅ C → A ≅ C
 ≅Trans B record { isoFun = f₁ ; isIso = isof₁ } 
@@ -179,8 +193,6 @@ isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight
                                    invLeft = invRight ; 
                                    invRight = invLeft } }
 
-isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
-isoTransport B refl = isoId
 
 
 
@@ -229,8 +241,6 @@ iso⊤ = λ y f → record { isoFun = λ _ → * ;
 
 --Results about ⊥ and isomorphism
 --QUESTION : Am I forced to use efql ?
-efql : ∀ {k} {A : Set k} → ⊥ → A
-efql () 
 
 iso⊥ : ∀ {k l} {A : Set k} {B : Set l} → (A → ⊥) → (B → ⊥) → A ≅ B
 iso⊥ A⊥ B⊥ = record { isoFun = λ a → efql (A⊥ a) ; 
@@ -246,7 +256,7 @@ iso∨⊥left A⊥ = record { isoFun = right ;
 
 iso∨⊥right : ∀ {k l} {A : Set k} {B : Set l} → (B → ⊥) → A ≅ A ∨ B
 iso∨⊥right {A = A} {B = B} B⊥ = ≅Trans (B ∨ A) (iso∨⊥left B⊥) ∨Sym 
-
+-}
 
 
 --Results about Σ and isomorphisms.
@@ -263,10 +273,10 @@ isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLef
           = record { inv = λ {(a₂ , b₂) → (g a₂) , (iso.inv (isoF (g a₂)) (transport B₂ (invLeft a₂) b₂))} ; 
                      invLeft = λ {(a₂ , b₂) → equalΣ (invLeft a₂) (iso.invLeft (isoF (g a₂)) _) } ; 
                      invRight = λ {(a₁ , b₁) → equalΣ (invRight a₁) (≡Trans
-                                                 (iso.inv (isoF (g (f a₁))) (F (transport B₁ (invRight a₁) b₁))) 
+                                                 {y = iso.inv (isoF (g (f a₁))) (F (transport B₁ (invRight a₁) b₁))} 
                                                  (iso.invRight (isoF (g (f a₁))) _)
                                                  (ap (iso.inv (isoF (g (f a₁)))) 
-                                                 (≡Trans (transport B₂ (ap f (invRight a₁)) (F b₁)) 
+                                                 (≡Trans {y = transport B₂ (ap f (invRight a₁)) (F b₁)} 
                                                          (transportComp (invRight a₁) F) 
                                                          (transportEqualPaths {b = F b₁}(ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
