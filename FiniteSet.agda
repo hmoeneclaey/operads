@@ -39,6 +39,18 @@ instance
   canonicalFOSet : {n : ℕ} → FOSet (Fin n)
   canonicalFOSet {n} = record { cardinal = n ; funFO = Id ; isIsoFO = isoId }
 
+--Defining the order on them
+
+_<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
+_<<_ {A} {{Afinite}} x y = funFO x < funFO y
+
+--The larger the number, the more binding
+infix 56 _<<_
+
+
+
+
+
 
 --We show that finite sets are stable by Σ
 
@@ -88,60 +100,89 @@ module CanonicalIsoForSigma where
                                (isoCanonicalΣAux f))
 
 --Those are the two we need for the moment
-  canonicalΣ : {n : ℕ} (f : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (f x)) → Fin (finiteSum f)
-  canonicalΣ f = iso.inv (_≅_.isIso (isoCanonicalΣ f))
+  canonicalΣ : {n : ℕ} (S : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (S x)) → Fin (finiteSum S)
+  canonicalΣ S = iso.inv (_≅_.isIso (isoCanonicalΣ S))
 
   dumbAux : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso (iso.inv isof)
   dumbAux {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } = record { inv = f ; invLeft = invRight ; invRight = invLeft }
 
-  isIsoCanonicalΣ : {n : ℕ} (f : Fin n → ℕ) → iso (canonicalΣ f)
-  isIsoCanonicalΣ f = dumbAux (_≅_.isIso (isoCanonicalΣ f))
+  isIsoCanonicalΣ : {n : ℕ} (S : Fin n → ℕ) → iso (canonicalΣ S)
+  isIsoCanonicalΣ S = dumbAux (_≅_.isIso (isoCanonicalΣ S))
+
+  canonicalΣorder : {n : ℕ} (S : Fin n → ℕ) {a₁ a₂ : Fin n} {b₁ : Fin (S a₁)} {b₂ : Fin (S a₂)} → 
+                    (canonicalΣ S (a₁ , b₁) < canonicalΣ S (a₂ , b₂)) ↔ ((a₁ < a₂) ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap S p) b₁ < b₂ ))
+  canonicalΣorder = {!!}
 
 
 open CanonicalIsoForSigma using (canonicalΣ) 
 open CanonicalIsoForSigma using (isIsoCanonicalΣ) 
+open CanonicalIsoForSigma using (canonicalΣorder)
 
 
 
+Σcardinal : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} → Fin (cardinal {A}) → ℕ
+Σcardinal A ⦃ record { cardinal = |A| ; 
+                          funFO = f ; 
+                          isIsoFO = record { inv = g ; 
+                                             invLeft = invLeft ; 
+                                             invRight = invRight } } ⦄ B 
+                 = λ n → cardinal {B (g n)}
 
+
+ΣFibre : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} → {a : A} → B a → Fin (Σcardinal A B (funFO a))
+ΣFibre A ⦃ record { cardinal = |A| ; 
+                    funFO = f ; 
+                    isIsoFO = record { inv = g ; invLeft = invLeft ; invRight = invRight } } ⦄ B {a = a} 
+               = λ b → transport (λ a → Fin (cardinal {B a})) (invRight a) (funFO {B a} b)
 
 instance 
   finiteΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
-  finiteΣ {A} {{ record { cardinal = |A| ; 
-                          funFO = f ; 
-                          isIsoFO = record {inv = g ; invLeft = invLeft ; invRight = invRight} } }} {B} {{Bfinite}} 
-              = let S : Fin |A| → ℕ 
-                    S = λ (n : Fin |A|) → cardinal {B (g n)} 
-                in
-                let F : {a : A} → B a → Fin (cardinal {B (g(f a))} )
-                    F = λ {a} b → transport (λ a → Fin (cardinal {B a})) (invRight a) (funFO {B a} b) 
-                in
-                   record { cardinal = finiteSum S ; 
-                            funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} f F) ;
+  finiteΣ {A} {{Afinite}} {B} {{Bfinite}} 
+              = let S = Σcardinal A B in let F = ΣFibre A B in
+                   record { cardinal = finiteSum (Σcardinal A B) ; 
+                            funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} funFO F) ;
                             isIsoFO = isoComp 
-                                      (isoΣfun (record { inv = g ; invLeft = invLeft ; invRight = invRight }) 
-                                      λ a → isoComp (isIsoFO {B a}) (isoTransport _ (invRight a))) 
+                                      (isoΣfun (isIsoFO)
+                                      λ a → isoComp (isIsoFO {B a}) (isoTransport _ _)) 
                                       (isIsoCanonicalΣ S) }
                  
 
---About the order on FOSet
-
-_<<_ : {A : Set} {{Afinite : FOSet A}} → A → A → Set
-_<<_ {A} {{Afinite}} x y = funFO x < funFO y
-
---The larger the number, the more binding
-infix 56 _<<_
 
 
 
-{-
 --We want an explicit description of the order on Σ types
+
+
+{-transportOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} {a₁ a₂ : A} 
+                 (p : a₁ ≡ a₂) {b₁ b₂ : B a₁} → b₁ << b₂ → transport B p b₁ << transport B p b₂
+transportOrder refl = λ x → x-}
+
+ΣFibreOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} {a : A} {b₁ b₂ : B a} → b₁ << b₂ → ΣFibre A B b₁ < ΣFibre A B b₂
+ΣFibreOrder = {!!}
+
+ΣFibreOrderRev : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} {a : A} {b₁ b₂ : B a} → ΣFibre A B b₁ < ΣFibre A B b₂ → b₁ << b₂
+ΣFibreOrderRev = {!!}
+
 
 Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
          → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
          → (a₁ , b₁) << (a₂ , b₂) ↔ (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
-Σorder = {!!}
--}
+Σorder {A} {{Afinite}} {B} ⦃ Bfinite ⦄ {a₁} {a₂} {b₁} {b₂} 
+       = let S = Σcardinal A B in 
+         let F = ΣFibre A B in 
+         let f : A → Fin (cardinal {A})
+             f = funFO
+         in
+         ↔Trans ((f a₁ < f a₂) ∨ (Σ (f a₁ ≡ f a₂) (λ p → transport Fin (ap S p) (F b₁) < F b₂)))
+           (canonicalΣorder S {a₁ = f a₁} {a₂ = f a₂} {b₁ = F b₁} {b₂ = F b₂}) 
+           (↔natural∨ ↔Refl ( let C = λ p → transport Fin (ap (Σcardinal A B) p) (ΣFibre A B b₁) < ΣFibre A B b₂ in
+                              let u₁ : Σ (f a₁ ≡ f a₂) C → Σ (a₁ ≡ a₂) (C o (ap f))
+                                  u₁ = iso.inv (isoΣfun {B₂ = C} {f = (ap f)} 
+                                                        {F = Id} {!!} (λ _ → isoId)) 
+                              in ((λ {(refl , q) → refl , ΣFibreOrderRev {A = A} {b₁ = b₁} q}) o u₁) ,
+                             (λ {(refl , q) → refl , ΣFibreOrder {A = A} {b₁ = b₁} q }))) 
+
+
 
 
 

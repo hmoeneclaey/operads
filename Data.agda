@@ -45,6 +45,22 @@ A ↔ B = (A → B) ∧ (B → A)
 infix 46 _↔_
 
 
+
+
+--Some logical properties
+
+↔Refl : ∀ {k} {A : Set k} → A ↔ A
+↔Refl = (λ a → a) , λ a → a
+
+↔Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ↔ B → B ↔ C → A ↔ C
+↔Trans B (f₁ , g₁) (f₂ , g₂) = (f₂ o f₁) , (g₁ o g₂)
+
+↔natural∨ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → A ↔ C → B ↔ D → (A ∨ B) ↔ (C ∨ D)  
+↔natural∨ (f₁ , g₁) (f₂ , g₂) = (λ { (left a) → left (f₁ a) ; (right b) → right (f₂ b)}) , 
+                                   λ { (left c) → left (g₁ c) ; (right d) → right (g₂ d)}
+
+
+
 --Natural numbers
 
 data ℕ : Set where
@@ -165,6 +181,8 @@ isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight
 
 isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
 isoTransport B refl = isoId
+
+
 
 --Results about ∨ and isomorphisms
 
