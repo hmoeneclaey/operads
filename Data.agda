@@ -15,7 +15,7 @@ _o_ : ∀ {k l m} {A : Set k} {B : A → Set l} {C : {a : A} → B a → Set m}
       → (a : A) → C (f a)
 g o f = λ a → g (f a)
 
-
+infixr 78 _o_
 
 
 --Logical connectives
@@ -58,15 +58,23 @@ efql ()
 ↔Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ↔ B → B ↔ C → A ↔ C
 ↔Trans B (f₁ , g₁) (f₂ , g₂) = (f₂ o f₁) , (g₁ o g₂)
 
-↔natural∨ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → A ↔ C → B ↔ D → (A ∨ B) ↔ (C ∨ D)  
-↔natural∨ (f₁ , g₁) (f₂ , g₂) = (λ { (left a) → left (f₁ a) ; (right b) → right (f₂ b)}) , 
-                                   λ { (left c) → left (g₁ c) ; (right d) → right (g₂ d)}
+∨Elim : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} → (A → C) → (B → C) → A ∨ B → C 
+∨Elim f g (left a) = f a
+∨Elim f g (right b) = g b 
+
+∨Nat : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → (A → C) → (B → D) → (A ∨ B) → (C ∨ D)
+∨Nat f g = ∨Elim (left o f) (right o g)
+
+∨Nat↔ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → A ↔ C → B ↔ D → (A ∨ B) ↔ (C ∨ D)  
+∨Nat↔ (f₁ , g₁) (f₂ , g₂) = ∨Nat f₁ f₂ , ∨Nat g₁ g₂
 
 ∧left : ∀ {k l} {A : Set k} {B : Set l} → A ∧ B → A
 ∧left (a , b) = a
 
 ∧right : ∀ {k l} {A : Set k} {B : Set l} → A ∧ B → B
 ∧right (a , b) = b
+
+
 
 
 
@@ -88,8 +96,11 @@ s m + n = s(m + n)
 data _≡_ {k} {A : Set k} : A → A → Set k where
      refl : {a : A} → a ≡ a
 
---For now we postulate UIP, although Axiom K is perhaps a bit better
-postulate UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
+--Axiom K is implemented ! This is the only place where we use it
+UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
+UIP {p = refl} {q = refl} = refl
+
+postulate extFun : ∀ {k l} {A : Set k} {B : Set l} → {f g : A → B} → ((a : A) → f a ≡ g a) → f ≡ g 
 
 --When we need to declare the type explicitly
 --I should ask guillaume for a neater solution
@@ -117,7 +128,7 @@ transportComp : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {f : A₁ → A₂} 
                       → F (transport B₁ p b) ≡ transport B₂ (ap f p) (F b)
 transportComp refl F = refl
 
-transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} (p q : x ≡ y) {b : B x} 
+transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} (p q : x ≡ y) 
                       → p ≡ q → transport B p b ≡ transport B q b
 transportEqualPaths p q refl = refl
 
@@ -172,9 +183,56 @@ isoAp {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {
                  invLeft = λ q → UIP ; 
                  invRight = λ p → UIP }
 
+isoInv : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso (iso.inv isof)
+isoInv {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } 
+             = record { inv = f ; invLeft = invRight ; invRight = invLeft }
 
---Finally we do not use _≅_ that much
+
+
+
+
+
+--Results about Σ and isomorphisms.
+
+Σfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n}
+       (f : A₁ → A₂) → ({a : A₁} → B₁ a → B₂ (f a))
+       → Σ A₁ B₁ → Σ A₂ B₂
+Σfun f F (a , b) = (f a , F b)
+
+
+isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n}
+          {f : A₁ → A₂} {F : {a : A₁} → B₁ a → B₂ (f a) }
+          → iso f → ((a : A₁) → iso (F {a})) → iso (Σfun {B₂ = B₂} f F)
+isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLeft ; invRight = invRight } isoF
+          = record { inv = λ {(a₂ , b₂) → (g a₂) , (iso.inv (isoF (g a₂)) (transport B₂ (invLeft a₂) b₂))} ;
+                     invLeft = λ {(a₂ , b₂) → equalΣ (invLeft a₂) (iso.invLeft (isoF (g a₂)) _) } ;
+                     invRight = λ {(a₁ , b₁) → equalΣ (invRight a₁) (≡Trans
+                                                 {y = iso.inv (isoF (g (f a₁))) (F (transport B₁ (invRight a₁) b₁))}
+                                                 (iso.invRight (isoF (g (f a₁))) _)
+                                                 (ap (iso.inv (isoF (g (f a₁))))
+                                                 (≡Trans {y = transport B₂ (ap f (invRight a₁)) (F b₁)}
+                                                         (transportComp (invRight a₁) F)
+                                                         (transportEqualPaths {b = F b₁} (ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
+
+
+
+--Results about iso and ∨
+
+iso∨ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} {f₁ : A → C} {f₂ : B → D} → iso f₁ → iso f₂ → iso (∨Nat f₁ f₂)
+iso∨ record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ } 
+     record { inv = g₂ ; invLeft = invLeft₂ ; invRight = invRight₂ } 
+   = record { inv = ∨Nat g₁ g₂ ; 
+              invLeft = λ { (left c) → ap left (invLeft₁ c) ; (right d) → ap right (invLeft₂ d)} ; 
+              invRight = λ { (left a) → ap left (invRight₁ a) ; (right b) → ap right (invRight₂ b)} }  
+
+
+
+
+
 {-
+--Properties of ≅
+
+
 ≅Refl : ∀ {k} {A : Set k} → A ≅ A
 ≅Refl = record { isoFun = Id ; isIso = isoId }
 
@@ -192,9 +250,6 @@ isoAp {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {
                   isIso = record { inv = f ; 
                                    invLeft = invRight ; 
                                    invRight = invLeft } }
-
-
-
 
 --Results about ∨ and isomorphisms
 
@@ -258,26 +313,5 @@ iso∨⊥right : ∀ {k l} {A : Set k} {B : Set l} → (B → ⊥) → A ≅ A �
 iso∨⊥right {A = A} {B = B} B⊥ = ≅Trans (B ∨ A) (iso∨⊥left B⊥) ∨Sym 
 -}
 
-
---Results about Σ and isomorphisms.
-
-Σfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} 
-       (f : A₁ → A₂) → ({a : A₁} → B₁ a → B₂ (f a))
-       → Σ A₁ B₁ → Σ A₂ B₂
-Σfun f F (a , b) = (f a , F b)
-
-isoΣfun : ∀ {k l m n} {A₁ : Set k} {A₂ : Set l} {B₁ : A₁ → Set m} {B₂ : A₂ → Set n} 
-          {f : A₁ → A₂} {F : {a : A₁} → B₁ a → B₂ (f a) } 
-          → iso f → ((a : A₁) → iso (F {a})) → iso (Σfun {B₂ = B₂} f F)
-isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLeft ; invRight = invRight } isoF 
-          = record { inv = λ {(a₂ , b₂) → (g a₂) , (iso.inv (isoF (g a₂)) (transport B₂ (invLeft a₂) b₂))} ; 
-                     invLeft = λ {(a₂ , b₂) → equalΣ (invLeft a₂) (iso.invLeft (isoF (g a₂)) _) } ; 
-                     invRight = λ {(a₁ , b₁) → equalΣ (invRight a₁) (≡Trans
-                                                 {y = iso.inv (isoF (g (f a₁))) (F (transport B₁ (invRight a₁) b₁))} 
-                                                 (iso.invRight (isoF (g (f a₁))) _)
-                                                 (ap (iso.inv (isoF (g (f a₁)))) 
-                                                 (≡Trans {y = transport B₂ (ap f (invRight a₁)) (F b₁)} 
-                                                         (transportComp (invRight a₁) F) 
-                                                         (transportEqualPaths {b = F b₁}(ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
 
