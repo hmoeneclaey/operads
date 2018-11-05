@@ -102,7 +102,10 @@ module ArithmeticForCanonicalSets where
 
 
   --This equality is useful for inductive case
-  equalFin+LeftRight : {m n : ℕ} → (iso.inv isoFinSucc  o (∨Nat Id Fin+LeftRight) o ∨Assoc o (∨Nat FinSucc Id)) ≡ Fin+LeftRight {m = s m} {n = n}
+  equalFin+LeftRight : {m n : ℕ} → 
+                       (iso.inv isoFinSucc  o (∨Nat Id Fin+LeftRight) o ∨Assoc o (∨Nat FinSucc Id)) 
+                       ≡ Fin+LeftRight {m = s m} {n = n}
+
   equalFin+LeftRight = funext (λ { (left fzero) → refl ; (left (fsucc a)) → refl ; (right a) → refl})
 
 
@@ -140,7 +143,8 @@ module ArithmeticForCanonicalSets where
   
 
   --We use function extensionnality, but we can probably deal without
-  equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) → (Fin+LeftRight  o (∨Nat Id (canonicalΣ (S o fsucc))) o (functionAux S)) ≡ canonicalΣ S
+  equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) 
+                    → (Fin+LeftRight  o (∨Nat Id (canonicalΣ (S o fsucc))) o (functionAux S)) ≡ canonicalΣ S
   equalCanonicalΣ S = funext (λ { (fzero , b) → refl ; (fsucc a , b) → refl})
 
 
@@ -191,7 +195,8 @@ module ArithmeticForCanonicalSets where
 
 
   canonicalΣorder : {n : ℕ} (S : Fin n → ℕ) {a₁ a₂ : Fin n} {b₁ : Fin (S a₁)} {b₂ : Fin (S a₂)} 
-                    → (canonicalΣ S (a₁ , b₁) << canonicalΣ S (a₂ , b₂)) ↔ ((a₁ < a₂) ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap S p) b₁ < b₂ ))
+                    → (canonicalΣ S (a₁ , b₁) << canonicalΣ S (a₂ , b₂)) 
+                    ↔ ((a₁ < a₂) ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap S p) b₁ < b₂ ))
 
   canonicalΣorder S {fzero} {fzero} {b₁} {b₂} = ↔Trans (b₁ < b₂) 
                                                        (Fin+LeftOrder b₁ b₂)  
@@ -203,17 +208,17 @@ module ArithmeticForCanonicalSets where
   canonicalΣorder S {fsucc a₁} {fzero} {b₁} {b₂} = (λ q → efql (Fin+OrderSup _ b₂ q)) , 
                                                    λ { (left ()) ; (right (() , _)) }
   
-  canonicalΣorder S {fsucc a₁} {fsucc a₂} {b₁} {b₂} = ↔Trans (canonicalΣ (S o fsucc) (a₁ , b₁) << canonicalΣ (S o fsucc) (a₂ , b₂))
-                                                        (Fin+RightOrder {m = S fzero} _ _) 
-                                                        (↔Trans
-                                                           (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap (S o fsucc) p) b₁ << b₂))
-                                                           (canonicalΣorder (S o fsucc) {a₁} {a₂}) 
-                                                        (∨Nat↔ ↔Refl 
-                                                               (let C = λ (p : fsucc a₁ ≡ fsucc a₂) → transport Fin (ap S p) b₁ < b₂ in 
-                                                                    ↔Trans (Σ (a₁ ≡ a₂) (C o ap fsucc)) 
-                                                                           ((λ {(refl , q) → refl , q}) , 
-                                                                            λ {(refl , q) → refl , q}) 
-                                                                           (injectiveEqual C injectiveFsucc))))
+  canonicalΣorder S {fsucc a₁} {fsucc a₂} {b₁} {b₂} 
+                           = ↔Trans (canonicalΣ (S o fsucc) (a₁ , b₁) << canonicalΣ (S o fsucc) (a₂ , b₂))
+                                    (Fin+RightOrder {m = S fzero} _ _) 
+                                    (↔Trans (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap (S o fsucc) p) b₁ << b₂))
+                                            (canonicalΣorder (S o fsucc) {a₁} {a₂}) 
+                                            (∨Nat↔ ↔Refl 
+                                                   (let C = λ (p : fsucc a₁ ≡ fsucc a₂) → transport Fin (ap S p) b₁ < b₂ 
+                                                    in ↔Trans (Σ (a₁ ≡ a₂) (C o ap fsucc)) 
+                                                               ((λ {(refl , q) → refl , q}) , 
+                                                                 λ {(refl , q) → refl , q}) 
+                                                               (injectiveEqual C injectiveFsucc))))
 
 
 
@@ -227,7 +232,7 @@ module ArithmeticForCanonicalSets where
 
 module FiniteUnionOfFiniteSets where
 
---We only need three results from the module
+--We only need three results from the module on canonical finite sets
   open ArithmeticForCanonicalSets using (canonicalΣ; isIsoCanonicalΣ; canonicalΣorder)
 
 
@@ -240,7 +245,9 @@ module FiniteUnionOfFiniteSets where
                  = λ n → cardinal {B (g n)}
 
 
-  Σfibre : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} → {a : A} → B a → Fin (Σcardinal A B (funFO a))
+  Σfibre : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} 
+           → {a : A} → B a → Fin (Σcardinal A B (funFO a))
+
   Σfibre A ⦃ record { cardinal = |A| ; 
                       funFO = f ; 
                       isIsoFO = record { inv = g ; invLeft = invLeft ; invRight = invRight } } ⦄ B {a = a} 
@@ -248,15 +255,16 @@ module FiniteUnionOfFiniteSets where
 
 
   instance 
-    finiteΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
+    FOΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
 
-    finiteΣ {A} {{Afinite}} {B} {{Bfinite}} 
+    FOΣ {A} {{Afinite}} {B} {{Bfinite}} 
               = let S = Σcardinal A B in let F = Σfibre A B in
                    record { cardinal = finiteSum (Σcardinal A B) ; 
                             funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} funFO F) ;
                             isIsoFO = isoComp 
                                       (isoΣfun (isIsoFO)
-                                      λ a → isoComp (isIsoFO {B a}) (isoTransport (λ a → Fin (cardinal {B a})) (iso.invRight (isIsoFO {A}) a))) 
+                                      λ a → isoComp (isIsoFO {B a}) 
+                                                    (isoTransport (λ a → Fin (cardinal {B a})) (iso.invRight (isIsoFO {A}) a))) 
                                       (isIsoCanonicalΣ S) }
                  
 
@@ -300,7 +308,7 @@ module FiniteUnionOfFiniteSets where
 
 
 
-open FiniteUnionOfFiniteSets using (finiteΣ; Σorder)
+open FiniteUnionOfFiniteSets using (FOΣ; Σorder)
 
 
 
@@ -309,10 +317,41 @@ open FiniteUnionOfFiniteSets using (finiteΣ; Σorder)
 
 record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
   field
-    isIsoFO : iso f
+    isoHomFO : iso f
     orderPreserving : {x y : A} → x << y ↔ f x << f y
 
 open HomFO {{...}} public
+
+
+
+
+
+--We construct the basic instance needed for FOSet to be a category
+
+instance
+  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
+  HomFOId = record { isoHomFO = isoId ; 
+                     orderPreserving = ↔Refl }
+
+
+  HomFOComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
+              {f : A → B} {g : B → C} (homf : HomFO f) (homg : HomFO g)
+              → HomFO (g o f)
+
+  HomFOComp {f = f}
+            record { isoHomFO = isof ; orderPreserving = orderf } 
+            record { isoHomFO = isog ; orderPreserving = orderg } 
+          = record { isoHomFO = isoComp isof isog ; 
+                     orderPreserving = λ {x} {y} → ↔Trans (f x << f y) orderf orderg }
+
+
+
+--We construct the isomorphism needed for the definition of operads
+
+η₁ : (B : Fin (s O) → Set) {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → B fzero → Σ (Fin (s O)) B
+η₁ B x = fzero , x
+
+
 
 
 {-

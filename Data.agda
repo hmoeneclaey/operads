@@ -114,16 +114,12 @@ s m + n = s(m + n)
 data _≡_ {k} {A : Set k} : A → A → Set k where
      refl : {a : A} → a ≡ a
 
---Axiom K is implemented ! This is the only place where we use it
+--Axiom K is implemented !
 UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
 UIP {p = refl} {q = refl} = refl
 
 postulate funext : ∀ {k l} {A : Set k} {B : Set l} → {f g : A → B} → ((a : A) → f a ≡ g a) → f ≡ g 
 
---When we need to declare the type explicitly
---I should ask guillaume for a neater solution
-Eq : ∀ {k} (A : Set k) → A → A → Set k
-Eq A x y = x ≡ y
 
 
 
@@ -154,12 +150,11 @@ transportEqualPaths p q refl = refl
 
 --Results about Σ and equality
 
---equalΣfibre : ∀ {k l} {A : Set k} {B : A → Set l} {a : A} {b₁ b₂ : B a} → b₁ ≡ b₂ → Eq (Σ A B) (a , b₁) (a , b₂)
---equalΣfibre refl = refl
-
 equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} 
          (p : a₁ ≡ a₂) → transport B p b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂) 
 equalΣ refl refl = refl
+
+
 
 
 --Definition of isomorphism
@@ -194,14 +189,6 @@ isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight
 isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
 isoTransport B refl = isoId
 
-{-
-isoAp : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → {x y : A} →  iso (ap f {x = x} {y = y})
-isoAp {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y}
-      = record { inv = λ p → ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y))) ; 
-                 invLeft = λ q → UIP ; 
-                 invRight = λ p → UIP }
--}
-
 isoInv : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso (iso.inv isof)
 isoInv {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } 
              = record { inv = f ; invLeft = invRight ; invRight = invLeft }
@@ -229,7 +216,8 @@ isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLef
                                                  (ap (iso.inv (isoF (g (f a₁))))
                                                  (≡Trans {y = transport B₂ (ap f (invRight a₁)) (F b₁)}
                                                          (transportComp (invRight a₁) F)
-                                                         (transportEqualPaths {b = F b₁} (ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
+                                                         (transportEqualPaths {b = F b₁} 
+                                                                  (ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
 
 
@@ -243,7 +231,8 @@ iso∨Assoc = record { inv = λ { (left a) → left (left a) ;
                      invRight = λ { (left (left a)) → refl ; (left (right b)) → refl ; (right c) → refl} }
 
 
-iso∨Nat : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} {f₁ : A → C} {f₂ : B → D} → iso f₁ → iso f₂ → iso (∨Nat f₁ f₂)
+iso∨Nat : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} {f₁ : A → C} {f₂ : B → D} 
+          → iso f₁ → iso f₂ → iso (∨Nat f₁ f₂)
 iso∨Nat record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ } 
      record { inv = g₂ ; invLeft = invLeft₂ ; invRight = invRight₂ } 
    = record { inv = ∨Nat g₁ g₂ ; 
