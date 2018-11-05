@@ -39,6 +39,9 @@ data _∨_ {k l} (A : Set k) (B : Set l) : Set (k ⊔ l) where
 
 infix 36 _∨_
 
+¬ : ∀ {k} → Set k → Set k
+¬ A = A → ⊥
+
 _↔_ : ∀ {k l} (A : Set l) (B : Set k) → Set (k ⊔ l)
 A ↔ B = (A → B) ∧ (B → A)
 
@@ -52,11 +55,18 @@ infix 46 _↔_
 efql : ∀ {k} {A : Set k} → ⊥ → A
 efql ()
 
+--For ↔
+
 ↔Refl : ∀ {k} {A : Set k} → A ↔ A
 ↔Refl = (λ a → a) , λ a → a
 
 ↔Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ↔ B → B ↔ C → A ↔ C
 ↔Trans B (f₁ , g₁) (f₂ , g₂) = (f₂ o f₁) , (g₁ o g₂)
+
+↔Sym : ∀ {k l} {A : Set k} {B : Set l} → A ↔ B → B ↔ A
+↔Sym (f₁ , f₂) = f₂ , f₁
+
+--For ∨
 
 ∨Elim : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} → (A → C) → (B → C) → A ∨ B → C 
 ∨Elim f g (left a) = f a
@@ -65,8 +75,16 @@ efql ()
 ∨Nat : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → (A → C) → (B → D) → (A ∨ B) → (C ∨ D)
 ∨Nat f g = ∨Elim (left o f) (right o g)
 
+∨Assoc : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} → (A ∨ B) ∨ C → A ∨ (B ∨ C)
+∨Assoc (left (left a)) = left a
+∨Assoc (left (right b)) = right (left b)
+∨Assoc (right c) = right (right c)
+
 ∨Nat↔ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} → A ↔ C → B ↔ D → (A ∨ B) ↔ (C ∨ D)  
 ∨Nat↔ (f₁ , g₁) (f₂ , g₂) = ∨Nat f₁ f₂ , ∨Nat g₁ g₂
+
+
+--For ∧
 
 ∧left : ∀ {k l} {A : Set k} {B : Set l} → A ∧ B → A
 ∧left (a , b) = a
@@ -100,7 +118,7 @@ data _≡_ {k} {A : Set k} : A → A → Set k where
 UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
 UIP {p = refl} {q = refl} = refl
 
-postulate extFun : ∀ {k l} {A : Set k} {B : Set l} → {f g : A → B} → ((a : A) → f a ≡ g a) → f ≡ g 
+postulate funext : ∀ {k l} {A : Set k} {B : Set l} → {f g : A → B} → ((a : A) → f a ≡ g a) → f ≡ g 
 
 --When we need to declare the type explicitly
 --I should ask guillaume for a neater solution
@@ -144,7 +162,6 @@ equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁
 equalΣ refl refl = refl
 
 
-
 --Definition of isomorphism
 
 record iso {k l} {A : Set k} {B : Set l} (f : A → B) : Set (k ⊔ l) where
@@ -177,17 +194,17 @@ isoComp {f = f₁} {g = g₁} record { inv = f₂ ; invLeft = invf₁ ; invRight
 isoTransport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} (p : x ≡ y) → iso (transport B p)
 isoTransport B refl = isoId
 
+{-
 isoAp : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → {x y : A} →  iso (ap f {x = x} {y = y})
 isoAp {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y}
       = record { inv = λ p → ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y))) ; 
                  invLeft = λ q → UIP ; 
                  invRight = λ p → UIP }
+-}
 
 isoInv : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso (iso.inv isof)
 isoInv {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } 
              = record { inv = f ; invLeft = invRight ; invRight = invLeft }
-
-
 
 
 
@@ -218,8 +235,16 @@ isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLef
 
 --Results about iso and ∨
 
-iso∨ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} {f₁ : A → C} {f₂ : B → D} → iso f₁ → iso f₂ → iso (∨Nat f₁ f₂)
-iso∨ record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ } 
+iso∨Assoc : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} → iso (∨Assoc {A = A} {B = B} {C = C})
+iso∨Assoc = record { inv = λ { (left a) → left (left a) ; 
+                               (right (left b)) → left (right b) ; 
+                               (right (right c)) → right c} ; 
+                     invLeft = λ { (left a) → refl ; (right (left b)) → refl ; (right (right c)) → refl} ; 
+                     invRight = λ { (left (left a)) → refl ; (left (right b)) → refl ; (right c) → refl} }
+
+
+iso∨Nat : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n} {f₁ : A → C} {f₂ : B → D} → iso f₁ → iso f₂ → iso (∨Nat f₁ f₂)
+iso∨Nat record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ } 
      record { inv = g₂ ; invLeft = invLeft₂ ; invRight = invRight₂ } 
    = record { inv = ∨Nat g₁ g₂ ; 
               invLeft = λ { (left c) → ap left (invLeft₁ c) ; (right d) → ap right (invLeft₂ d)} ; 
@@ -227,6 +252,31 @@ iso∨ record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ }
 
 
 
+
+
+
+
+
+--We define injective function
+
+injective : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) → Set (k ⊔ l)
+injective {A = A} f = {x y : A} → f x ≡ f y → x ≡ y
+
+
+
+--We show Σ and injective interact well
+--We use axiom K
+
+injectiveEqual : ∀ {k l m} {A : Set k} {B : Set l} {a₁ a₂ : A} {f : A → B} (C : f a₁ ≡ f a₂ → Set m)
+                 → injective f → Σ (a₁ ≡ a₂) (C o ap f) ↔ Σ (f a₁ ≡ f a₂) C
+injectiveEqual C injf = (λ {(refl , c) → refl , c}) , 
+                        λ {(p , c) → injf p , transport C UIP c}
+
+
+
+injectiveIso : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → injective f
+injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y} p 
+                  = ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y)))
 
 
 {-
