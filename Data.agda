@@ -93,6 +93,12 @@ efql ()
 ∧right (a , b) = b
 
 
+--For Σ
+
+ΣAssoc : ∀ {k l m} (A : Set k) (B : A → Set l) (C : Σ A B → Set m)
+    → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
+ΣAssoc A B C (a , (b , c)) = ((a , b) , c)
+
 
 
 
@@ -155,6 +161,28 @@ equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁
 equalΣ refl refl = refl
 
 
+--I often use something similar, but not exectly that
+{-
+Σequal↔ : ∀ {k l} {A : Set k} {C₁ C₂ : {a₁ a₂ : A} → a₁ ≡ a₂ → Set l} 
+          → ((a : A) → C₁ (refl {a = a}) ↔ C₂ (refl {a = a})) 
+          → {a₁ a₂ : A} →  (Σ (a₁ ≡ a₂) C₁) ↔ (Σ (a₁ ≡ a₂) C₂)
+Σequal↔ f {a₁} = ( λ {(refl , c) → refl , ∧left (f a₁) c} ), 
+                 ( λ {(refl , c) → refl , (∧right (f a₁) c) } )
+-}
+
+
+--Dependent transport
+
+deptransport : ∀ {k l m} {A : Set k} {B : A → Set l} (C : Σ A B → Set m) 
+               {a₁ a₂ : A} {b : B a₁} (p : a₁ ≡ a₂) → C (a₁ , b) → C (a₂ , transport B p b)
+deptransport C refl = Id
+
+
+{-
+deptransportEqual : ∀ {k l m} {A : Set k} {B : A → Set l} (C : Σ A B → Set m) {a₁ a₂ : A} {b : B a₁} {c : C (a₁ , b)} (p : a₁ ≡ a₂) 
+                    → transport (λ a → Σ (B a) (λ b → C (a , b))) p (b , c) ≡ (transport B p b , deptransport C p c)
+deptransportEqual C refl = refl
+-}
 
 
 --Definition of isomorphism
@@ -219,6 +247,11 @@ isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLef
                                                          (transportEqualPaths {b = F b₁} 
                                                                   (ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
+
+isoΣAssoc : ∀ {k l m} {A : Set k} {B : A → Set l} {C : Σ A B → Set m} → iso (ΣAssoc A B C)
+isoΣAssoc = record { inv = λ {((a , b) , c) → (a , (b , c))} ; 
+                     invLeft = λ {((a , b) , c) → refl} ; 
+                     invRight = λ {(a , (b , c)) → refl} }
 
 
 --Results about iso and ∨

@@ -41,6 +41,16 @@ infix 56 _<<_
 
 
 
+--Very basic facts about the order
+
+<Irefl : {n : ℕ} (a : Fin n) → ¬ (a < a)
+<Irefl fzero = Id
+<Irefl (fsucc a) = <Irefl a
+
+<<Irefl : {A : Set} {{_ : FOSet A}} (a : A) → ¬ (a << a)
+<<Irefl {A} a = λ q → <Irefl (funFO a) q 
+
+
 
 
 
@@ -288,9 +298,13 @@ module FiniteUnionOfFiniteSets where
                             in (∧left Aux , ∧right Aux)
 
 
+  Σord : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}}
+           → (a₁ : A) (b₁ : B a₁) (a₂ : A) (b₂ : B a₂) → Set
+  Σord {B = B} a₁ b₁ a₂ b₂ = (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
+
   Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
            → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
-           → (a₁ , b₁) << (a₂ , b₂) ↔ (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
+           → (a₁ , b₁) << (a₂ , b₂) ↔ Σord a₁ b₁ a₂ b₂
 
   Σorder {A} {{Afinite}} {B} ⦃ Bfinite ⦄ {a₁} {a₂} {b₁} {b₂} 
          = let S = Σcardinal A B in 
@@ -303,12 +317,25 @@ module FiniteUnionOfFiniteSets where
                   (∨Nat↔ ↔Refl let C = λ p → transport Fin (ap (Σcardinal A B) p) (Σfibre A B b₁) < Σfibre A B b₂ 
                                in ↔Trans (Σ (a₁ ≡ a₂) (λ p → C (ap f p)))  
                                        (↔Sym (injectiveEqual C (injectiveIso isIsoFO))) 
-                                         ((λ {(refl , q) → (refl , ∧right (ΣfibreOrder {A = A} {b₁ = b₁}) q)}) , 
-                                          (λ {(refl , q) → (refl , ∧left (ΣfibreOrder {A = A} {b₁ = b₁}) q)})) )
+                                             ((λ {(refl , q) → (refl , ∧right (ΣfibreOrder {A = A} {b₁ = b₁}) q)}) , 
+                                              (λ {(refl , q) → (refl , ∧left (ΣfibreOrder {A = A} {b₁ = b₁}) q)})) )
 
 
 
-open FiniteUnionOfFiniteSets using (FOΣ; Σorder)
+open FiniteUnionOfFiniteSets using (FOΣ; Σord; Σorder)
+
+ord : (A : Set) {{_ : FOSet A}} → A → A → Set
+ord A x y = x << y 
+
+ΣorderSnd : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
+            {a : A} → {b₁ b₂ : B a} 
+            → b₁ << b₂ ↔ ord (Σ A B) (a , b₁) (a , b₂)
+ΣorderSnd {B = B} {a = a} {b₁ = b₁} {b₂ = b₂} = ↔Trans (Σord a b₁ a b₂) 
+                                                ((λ p → right (refl , p)) , 
+                                                 λ { (left q) → efql (<<Irefl a q) ; (right (refl , q)) → q}) 
+                                                (↔Sym (Σorder {B = B}) )
+
+
 
 
 
@@ -318,7 +345,7 @@ open FiniteUnionOfFiniteSets using (FOΣ; Σorder)
 record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
   field
     isoHomFO : iso f
-    orderPreserving : {x y : A} → x << y ↔ f x << f y
+    orderPreserving : (x y : A) → x << y ↔ f x << f y
 
 open HomFO {{...}} public
 
@@ -331,7 +358,7 @@ open HomFO {{...}} public
 instance
   HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
   HomFOId = record { isoHomFO = isoId ; 
-                     orderPreserving = ↔Refl }
+                     orderPreserving = λ x y → ↔Refl }
 
 
   HomFOComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
@@ -342,36 +369,89 @@ instance
             record { isoHomFO = isof ; orderPreserving = orderf } 
             record { isoHomFO = isog ; orderPreserving = orderg } 
           = record { isoHomFO = isoComp isof isog ; 
-                     orderPreserving = λ {x} {y} → ↔Trans (f x << f y) orderf orderg }
+                     orderPreserving = λ x y → ↔Trans (f x << f y) (orderf _ _) (orderg _ _) }
 
+
+  HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
+              {B₁ : A₁ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {B₂ : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
+              {f : A₁ → A₂} {{homf : HomFO f}}
+              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} {{homF : {a₁ : A₁} → HomFO (F {a₁})}}
+              → HomFO (Σfun {B₂ = B₂} f F)
+
+  HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} ⦃ record { isoHomFO = isof ; orderPreserving = orderf } ⦄ {F = F} {{homF}} 
+               = record { isoHomFO = isoΣfun isof (λ a₁ → isoHomFO {f = F {a₁}} {{homF {a₁}}}) ; 
+                          orderPreserving = λ {(a₁ , b₁) (a₂ , b₂) 
+                                            → ↔Trans (Σord a₁ b₁ a₂ b₂) 
+                                                     (Σorder {B = B₁}) 
+                                                     (↔Trans (Σord {B = B₂} (f a₁) (F b₁) (f a₂) (F b₂)) 
+                                                              (∨Nat↔ (orderf _ _) 
+                                                                     (↔Trans (Σ (a₁ ≡ a₂) (λ p → transport B₂ (ap f p) (F b₁) << F b₂))
+                                                                        ((λ {(refl , q) → refl , ∧left (orderPreserving {f = F {a₁}} {{homF {a₁}}} b₁ b₂) q}) , 
+                                                                          λ {(refl , q) → refl , (∧right (orderPreserving {f = F {a₁}} {{homF {a₁}}} b₁ b₂) q)}) 
+                                                                        (injectiveEqual (λ p → transport B₂ p (F b₁) << F b₂) (injectiveIso isof)))) 
+                                                              (↔Sym (Σorder {B = B₂})))} }
 
 
 --We construct the isomorphism needed for the definition of operads
 
-η₁ : (B : Fin (s O) → Set) {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → B fzero → Σ (Fin (s O)) B
+η₁ : (B : Fin (s O) → Set) {{_ : {x : Fin (s O)} → FOSet (B x)}} → B fzero → Σ (Fin (s O)) B
 η₁ B x = fzero , x
 
+η₂ : (A : Set) {{_ : FOSet A}} → A → Σ A (λ _ → Fin (s O))
+η₂ A a = a , fzero
+
+ψ : (A : Set) {{_ : FOSet A}} (B : A → Set) {{_ : {a : A} → FOSet (B a)}} (C : Σ A B → Set) {{_ : {x : Σ A B} → FOSet (C x)}}
+    → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
+ψ A B C = ΣAssoc A B C
 
 
 
-{-
 
---We construct the examples of morphisms  we need for the definition of operads
-
-η₁ : (B : Fin (s O) → Set) {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → B(fzero O) → Σ (Fin (s O)) B
-η₁ B = λ x → (fzero O) , x 
-
-instance
-  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
-  HomFOId = record { isIsoFO = isoId ; orderPreserving = (λ p → p) , (λ q → q) }
+instance 
 
   HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
-  HomFOη₁ {B} = record { isIsoFO = record { inv = λ {(x , b) → transport B (Fin⊤ x) b} ; 
-                                            invLeft = λ { (fzero .O , b) → refl ; (fsucc .O x , b) → efql (Fin⊥ x)} ; 
-                                            invRight = λ x → refl } ; 
-                         orderPreserving =  {!!} } 
 
-  --HomFOη₂ : {A : Set} {{Afinite : FOSet A}} → HomFO 
+  HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ; 
+                                         invLeft = λ {(fzero , _) → refl} ; 
+                                         invRight = λ _ → refl } ; 
+                     orderPreserving = λ x y → ΣorderSnd {B = B} } 
 
 
--}
+  HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
+
+  HomFOη₂ = record { isoHomFO = record { inv = λ { (a , _) → a} ; 
+                                         invLeft = λ { (a , fzero) → refl} ; 
+                                         invRight = λ _ → refl } ; 
+                     orderPreserving = λ x y → ↔Trans (x << y ∨ Σ (x ≡ y) (λ _ → ord (Fin (s O)) fzero fzero)) 
+                                                   ((λ q → left q) ,
+                                                    (λ { (left q) → q ; (right (_ , ()) )}))
+                                                   (↔Sym (Σorder {B = λ _ → Fin (s O)})) } --I am suspicious about the fact that we ignore transport
+
+
+
+  HomFOψ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} 
+           {C : Σ A B → Set} {{_ : {x : Σ A B} → FOSet (C x)}}
+           → HomFO (ψ A B C)
+
+  HomFOψ {A} {B} {C} = record { isoHomFO = isoΣAssoc ;
+                                orderPreserving = λ { (a₁ , (b₁ , c₁)) (a₂ , (b₂ , c₂)) → 
+                                    ↔Trans (Σord a₁ (b₁ , c₁) a₂ (b₂ , c₂))
+                                      (Σorder {b₁ = (b₁ , c₁)} {b₂ = (b₂ , c₂)}) 
+                                      (↔Trans (Σord (a₁ , b₁) c₁ (a₂ , b₂) c₂)
+                                         (↔Trans (Σord a₁ b₁ a₂ b₂ ∨
+                                                 Σ ((a₁ , b₁) ≡ (a₂ , b₂)) (λ p → transport C p c₁ << c₂))
+                                                 (↔Trans
+                                                    (a₁ << a₂ ∨
+                                                      Σ (a₁ ≡ a₂) (λ p → Σord (transport B p b₁) (deptransport C p c₁) b₂ c₂))
+                                                    (∨Nat↔ ↔Refl 
+                                                           ((λ {(refl , q) → refl , ∧left (Σorder {a₁ = b₁} {b₁ = c₁}) q}) , 
+                                                             λ {(refl , q) → refl , ∧right (Σorder {a₁ = b₁} {b₁ = c₁}) q})) 
+                                                    ((λ { (left qa) → left (left qa) ; 
+                                                          (right (refl , left qb)) → left (right (refl , qb)) ; 
+                                                          (right (refl , right (refl , qc))) → right (refl , qc)}) , 
+                                                      λ { (left (left qa)) → left qa ; 
+                                                          (left (right (refl , qb))) → right (refl , (left qb)) ; 
+                                                          (right (refl , qc)) → right (refl , (right (refl , qc)))}))
+                                             (∨Nat↔ (↔Sym (Σorder {B = B})) 
+                                                     ↔Refl)) 
+                                             (↔Sym (Σorder {B = C})))} }
