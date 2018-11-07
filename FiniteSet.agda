@@ -356,7 +356,7 @@ open HomFO {{...}} public
 --We construct the basic instance needed for FOSet to be a category
 
 instance
-  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (λ (x : A) → x)
+  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
   HomFOId = record { isoHomFO = isoId ; 
                      orderPreserving = λ x y → ↔Refl }
 
@@ -374,11 +374,11 @@ instance
 
   HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
               {B₁ : A₁ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {B₂ : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
-              {f : A₁ → A₂} {{homf : HomFO f}}
-              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} {{homF : {a₁ : A₁} → HomFO (F {a₁})}}
+              {f : A₁ → A₂} (homf : HomFO f)
+              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} (homF : {a₁ : A₁} → HomFO (F {a₁}))
               → HomFO (Σfun {B₂ = B₂} f F)
 
-  HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} ⦃ record { isoHomFO = isof ; orderPreserving = orderf } ⦄ {F = F} {{homF}} 
+  HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} record { isoHomFO = isof ; orderPreserving = orderf } {F = F} homF 
                = record { isoHomFO = isoΣfun isof (λ a₁ → isoHomFO {f = F {a₁}} {{homF {a₁}}}) ; 
                           orderPreserving = λ {(a₁ , b₁) (a₂ , b₂) 
                                             → ↔Trans (Σord a₁ b₁ a₂ b₂) 

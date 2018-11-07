@@ -161,6 +161,7 @@ equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁
 equalΣ refl refl = refl
 
 
+--TODO
 --I often use something similar, but not exectly that
 {-
 Σequal↔ : ∀ {k l} {A : Set k} {C₁ C₂ : {a₁ a₂ : A} → a₁ ≡ a₂ → Set l} 
