@@ -7,7 +7,7 @@ open import Agda.Primitive
 --Composition and identity
 
 Id : ∀ {k} {A : Set k} → A → A
-Id x = x
+Id = λ x → x
 
 _o_ : ∀ {k l m} {A : Set k} {B : A → Set l} {C : {a : A} → B a → Set m} 
       → (g : {a : A} → (b : B a) → C b) 
