@@ -22,12 +22,21 @@ infixr 78 _o_
 
 data ⊥ : Set where
 
-data ⊤ : Set where
-  * : ⊤
+record ⊤ : Set where
+  constructor *
 
-data Σ {k l} (A : Set k) (B : A → Set l) : Set (k ⊔ l)  where
+data Σ {k l} (A : Set k) (B : A → Set l) : Set (k ⊔ l) where
   _,_ : (a : A) → B a → Σ A B
 
+
+--For some reason the data type sigma type check faster
+{-
+record Σ {k l} (A : Set k) (B : A → Set l) : Set (k ⊔ l)  where
+  constructor _,_
+  field 
+    fst : A
+    snd : B fst
+-}
 --infixr 56 _,_
 
 _∧_ : ∀ {k l} → Set k → Set l → Set (k ⊔ l)
@@ -94,11 +103,11 @@ efql ()
 
 
 --For Σ
-
+{-
 ΣAssoc : ∀ {k l m} (A : Set k) (B : A → Set l) (C : Σ A B → Set m)
     → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
 ΣAssoc A B C (a , (b , c)) = ((a , b) , c)
-
+-}
 
 
 
@@ -162,7 +171,7 @@ equalΣ refl refl = refl
 
 
 --TODO
---I often use something similar, but not exectly that
+--I often use something similar, but not exactly that
 {-
 Σequal↔ : ∀ {k l} {A : Set k} {C₁ C₂ : {a₁ a₂ : A} → a₁ ≡ a₂ → Set l} 
           → ((a : A) → C₁ (refl {a = a}) ↔ C₂ (refl {a = a})) 
@@ -248,12 +257,12 @@ isoΣfun {B₁ = B₁} {B₂ = B₂} {f} {F} record { inv = g ; invLeft = invLef
                                                          (transportEqualPaths {b = F b₁} 
                                                                   (ap f (invRight a₁)) (invLeft (f a₁)) UIP) )))}}
 
-
+{-
 isoΣAssoc : ∀ {k l m} {A : Set k} {B : A → Set l} {C : Σ A B → Set m} → iso (ΣAssoc A B C)
 isoΣAssoc = record { inv = λ {((a , b) , c) → (a , (b , c))} ; 
                      invLeft = λ {((a , b) , c) → refl} ; 
                      invRight = λ {(a , (b , c)) → refl} }
-
+-}
 
 --Results about iso and ∨
 

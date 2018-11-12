@@ -73,7 +73,7 @@ MonOperad : Operad Mon MonFun
 MonOperad = record
               { id = *
               ; γ = λ _ _ → *
-              ; functorId = λ {* → refl}
+              ; functorId = λ _ → refl
               ; functorComp = λ _ → refl
               ; unitLeft = λ _ → refl 
               ; unitRight = λ _ → refl
