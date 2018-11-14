@@ -1,4 +1,4 @@
-
+ 
 module Operad where
 
 open import Data

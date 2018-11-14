@@ -388,8 +388,8 @@ instance
                                                      (↔Trans (Σord {B = B₂} (f a₁) (F b₁) (f a₂) (F b₂)) 
                                                               (∨Nat↔ (orderf _ _) 
                                                                      (↔Trans (Σ (a₁ ≡ a₂) (λ p → transport B₂ (ap f p) (F b₁) << F b₂))
-                                                                        ((λ {(refl , q) → refl , ∧left (orderPreserving {f = F {a₁}} {{homF {a₁}}} b₁ b₂) q}) , 
-                                                                          λ {(refl , q) → refl , (∧right (orderPreserving {f = F {a₁}} {{homF {a₁}}} b₁ b₂) q)}) 
+                                                                        ((λ {(refl , q) → refl , ∧left (orderPreserving {f = F {a₁}} b₁ b₂) q}) , 
+                                                                          λ {(refl , q) → refl , (∧right (orderPreserving {f = F {a₁}} b₁ b₂) q)}) 
                                                                         (injectiveEqual (λ p → transport B₂ p (F b₁) << F b₂) (injectiveIso isof)))) 
                                                               (↔Sym (Σorder {B = B₂})))} }
 

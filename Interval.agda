@@ -7,5 +7,5 @@ open import Data
 
 postulate
   I : Set
-  e₁ e₂ : I
+  e₀ e₁ : I
   inf : I ∧ I → I
