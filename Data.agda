@@ -129,6 +129,9 @@ s m + n = s(m + n)
 data _≡_ {k} {A : Set k} : A → A → Set k where
      refl : {a : A} → a ≡ a
 
+Equal : ∀ {k} (A : Set k) (a b : A) → Set k
+Equal A a b = a ≡ b
+
 --Axiom K is implemented !
 UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
 UIP {p = refl} {q = refl} = refl
@@ -168,6 +171,9 @@ transportEqualPaths p q refl = refl
 equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} 
          (p : a₁ ≡ a₂) → transport B p b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂) 
 equalΣ refl refl = refl
+
+equal∧ : ∀ {k l} {A : Set k} {B : Set l} {a₁ a₂ : A} {b₁ b₂ : B} → a₁ ≡ a₂ → b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂)
+equal∧ refl refl = refl
 
 
 --TODO
@@ -309,6 +315,29 @@ injectiveEqual C injf = (λ {(refl , c) → refl , c}) ,
 injectiveIso : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → injective f
 injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y} p 
                   = ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y)))
+
+
+
+
+
+
+--We define pullback
+
+Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
+Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})  
+
+
+{-
+mkPullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C} (a : A) (b : B) (eq : f a ≡ g b) → Pullback f g
+mkPullback a b eq = ((a , b) , eq)
+-}
+equalPullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
+                   {a₁ a₂ : A} {b₁ b₂ : B} {eq₁ : f a₁ ≡ g b₁} {eq₂ : f a₂ ≡ g b₂}
+                   → a₁ ≡ a₂ → b₁ ≡ b₂ → Equal (Pullback f g) ((a₁ , b₁) , eq₁) ((a₂ , b₂) , eq₂)
+equalPullback refl refl = equalΣ refl UIP
+
+
+
 
 
 {-

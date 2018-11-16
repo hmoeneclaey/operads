@@ -8,4 +8,4 @@ open import Data
 postulate
   I : Set
   e₀ e₁ : I
-  inf : I ∧ I → I
+  _⊔_ : I → I → I
