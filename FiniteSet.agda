@@ -373,14 +373,14 @@ HomFOComp f g
           = record { isoHomFO = isoComp isof isog ; 
                      orderPreserving = λ x y → ↔Trans (f x << f y) (orderf _ _) (orderg _ _) }
 
-instance
-  HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
+
+HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
               {B₁ : A₁ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {B₂ : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
               {f : A₁ → A₂} {{homf : HomFO f}}
               {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} {{homF : {a₁ : A₁} → HomFO (F {a₁})}}
               → HomFO (Σfun {B₂ = B₂} f F)
 
-  HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} {{ record { isoHomFO = isof ; orderPreserving = orderf } }} {F = F} {{homF}} 
+HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} {{ record { isoHomFO = isof ; orderPreserving = orderf } }} {F = F} {{homF}} 
                = record { isoHomFO = isoΣfun isof (λ a₁ → isoHomFO {f = F {a₁}} {{homF {a₁}}}) ; 
                           orderPreserving = λ {(a₁ , b₁) (a₂ , b₂) 
                                             → ↔Trans (Σord a₁ b₁ a₂ b₂) 
@@ -409,16 +409,16 @@ instance
 
 
 
-instance 
+ 
 
-  HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
+HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
 
-  HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ; 
+HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ; 
                                              invLeft = λ {(fzero , _) → refl} ; 
                                              invRight = λ _ → refl } ; 
                          orderPreserving = λ x y → ΣorderSnd {B = B} } 
 
-
+instance
   HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
 
   HomFOη₂ = record { isoHomFO = record { inv = λ { (a , _) → a} ; 
@@ -430,11 +430,12 @@ instance
                                                    (↔Sym (Σorder {B = λ _ → Fin (s O)})) } --I am suspicious about the fact that we ignore transport
 
 
-  HomFOψ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} 
+
+HomFOψ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} 
            {C : Σ A B → Set} {{_ : {x : Σ A B} → FOSet (C x)}}
            → HomFO (ψ A B C)
 
-  HomFOψ {A} {B} {C} = record { isoHomFO = record { inv = λ {((a , b) , c) → (a , (b , c))} ; 
+HomFOψ {A} {B} {C} = record { isoHomFO = record { inv = λ {((a , b) , c) → (a , (b , c))} ; 
                                                     invLeft = λ {((a , b) , c) → refl} ; 
                                                     invRight = λ {(a , (b , c)) → refl} } ;
                                 orderPreserving = λ { (a₁ , (b₁ , c₁)) (a₂ , (b₂ , c₂)) → 

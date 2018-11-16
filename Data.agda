@@ -324,19 +324,22 @@ injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight 
 --We define pullback
 
 Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
-Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})  
+Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})
 
+module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C} where
 
-{-
-mkPullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C} (a : A) (b : B) (eq : f a ≡ g b) → Pullback f g
-mkPullback a b eq = ((a , b) , eq)
--}
-equalPullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
-                   {a₁ a₂ : A} {b₁ b₂ : B} {eq₁ : f a₁ ≡ g b₁} {eq₂ : f a₂ ≡ g b₂}
-                   → a₁ ≡ a₂ → b₁ ≡ b₂ → Equal (Pullback f g) ((a₁ , b₁) , eq₁) ((a₂ , b₂) , eq₂)
-equalPullback refl refl = equalΣ refl UIP
+  proj₁ : Pullback f g → A
+  proj₁ ((a , _) , _) = a
 
+  proj₂ : Pullback f g → B
+  proj₂ ((_ , b) , _) = b
 
+  equalProj : (x : Pullback f g) → f (proj₁ x) ≡ g (proj₂ x)
+  equalProj ((a , b) , eq) = eq
+
+  equalPullback : {x y : Pullback f g}
+                  → proj₁ x ≡ proj₁ y → proj₂ x ≡ proj₂ y → x ≡ y
+  equalPullback {(a₁ , b₁) , eq₁} {(a₂ , b₂) , eq₂} refl refl = equalΣ refl UIP
 
 
 
