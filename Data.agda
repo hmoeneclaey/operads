@@ -136,7 +136,7 @@ Equal A a b = a ≡ b
 UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
 UIP {p = refl} {q = refl} = refl
 
-postulate funext : ∀ {k l} {A : Set k} {B : Set l} → {f g : A → B} → ((a : A) → f a ≡ g a) → f ≡ g 
+postulate funext : ∀ {k l} {A : Set k} {B : A → Set l} → {f g : (a : A) → B a} → ((a : A) → f a ≡ g a) → f ≡ g 
 
 
 

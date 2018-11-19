@@ -410,13 +410,13 @@ HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} {{ record { isoHomFO = isof ; ord
 
 
  
-
 HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
 
 HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ; 
                                              invLeft = λ {(fzero , _) → refl} ; 
                                              invRight = λ _ → refl } ; 
                          orderPreserving = λ x y → ΣorderSnd {B = B} } 
+
 
 instance
   HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
