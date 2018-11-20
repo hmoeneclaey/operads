@@ -20,3 +20,11 @@ Main results :
 ## Operad.agda
 
 Contains the definition of ns-operads, together with endomorphism and monoid ns-operad
+
+## FibrantUniverses.agda
+
+Contains the definition of the fibrant structure, along with basic porperties
+
+## HomotopyTransfer.agda
+
+Contains the proof that fibrant algebras are invariant by equivalence for cofibrant operads
