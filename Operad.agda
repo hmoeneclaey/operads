@@ -18,7 +18,7 @@ arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B}
                       (f : A → B) {{_ : HomFO {{Afinite}} {{Bfinite}} f}} 
                       → P A {{Afinite}} → P B {{Bfinite}}
 
-
+{-
 record Collection {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) where
 
   field
@@ -33,12 +33,12 @@ record Collection {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc 
                               → (c : P A) → functor g {{homg}} (functor f c) ≡ functor (g o f) {{HomFOComp f g}} c
 
 open Collection {{...}} public
-
+-}
 
 Nat : ∀ {k} (P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
 Nat P₁ P₂ = (A : Set) → {{_ : FOSet A}} → P₁ A → P₂ A
 
-
+{-
 HomCollection : ∀ {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
                   {{_ : Collection P₁}}
                   {{_ : Collection P₂}}
@@ -46,17 +46,25 @@ HomCollection : ∀ {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
 HomCollection {P₁ = P₁} α = {A : Set} {Afinite : FOSet A} {B : Set} {Bfinite : FOSet B} (f : A → B) {homf : HomFO {{Afinite}} {{Bfinite}} f}
                                        → (c : P₁ A {{Afinite}}) → functor f {{homf}} (α A c) ≡ α B {{Bfinite}} (functor f {{homf}} c) 
 
-
+-}
 
 
 
 
 --We define operads
 
-record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k)
-                  {{_ : Collection P}} : Set (lsuc k) where
+record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) where
 
               field            
+
+                functor : arrowAction P
+
+                functorId : {A : Set} {{_ : FOSet A}} (c : P A)
+                           → functor (Id {A = A}) c ≡ c
+
+                functorComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
+                              {f : A → B} {g : B → C} {{homf : HomFO f}} {{homg : HomFO g}}
+                              → (c : P A) → functor g {{homg}} (functor f c) ≡ functor (g o f) {{HomFOComp f g}} c
 
                 id : P (Fin (s O))
 
@@ -92,14 +100,19 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k)
 open Operad {{...}} public
 
 
-record HomOperad {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k} {colP₁ : Collection P₁} {colP₂ : Collection P₂}
-                 {{_ : Operad P₁ {{colP₁}}}} {{_ : Operad P₂ {{colP₂}}}}
-                 (α : Nat P₁ P₂) (_ : HomCollection {{colP₁}} {{colP₂}} α) : Set (lsuc k) where
+record HomOperad {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
+                 {{_ : Operad P₁}} {{_ : Operad P₂}}
+                 (α : Nat P₁ P₂) : Set (lsuc k) where
        field
-         HomOperadId : α (Fin (s O)) (id {{colP₁}}) ≡ id {{colP₂}}
+
+         HomCollection : {A : Set} {Afinite : FOSet A} {B : Set} {Bfinite : FOSet B} (f : A → B) {homf : HomFO {{Afinite}} {{Bfinite}} f}
+                         → (c : P₁ A {{Afinite}}) → functor f {{homf}} (α A c) ≡ α B {{Bfinite}} (functor f {{homf}} c) 
+
+         HomOperadId : α (Fin (s O)) id ≡ id
+
          HomOperadγ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}}
                       (c : P₁ A) (d : (a : A) → P₁ (B a))
-                      → α _ (γ {{colP₁}} c d) ≡ γ {{colP₂}} (α _ c) (λ a → α _ (d a))
+                      → α _ (γ c d) ≡ γ (α _ c) (λ a → α _ (d a))
 
 
 --The monoid operad
@@ -110,14 +123,18 @@ Mon A = ⊤
 MonFun : arrowAction Mon
 MonFun _ = λ _ → *
 
+{-
 instance
   CollMon : Collection Mon
   CollMon = record { functor = MonFun ;
                      functorId = λ _ → refl ;
                      functorComp = λ _ → refl }
+-}
 instance
-  OpMon : Operad Mon
-  OpMon = record
+  postulate
+    OpMon : Operad Mon
+{-
+OpMon = record
               { id = *
               ; γ = λ _ _ → *
               ; unitLeft = λ _ → refl
@@ -126,7 +143,7 @@ instance
               ; naturalityBase = λ _ _ _ → refl
               ; assoc = λ _ _ _ → refl
               }
-
+-}
 
 
 
@@ -138,16 +155,21 @@ End X A = (A → X) → X
 EndFun : ∀ {k} (X : Set k) → arrowAction (End X)
 EndFun X f = λ c g → c (g o f)
 
+{-
 instance
   CollEnd : ∀ {k} {X : Set k} → Collection (End X)
   CollEnd = record { functor = λ f c g → c (g o f) ;
                      functorId = λ _ → refl ;
                      functorComp = λ _ → refl }
+-}
 
 instance
-  OpEnd : (X : Set) → Operad (End X)
-  OpEnd X = record
-              { id = λ c → c fzero
+  OpEnd : ∀ {k} {X : Set k} → Operad (End X)
+  OpEnd = record
+              { functor = λ f c g → c (g o f)
+              ; functorId = λ _ → refl
+              ; functorComp = λ _ → refl
+              ; id = λ c → c fzero
               ; γ = λ c d f → c (λ a → d a (λ b → f (a , b)))
               ; unitLeft = λ _ → refl
               ; unitRight = λ _ → refl
@@ -155,4 +177,5 @@ instance
               ; naturalityBase = λ _ _ _ → refl
               ; assoc = λ _ _ _ → refl
               }
+
 
