@@ -6,93 +6,55 @@ open import FiniteSet
 open import Operad
 
 
+module _ {k} {X Y : Set k} (p : X → Y) where
+
+  record EndMor (A : Set) {{_ : FOSet A}} : Set k where
+    field
+      π₁ : End X A
+      π₂ : End Y A
+      equal : (d : A → X) → p (π₁ d) ≡ π₂ (p o d) 
+
+
+ 
+
+  mkEndMor : {A : Set} {{_ : FOSet A}}
+               (c₁ : End X A) → (c₂ : End Y A) → ((d : A → X) → p (c₁ d) ≡ c₂ (p o d)) → EndMor A
+  mkEndMor c₁ c₂ eq = record { π₁ = c₁ ; π₂ = c₂ ; equal = eq }
+
+  ≡EndMor : {A : Set} {{_ : FOSet A}} → {x y : EndMor A}
+              → EndMor.π₁ x ≡ EndMor.π₁ y → EndMor.π₂ x ≡ EndMor.π₂ y → x ≡ y
+  ≡EndMor {x = record { π₁ = π₁ ; π₂ = π₂ ; equal = equal }}
+          {record { π₁ = π₁' ; π₂ = π₂' ; equal = equal' }} refl refl = ap (mkEndMor π₁ π₂) (funext (λ a → UIP))
+    
 
 
 
-module PullbackOfCollections {k} {P₁ P₂ P₃ : (A : Set) → {{_ : FOSet A}} → Set k}
-                             {{colP₁ : Collection P₁}}
-                             {{colP₂ : Collection P₂}}
-                             {{colP₃ : Collection P₃}}
-                             (α : Nat P₁ P₂) {homα : HomCollection α}
-                             (β : Nat P₃ P₂) {homβ : HomCollection β} where
+  EndMorFun : arrowAction EndMor
+  EndMorFun f {{homf}} record { π₁ = c₁ ; π₂ = c₂ ; equal = eq }
+            = record { π₁ = EndFun X f {{homf}} c₁ ;
+                       π₂ = EndFun Y f {{homf}} c₂ ;
+                       equal = λ d → eq (d o f) }
 
+  instance
+    CollEndMor : Collection EndMor
+    CollEndMor = record { functor = EndMorFun ;
+                          functorId = λ _ → refl ;
+                          functorComp = λ _ → refl }
 
-       PullbackColl : (A : Set) → {{_ : FOSet A}} → Set k
-       PullbackColl A = Pullback (α A) (β A)
-
-
-       PullbackCollFun : arrowAction PullbackColl
-       PullbackCollFun f ((a , b) , eq) 
-                             = ((functor f a , functor f b ) ,
-                                        ≡Trans {y = functor f (α _ a)}
-                                                       (≡Sym (homα f a))
-                                                       (≡Trans {y = functor f (β _ b)}
-                                                         (ap (functor f) eq)
-                                                         (homβ f b)) )
-
-
-       instance
-         CollectionPullback : Collection PullbackColl
-         CollectionPullback = record { functor = PullbackCollFun ;
-                                       functorId = λ { ((a , b) , _) → equalPullback (functorId a) (functorId b) } ;
-                                       functorComp = λ { ((a , b) , _) → equalPullback (functorComp a) (functorComp b)} }
-
-
-       operadProj₁ : Nat PullbackColl P₁
-       operadProj₁ A x = proj₁ x
-
-       operadProj₂ : Nat PullbackColl P₃
-       operadProj₂ A x = proj₂ x
-
-       
-       HomCollProj₁ : HomCollection operadProj₁
-       HomCollProj₁ f ((_ , _) , _) = refl
-
-       HomCollProj₂ : HomCollection operadProj₂
-       HomCollProj₂ f ((_ , _) , _) = refl
-
-
-       module PullbackOfOperads {{_ : Operad P₁}} {{_ : Operad P₃}}
-                      (eqId : α (Fin (s O)) id ≡ β (Fin (s O)) id)
-                      (eqγ : {A : Set} → {{_ : FOSet A}} → {B : A → Set} → {{_ : {a : A} → FOSet (B a)}}
-                            → {c₁ : P₁ A} → {c₃ : P₃ A} → {d₁ : (a : A) → P₁ (B a)} → {d₃ : (a : A) → P₃ (B a)}
-                            → α A c₁ ≡ β A c₃ → ((a : A) → α _ (d₁ a) ≡ β _ (d₃ a))
-                            → α _ (γ c₁ d₁) ≡  β _ (γ c₃ d₃))
-                            where
-
-
-                      instance                        
-                        PullbackOp : Operad PullbackColl
-                        PullbackOp = record
-
-                                   { id = (id , id) , eqId
-              
-                                   ; γ = λ c d → (γ (proj₁ c) (proj₁ o d) , γ (proj₂ c) (proj₂ o d))
-                                      , eqγ (equalProj c) (λ a → equalProj (d a))
-
-                                   ; unitLeft = λ { ((c₁ , c₂) , eq) → equalPullback (unitLeft c₁) (unitLeft c₂)}
-
-                                   ; unitRight = λ {B} d → equalPullback (≡Trans (unitRight (proj₁ o d)) (HomCollProj₁ (η₁ B) (d fzero)))
-                                                              (≡Trans (unitRight (proj₂ o d)) (HomCollProj₂ (η₁ B) (d fzero)))
-
-                                   ; naturalityFiber = λ F c d → equalPullback (≡Trans (naturalityFiber F (proj₁ c) (proj₁ o d))
-                                                                            (ap (γ (proj₁ c)) (funext (λ a → HomCollProj₁ F (d a)))))
-                                                                    (≡Trans (naturalityFiber F (proj₂ c) (proj₂ o d))
-                                                                            (ap (γ (proj₂ c)) (funext (λ a → HomCollProj₂ F (d a)))))
-
-                                   ; naturalityBase = λ f c d → equalPullback (≡Trans (naturalityBase f (proj₁ c) (proj₁ o d))
-                                                                           (ap (λ c₁ → γ c₁ (proj₁ o d)) (HomCollProj₁ f c)))
-                                                                   (≡Trans (naturalityBase f (proj₂ c) (proj₂ o d))
-                                                                           (ap (λ c₁ → γ c₁ (proj₂ o d)) (HomCollProj₂ f c)))
-
-                                   ; assoc = λ c d e → equalPullback (assoc (proj₁ c) (proj₁ o d) (proj₁ o e))
-                                                          (assoc (proj₂ c) (proj₂ o d) (proj₂ o e))
-                                   }
-
-                      HomOpProj₁ : {!!}
-                      HomOpProj₁ = {!!}
-             
-
-
+  instance
+    OpEndMor : Operad EndMor
+    OpEndMor = record
+                 { id = record { π₁ = λ c → c fzero ;
+                                 π₂ = λ c → c fzero ;
+                                 equal = λ _ → refl }
+                 ; γ = λ c d → record { π₁ = λ f → (EndMor.π₁ c) (λ a → EndMor.π₁ (d a) (λ b → f (a , b))) ;
+                                        π₂ = λ f → (EndMor.π₂ c) (λ a → EndMor.π₂ (d a) (λ b → f (a , b))) ;
+                                        equal = λ d → {!!} }
+                 ; unitLeft = λ _ → ≡EndMor refl refl
+                 ; unitRight = λ _ → ≡EndMor refl refl
+                 ; naturalityFiber = λ _ _ _ → ≡EndMor refl refl
+                 ; naturalityBase = λ _ _ _ → ≡EndMor refl refl
+                 ; assoc = λ _ _ _ → ≡EndMor refl refl
+                 }
 
 

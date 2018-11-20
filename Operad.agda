@@ -104,21 +104,25 @@ record HomOperad {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k} {colP
 
 --The monoid operad
 
-{-
 Mon : (A : Set) {{_ : FOSet A}} → Set
 Mon A = ⊤
 
 MonFun : arrowAction Mon
 MonFun _ = λ _ → *
 
-MonOperad : Operad Mon MonFun
-MonOperad = record
-              { functor = record { functorId = refl ; functorComp = refl }
-              ; id = *
+instance
+  CollMon : Collection Mon
+  CollMon = record { functor = MonFun ;
+                     functorId = λ _ → refl ;
+                     functorComp = λ _ → refl }
+instance
+  OpMon : Operad Mon
+  OpMon = record
+              { id = *
               ; γ = λ _ _ → *
               ; unitLeft = λ _ → refl
               ; unitRight = λ _ → refl
-              ; naturalityFiber = λ _ _ → refl
+              ; naturalityFiber = λ _ _ _ → refl
               ; naturalityBase = λ _ _ _ → refl
               ; assoc = λ _ _ _ → refl
               }
@@ -134,15 +138,21 @@ End X A = (A → X) → X
 EndFun : ∀ {k} (X : Set k) → arrowAction (End X)
 EndFun X f = λ c g → c (g o f)
 
-EndOperad : (X : Set) → Operad (End X) (EndFun X)
-EndOperad X = record
-                { functor = record { functorId = refl ; functorComp = refl }
-                ; id = λ c → c fzero
-                ; γ = λ c d → λ e → c (λ a → d a (λ b → e (a , b)))
-                ; unitLeft = λ _ → refl
-                ; unitRight = λ _ → refl
-                ; naturalityFiber = λ _ _ → refl
-                ; naturalityBase = λ _ _ _ → refl
-                ; assoc = λ _ _ _ → refl
-                }
--}
+instance
+  CollEnd : ∀ {k} {X : Set k} → Collection (End X)
+  CollEnd = record { functor = λ f c g → c (g o f) ;
+                     functorId = λ _ → refl ;
+                     functorComp = λ _ → refl }
+
+instance
+  OpEnd : (X : Set) → Operad (End X)
+  OpEnd X = record
+              { id = λ c → c fzero
+              ; γ = λ c d f → c (λ a → d a (λ b → f (a , b)))
+              ; unitLeft = λ _ → refl
+              ; unitRight = λ _ → refl
+              ; naturalityFiber = λ _ _ _ → refl
+              ; naturalityBase = λ _ _ _ → refl
+              ; assoc = λ _ _ _ → refl
+              }
+
