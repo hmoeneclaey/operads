@@ -89,9 +89,9 @@ module _ {k} {X Y : Set k} (p : X → Y) where
 
 --Now we show that our situation is good when p is a trivial fibration and X and Y are fibrant
 
-  open import Interval
+--  open import Interval
 
-  module _ {{_ : Fib X}} {{_ : Fib Y}} where
+--  module _ {{_ : Fib X}} {{_ : Fib Y}} where
   
 
     
