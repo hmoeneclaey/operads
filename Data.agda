@@ -343,15 +343,15 @@ module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
 
 
 
-{-
+
 --Properties of ≅
 
 
 ≅Refl : ∀ {k} {A : Set k} → A ≅ A
 ≅Refl = record { isoFun = Id ; isIso = isoId }
 
-≅Trans : ∀ {k l m} {A : Set k} (B : Set l) {C : Set m} → A ≅ B → B ≅ C → A ≅ C
-≅Trans B record { isoFun = f₁ ; isIso = isof₁ } 
+≅Trans : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} → A ≅ B → B ≅ C → A ≅ C
+≅Trans record { isoFun = f₁ ; isIso = isof₁ } 
            record { isoFun = f₂ ; isIso = isof₂ }
          = record { isoFun = f₂ o f₁ ; isIso = isoComp isof₁ isof₂ }
 
@@ -365,6 +365,8 @@ module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
                                    invLeft = invRight ; 
                                    invRight = invLeft } }
 
+
+{-
 --Results about ∨ and isomorphisms
 
 --∨Flip : 

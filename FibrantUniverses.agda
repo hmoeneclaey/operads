@@ -3,10 +3,12 @@
 
 --This module will contains the fibrant universes and their homotopical structure. 
 
-module Interval where
+module FibrantUniverses where
 
 
 open import Data
+open import Agda.Primitive
+open import FiniteSet
 
 
 postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
@@ -32,7 +34,7 @@ record dPath {k} (P : I → Set k) (x : P e₀) (y : P e₁) : Set k where
 
 
 postulate
-  Fib : ∀ {k} → Set k → Set
+  Fib : ∀ {k} → Set k → Set k
 
   instance
     ⊤Fib : Fib ⊤
@@ -46,6 +48,7 @@ postulate
     IFib : ∀ {k} {P : I → Set k} {{_ : (i : I) → Fib (P i)}} {x : P e₀} {y : P e₁}
            → Fib (dPath P x y)
 
+  ≅Fib : ∀ {k l} {X : Set k} {Y : Set l} → X ≅ Y → {{_ : Fib X}} → Fib Y
 
 module _ {k l} {X : Set k} {{_ : Fib X}} 
   (C : (I → X) → Set l) {{_ : (p : I → X) → Fib (C p)}} 
@@ -64,6 +67,41 @@ module _ {k l} {X : Set k} {{_ : Fib X}}
 Path : ∀ {k} (X : Set k) (x y : X) → Set k
 Path X x y = dPath (λ _ → X) x y
 
+record Contr {k} (X : Set k) : Set k where
+  field
+    center : X
+    isContr : (y : X) → Path X center y
+
+
+module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
+
+  record fibre (y : Y) : Set (k ⊔ l) where
+    constructor _,_
+    field
+      point : X
+      equal : f point ≡ y
+
+  Fibration : Set (k ⊔ l)
+  Fibration = {y : Y} → Fib (fibre y)
+
+  ContrMap : Set (k ⊔ l)
+  ContrMap = {y : Y} → Contr (fibre y)
+
+  record TrivialFibration : Set (k ⊔ l) where
+    field
+      isFib : Fibration
+      isContr : ContrMap
 
 
 
+
+--A bunch of postulate which will be proven latter
+postulate
+  instance
+    fibFiniteProf : ∀ {k} {A : Set} {{_ : FOSet A}} {X : Set k} {{_ : Fib X}} → Fib (A → X)
+
+postulate
+  ≅Contr : ∀ {k l} {X : Set k} {Y : Set l} → X ≅ Y → Contr X → Contr Y
+
+postulate
+  ΠContr : ∀ {k l} {X : Set k} {P : X → Set l} → ((x : X) → Contr (P x)) → Contr ((x : X) → P x)

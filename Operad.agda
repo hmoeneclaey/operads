@@ -35,19 +35,8 @@ record Collection {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc 
 open Collection {{...}} public
 -}
 
-Nat : ∀ {k} (P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
+Nat : ∀ {k l} (P₁ : (A : Set) → {{_ : FOSet A}} → Set k) (P₂ : (A : Set) → {{_ : FOSet A}} → Set l) → Set (lsuc lzero ⊔ (k ⊔ l))
 Nat P₁ P₂ = (A : Set) → {{_ : FOSet A}} → P₁ A → P₂ A
-
-{-
-HomCollection : ∀ {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
-                  {{_ : Collection P₁}}
-                  {{_ : Collection P₂}}
-                  (α : Nat P₁ P₂) → Set (lsuc lzero ⊔ k)
-HomCollection {P₁ = P₁} α = {A : Set} {Afinite : FOSet A} {B : Set} {Bfinite : FOSet B} (f : A → B) {homf : HomFO {{Afinite}} {{Bfinite}} f}
-                                       → (c : P₁ A {{Afinite}}) → functor f {{homf}} (α A c) ≡ α B {{Bfinite}} (functor f {{homf}} c) 
-
--}
-
 
 
 
@@ -100,9 +89,9 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
 open Operad {{...}} public
 
 
-record HomOperad {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
+record HomOperad {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : Set) → {{_ : FOSet A}} → Set l}
                  {{_ : Operad P₁}} {{_ : Operad P₂}}
-                 (α : Nat P₁ P₂) : Set (lsuc k) where
+                 (α : Nat P₁ P₂) : Set (lsuc lzero ⊔ (k ⊔ l)) where
        field
 
          HomCollection : {A : Set} {Afinite : FOSet A} {B : Set} {Bfinite : FOSet B} (f : A → B) {homf : HomFO {{Afinite}} {{Bfinite}} f}
@@ -115,6 +104,16 @@ record HomOperad {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k}
                       → α _ (γ c d) ≡ γ (α _ c) (λ a → α _ (d a))
 
 
+
+module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : Set) → {{_ : FOSet A}} → Set l} {P₃ : (A : Set) → {{_ : FOSet A}} → Set m} where 
+
+       _∘_ : Nat P₂ P₃ → Nat P₁ P₂ → Nat P₁ P₃
+       β ∘ α = λ A → (β A) o (α A) 
+
+       postulate
+         HomOpComp : {{_ : Operad P₁}} {{_ : Operad P₂}} {{_ : Operad P₃}} → {α : Nat P₁ P₂} → {β : Nat P₂ P₃} → HomOperad β → HomOperad α → HomOperad (β ∘ α)
+
+{-
 --The monoid operad
 
 Mon : (A : Set) {{_ : FOSet A}} → Set
@@ -144,7 +143,7 @@ OpMon = record
               ; assoc = λ _ _ _ → refl
               }
 -}
-
+-}
 
 
 --The endomorphism operad
@@ -177,5 +176,13 @@ instance
               ; naturalityBase = λ _ _ _ → refl
               ; assoc = λ _ _ _ → refl
               }
+
+
+record Algebra {k l} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} (X : Set l) : Set (lsuc lzero ⊔ (k ⊔ l)) where
+  field
+    algebraStruct : Nat P (End X)
+    isAlg : HomOperad algebraStruct
+
+
 
 

@@ -4,6 +4,9 @@ open import Agda.Primitive
 open import Data
 open import FiniteSet
 open import Operad
+open import FibrantUniverses
+open import CofibrantOperads
+
 
 
 
@@ -38,13 +41,6 @@ module _ {k} {X Y : Set k} (p : X → Y) where
             = functor f {{homf}} c₁ ,
               functor f {{homf}} c₂ ,
               λ d → eq (d o f) 
-{-
-  instance
-    CollEndMor : Collection EndMor
-    CollEndMor = record { functor = EndMorFun ;
-                          functorId = λ _ → refl ;
-                          functorComp = λ _ → refl }
--}
 
 
   instance
@@ -89,9 +85,45 @@ module _ {k} {X Y : Set k} (p : X → Y) where
 
 --Now we show that our situation is good when p is a trivial fibration and X and Y are fibrant
 
---  open import Interval
 
---  module _ {{_ : Fib X}} {{_ : Fib Y}} where
-  
+  module _ {{_ : Fib X}} {{_ : Fib Y}} where
 
+    fibreIsoProj₂Aux : (A : Set) → {{_ : FOSet A}} (g : End Y A) → Σ (End X A) (λ f → (x : A → X) → p (f x) ≡ g (p o x)) ≅ fibre (operadProj₂ A) g
+    fibreIsoProj₂Aux A g = record { isoFun = λ {(f , eqf) → (f , g , eqf) , refl} ;
+                                     isIso = record { inv = λ {((f , g , eq₁) , refl) → (f , λ x → eq₁ x)} ;
+                                                      invLeft = λ {((f , g , eq₁) , refl) → refl} ;
+                                                      invRight = λ {(f , eqf) → refl} }}
+                                                      
+    fibreIsoProj₂ : (A : Set) → {{_ : FOSet A}} (g : End Y A) → ((x : A → X) → fibre p (g (p o x))) ≅ fibre (operadProj₂ A) g
+    fibreIsoProj₂ A g = ≅Trans (record { isoFun = λ sec → (fibre.point o sec) , λ x → fibre.equal (sec x) ;
+                                         isIso = record { inv = λ {(f , eqf) x → (f x) , (eqf x)} ;
+                                                          invLeft = λ {(f , eqf) → refl };
+                                                          invRight = λ sec → refl } })
+                               (fibreIsoProj₂Aux A g)
+
+
+    ContrProj₂ : ContrMap p → ContrMapOp operadProj₂
+    ContrProj₂ contrp A = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp))
+
+    FibProj₂ : {{_ : Fibration p}} → FibrationOp operadProj₂
+    FibProj₂ A =  ≅Fib (fibreIsoProj₂ A _)
+
+    TrivialFibProj₂ : TrivialFibration p → TrivialFibrationOp operadProj₂
+    TrivialFibProj₂ record { isFib = fibp ; isContr = contrp } = record { isFibOp = FibProj₂ {{fibp}}; isContrOp = ContrProj₂ contrp }
     
+
+
+
+-- X ->> Y gives Alg P Y → Alg P X
+
+algebraBackFibration : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} 
+                       {X Y : Set k} {{_ : Fib X}} {{_ : Fib Y}} {p : X → Y} (tfibp : TrivialFibration p)
+                       → CofibrantOp P → Algebra P Y → Algebra P X
+
+algebraBackFibration {p = p} tfibp cofibP record { algebraStruct = εY ; isAlg = isAlgY } =
+
+                           let fill = cofibP (operadProj₂ _) (HomOpProj₂ _) (TrivialFibProj₂ _ tfibp) εY isAlgY in
+
+                           record { algebraStruct = operadProj₁ _ ∘ lifting.δ fill ;
+                                    isAlg = HomOpComp (HomOpProj₁ _) (lifting.homδ fill) }
+
