@@ -54,7 +54,7 @@ infix 56 _<<_
 
 
 
---Things I don't know what to do with
+--Various properties of finite sets
 
 injectiveFsucc : {n : ℕ} → injective (fsucc {n})
 injectiveFsucc {n} {x} {y} refl = refl
@@ -65,6 +65,37 @@ finiteSum {s n} f = f (fzero) + finiteSum (f o fsucc)
 
 
 
+
+Prod : ∀ {k} (X : Set k) → ℕ → Set k
+Prod X O = ⊤
+Prod X (s n) = X ∧ Prod X n
+
+module _ {k} {X : Set k} where
+
+  prodFun : ∀ {n : ℕ} → Prod X n → (Fin n → X) 
+  prodFun {O} = λ _ ()
+  prodFun {s n} = λ { (x , y) fzero → x ;
+                    (x , y) (fsucc n) → prodFun y n }
+
+  invProdFun : ∀ {n : ℕ} → (Fin n → X) → Prod X n
+  invProdFun {O} = λ _ → *
+  invProdFun {s n} = λ x → (x fzero) , (invProdFun (x o fsucc))
+
+  invLeftProdFun : ∀ {n : ℕ} (x : Fin n → X) (m : Fin n) → x m ≡ prodFun (invProdFun x) m
+  invLeftProdFun {O} = λ _ ()
+  invLeftProdFun {s n} x = λ { fzero → refl ;
+                               (fsucc m) → invLeftProdFun (x o fsucc) m}
+
+  invRightProdFun : ∀ {n : ℕ} (a : Prod X n) → a ≡ invProdFun (prodFun a)
+  invRightProdFun {O} = λ _ → refl
+  invRightProdFun {s n} = λ {(x , y) → ap (λ y₁ → x , y₁) (invRightProdFun y)}
+
+  isoProdFun : ∀ {n : ℕ} → iso (prodFun {n})
+  isoProdFun = record { inv = invProdFun ;
+                        invLeft = funext o invLeftProdFun ;
+                        invRight = invRightProdFun }
+
+--open isoFiniteProduct using (prodFun; isoProdFun)
 
 
 --Prove finiteness of canonical finite sets
@@ -402,7 +433,8 @@ HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} {{ record { isoHomFO = isof ; ord
 η₂ : (A : Set) {{_ : FOSet A}} → A → Σ A (λ _ → Fin (s O))
 η₂ A a = a , fzero
 
-ψ : (A : Set) {{_ : FOSet A}} (B : A → Set) {{_ : {a : A} → FOSet (B a)}} (C : Σ A B → Set) {{_ : {x : Σ A B} → FOSet (C x)}}
+ψ : (A : Set) {{_ : FOSet A}} (B : A → Set) {{_ : {a : A} → FOSet (B a)}}
+    (C : Σ A B → Set) {{_ : {x : Σ A B} → FOSet (C x)}}
     → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
 ψ A B C (a  , (b , c)) = ((a , b) , c)          
 
@@ -427,7 +459,7 @@ instance
                      orderPreserving = λ x y → ↔Trans (x << y ∨ Σ (x ≡ y) (λ _ → ord (Fin (s O)) fzero fzero)) 
                                                    ((λ q → left q) ,
                                                     (λ { (left q) → q ; (right (_ , ()) )}))
-                                                   (↔Sym (Σorder {B = λ _ → Fin (s O)})) } --I am suspicious about the fact that we ignore transport
+                                                   (↔Sym (Σorder {B = λ _ → Fin (s O)})) } 
 
 
 

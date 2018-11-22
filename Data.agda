@@ -22,7 +22,7 @@ infixr 78 _o_
 
 data ⊥ : Set where
 
-record ⊤ : Set where
+record ⊤ {k} : Set k where
   constructor *
 
 data Σ {k l} (A : Set k) (B : A → Set l) : Set (k ⊔ l) where
@@ -239,6 +239,20 @@ isoInv {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight }
 
 
 
+--Results about → and isomorphisms
+
+
+preComp : ∀ {k l m} {X : Set k} {Y : Set l} (f : X → Y) {Z : Set m} → (Y → Z) → (X → Z)
+preComp f g = g o f
+
+isoPreComp : ∀ {k l m} {X : Set k} {Y : Set l} {f : X → Y} {Z : Set m} → iso f → iso (preComp f {Z})
+isoPreComp {f = f} record { inv = g ;
+                            invLeft = invLeft ;
+                            invRight = invRight } =
+                   record { inv = preComp g ;
+                            invLeft = λ h → funext (λ _ → ap h (invRight _)) ;
+                            invRight = λ h → funext (λ _ → ap h (invLeft _)) }
+
 
 --Results about Σ and isomorphisms.
 
@@ -320,7 +334,7 @@ injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight 
 
 
 
-
+{-
 --We define pullback
 
 Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
@@ -340,7 +354,7 @@ module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
   equalPullback : {x y : Pullback f g}
                   → proj₁ x ≡ proj₁ y → proj₂ x ≡ proj₂ y → x ≡ y
   equalPullback {(a₁ , b₁) , eq₁} {(a₂ , b₂) , eq₂} refl refl = equalΣ refl UIP
-
+-}
 
 
 

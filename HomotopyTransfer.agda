@@ -12,9 +12,9 @@ open import CofibrantOperads
 
 --First we define the endomorphism operad of a morphism
 
-module _ {k} {X Y : Set k} (p : X → Y) where
+module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
-  record EndMor (A : Set) {{_ : FOSet A}} : Set k where
+  record EndMor (A : Set) {{_ : FOSet A}} : Set (k ⊔ l) where
     constructor _,_,_ 
     field
       π₁ : End X A
@@ -66,18 +66,18 @@ module _ {k} {X Y : Set k} (p : X → Y) where
   operadProj₁ A (π₁ , _ , _) = π₁
 
   HomOpProj₁ : HomOperad operadProj₁ 
-  HomOpProj₁ = record { HomCollection = λ _ _ → refl ;
+  HomOpProj₁ = record { HomCollection = refl ;
                         HomOperadId = refl ;
-                        HomOperadγ = λ _ _ → refl }
+                        HomOperadγ = refl }
 
   
   operadProj₂ : Nat EndMor (End Y)
   operadProj₂ A (_ , π₂ , _) = π₂
 
   HomOpProj₂ : HomOperad operadProj₂ 
-  HomOpProj₂ = record { HomCollection = λ _ _ → refl ;
+  HomOpProj₂ = record { HomCollection = refl ;
                         HomOperadId = refl ;
-                        HomOperadγ = λ _ _ → refl }
+                        HomOperadγ = refl }
 
 
 
@@ -108,22 +108,44 @@ module _ {k} {X Y : Set k} (p : X → Y) where
     FibProj₂ : {{_ : Fibration p}} → FibrationOp operadProj₂
     FibProj₂ A =  ≅Fib (fibreIsoProj₂ A _)
 
+
     TrivialFibProj₂ : TrivialFibration p → TrivialFibrationOp operadProj₂
     TrivialFibProj₂ record { isFib = fibp ; isContr = contrp } = record { isFibOp = FibProj₂ {{fibp}}; isContrOp = ContrProj₂ contrp }
+
+
+    EndMorFib : TrivialFibration p →  {A : Set} → {{_ : FOSet A}} → Fib (EndMor A)
+    EndMorFib record { isFib = fibp ; isContr = _ } {A} = totalSpaceFib {{FibProj₂ {{fibp}} A}}
+  
+    postulate
+      EquivProj₁ : TrivialFibration p → EquivOp operadProj₁
     
 
 
 
--- X ->> Y gives Alg P Y → Alg P X
 
-algebraBackFibration : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} 
-                       {X Y : Set k} {{_ : Fib X}} {{_ : Fib Y}} {p : X → Y} (tfibp : TrivialFibration p)
-                       → CofibrantOp P → Algebra P Y → Algebra P X
+-- X -~->> Y gives Alg P Y ↔ Alg P X
 
-algebraBackFibration {p = p} tfibp cofibP record { algebraStruct = εY ; isAlg = isAlgY } =
+module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k}
+         {{_ : Operad P}} (cofibP : ∀ {n n'} → CofibrantOp {n} {n'} P)
+         {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
+         {p : X → Y} (tfibp : TrivialFibration p)  where
 
-                           let fill = cofibP (operadProj₂ _) (HomOpProj₂ _) (TrivialFibProj₂ _ tfibp) εY isAlgY in
+       algebraBackFibration : Algebra P Y → Algebra P X
 
-                           record { algebraStruct = operadProj₁ _ ∘ lifting.δ fill ;
-                                    isAlg = HomOpComp (HomOpProj₁ _) (lifting.homδ fill) }
+       algebraBackFibration record { algebraStruct = εY ; isAlg = isAlgY } =
 
+                            let fill = cofibP (operadProj₂ _) (HomOpProj₂ _) (TrivialFibProj₂ _ tfibp) εY isAlgY in
+
+                            record { algebraStruct = operadProj₁ _ ∘ lifting.δ fill ;
+                                     isAlg = HomOpComp (HomOpProj₁ _) (lifting.homδ fill) }
+
+
+       algebraForwardFibration : Algebra P X → Algebra P Y
+
+       algebraForwardFibration record { algebraStruct = εX ; isAlg = isAlgX } =
+
+                               let fill = CofibrantWkLiftingEquivalence cofibP {{fib₂ = EndMorFib _ tfibp}}
+                                          (operadProj₁ p) (HomOpProj₁ p) (EquivProj₁ _ tfibp) εX isAlgX in
+
+                               record { algebraStruct = operadProj₂ _ ∘ wkLifting.δ fill ;
+                                        isAlg = HomOpComp (HomOpProj₂ _) (wkLifting.homδ fill) } 

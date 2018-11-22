@@ -18,23 +18,6 @@ arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B}
                       (f : A → B) {{_ : HomFO {{Afinite}} {{Bfinite}} f}} 
                       → P A {{Afinite}} → P B {{Bfinite}}
 
-{-
-record Collection {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) where
-
-  field
-  
-    functor : arrowAction P
-
-    functorId : {A : Set} {{_ : FOSet A}} (c : P A)
-                     → functor (Id {A = A}) c ≡ c
-
-    functorComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
-                              {f : A → B} {g : B → C} {{homf : HomFO f}} {{homg : HomFO g}}
-                              → (c : P A) → functor g {{homg}} (functor f c) ≡ functor (g o f) {{HomFOComp f g}} c
-
-open Collection {{...}} public
--}
-
 Nat : ∀ {k l} (P₁ : (A : Set) → {{_ : FOSet A}} → Set k) (P₂ : (A : Set) → {{_ : FOSet A}} → Set l) → Set (lsuc lzero ⊔ (k ⊔ l))
 Nat P₁ P₂ = (A : Set) → {{_ : FOSet A}} → P₁ A → P₂ A
 
@@ -94,24 +77,35 @@ record HomOperad {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : 
                  (α : Nat P₁ P₂) : Set (lsuc lzero ⊔ (k ⊔ l)) where
        field
 
-         HomCollection : {A : Set} {Afinite : FOSet A} {B : Set} {Bfinite : FOSet B} (f : A → B) {homf : HomFO {{Afinite}} {{Bfinite}} f}
-                         → (c : P₁ A {{Afinite}}) → functor f {{homf}} (α A c) ≡ α B {{Bfinite}} (functor f {{homf}} c) 
+         HomCollection : {A : Set} {{_ : FOSet A}} {B : Set} {{_ : FOSet B}} {f : A → B} {{homf : HomFO f}}
+                         → {c : P₁ A} → α _ (functor f c) ≡ functor f (α _ c)
 
-         HomOperadId : α (Fin (s O)) id ≡ id
+         HomOperadId : α _ id ≡ id
 
          HomOperadγ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}}
-                      (c : P₁ A) (d : (a : A) → P₁ (B a))
+                      {c : P₁ A} {d : (a : A) → P₁ (B a)}
                       → α _ (γ c d) ≡ γ (α _ c) (λ a → α _ (d a))
 
 
 
 module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : Set) → {{_ : FOSet A}} → Set l} {P₃ : (A : Set) → {{_ : FOSet A}} → Set m} where 
 
-       _∘_ : Nat P₂ P₃ → Nat P₁ P₂ → Nat P₁ P₃
-       β ∘ α = λ A → (β A) o (α A) 
+       idtest : {A : Set} → A → A
+       idtest {A} = λ x → x
 
-       postulate
-         HomOpComp : {{_ : Operad P₁}} {{_ : Operad P₂}} {{_ : Operad P₃}} → {α : Nat P₁ P₂} → {β : Nat P₂ P₃} → HomOperad β → HomOperad α → HomOperad (β ∘ α)
+       _∘_ : Nat P₂ P₃ → Nat P₁ P₂ → Nat P₁ P₃
+       (β ∘ α) A = (β A) o (α A)
+
+       
+       HomOpComp : {{_ : Operad P₁}} {{_ : Operad P₂}} {{_ : Operad P₃}} → {α : Nat P₁ P₂} → {β : Nat P₂ P₃}  → HomOperad β →  HomOperad α  → HomOperad (β ∘ α)
+
+       HomOpComp {α = α} {β = β}
+                 record { HomCollection = homNatβ ; HomOperadId = homIdβ ; HomOperadγ = homγβ }
+                 record { HomCollection = homNatα ; HomOperadId = homIdα ; HomOperadγ = homγα } =
+                 record { HomCollection = ≡Trans (ap (β _) homNatα) homNatβ ;
+                          HomOperadId = ≡Trans (ap (β _) homIdα) homIdβ ;
+                          HomOperadγ = ≡Trans (ap (β _) homγα) homγβ }
+
 
 {-
 --The monoid operad
@@ -146,6 +140,7 @@ OpMon = record
 -}
 
 
+
 --The endomorphism operad
 
 End : ∀ {k} (X : Set k) (A : Set) {{_ : FOSet A}} → Set k
@@ -153,14 +148,6 @@ End X A = (A → X) → X
 
 EndFun : ∀ {k} (X : Set k) → arrowAction (End X)
 EndFun X f = λ c g → c (g o f)
-
-{-
-instance
-  CollEnd : ∀ {k} {X : Set k} → Collection (End X)
-  CollEnd = record { functor = λ f c g → c (g o f) ;
-                     functorId = λ _ → refl ;
-                     functorComp = λ _ → refl }
--}
 
 instance
   OpEnd : ∀ {k} {X : Set k} → Operad (End X)

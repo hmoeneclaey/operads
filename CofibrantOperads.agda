@@ -10,19 +10,23 @@ open import FibrantUniverses
 
 
 
-module _ {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k} (α : Nat P₁ P₂) where
+module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k}
+               {P₂ : (A : Set) → {{_ : FOSet A}} → Set l}
+               (α : Nat P₁ P₂) where
 
-  FibrationOp : Set (lsuc lzero ⊔ k)
+  FibrationOp : Set (lsuc lzero ⊔ (k ⊔ l))
   FibrationOp = (A : Set) → {{_ : FOSet A}} → Fibration (α A)
 
-  ContrMapOp : Set (lsuc lzero ⊔ k)
+  ContrMapOp : Set (lsuc lzero ⊔ (k ⊔ l))
   ContrMapOp = (A : Set) → {{_ : FOSet A}} → ContrMap (α A)
 
-  record TrivialFibrationOp :  Set (lsuc lzero ⊔ k) where
+  record TrivialFibrationOp :  Set (lsuc lzero ⊔ (k ⊔ l)) where
     field
       isFibOp : FibrationOp
       isContrOp : ContrMapOp
 
+  EquivOp : Set (lsuc lzero ⊔ (k ⊔ l))
+  EquivOp = (A : Set) → {{_ : FOSet A}} → Equiv (α A)
 
 
 --It is not good that we ask for lifting only in one universe
@@ -30,21 +34,37 @@ module _ {k} {P₁ P₂ : (A : Set) → {{_ : FOSet A}} → Set k} (α : Nat P�
 module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} where
 
   FibOp : Set (lsuc lzero ⊔ k)
-  FibOp = (A : Set) → {{_ : FOSet A}} → Fib (P A)
+  FibOp = {A : Set} → {{_ : FOSet A}} → Fib (P A)
 
-  record lifting {R₁ R₂ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad R₁}} {{_ : Operad R₂}}
-                 (α : Nat R₂ R₁) (β : Nat P R₁) : Set (lsuc lzero ⊔ k) where
-         field
-           δ : Nat P R₂
-           homδ : HomOperad δ
-           equal : {A : Set} → {{_ : FOSet A}} → (c : P A) → α A (δ A c) ≡ β A c
+  module _ {l m} {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad R₁}}
+                 {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R₂}}
+                 (α : Nat R₂ R₁) (β : Nat P R₁) where
 
-  CofibrantOp : Set (lsuc k)
-  CofibrantOp = {R₁ R₂ : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad R₁}} → {{_ : Operad R₂}}
+         record lifting : Set (lsuc lzero ⊔ (k ⊔ l ⊔ m)) where
+           field
+             δ : Nat P R₂
+             homδ : HomOperad δ
+             equal : {A : Set} → {{_ : FOSet A}} → (c : P A) → α A (δ A c) ≡ β A c
+
+         record wkLifting : Set (lsuc lzero ⊔ (k ⊔ l ⊔ m)) where
+           field
+             δ : Nat P R₂
+             homδ : HomOperad δ
+
+
+CofibrantOp : ∀ {k l m} (P : (A : Set) → {{_ : FOSet A}} → Set m) {{_ : Operad P}} → Set (lsuc k ⊔ (lsuc l ⊔ m)) 
+CofibrantOp {k} {l} P = {R₁ : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad R₁}}
+              → {R₂ : (A : Set) → {{_ : FOSet A}} → Set l} → {{_ : Operad R₂}}
                 → (α : Nat R₂ R₁) → HomOperad α → TrivialFibrationOp α
                 → (β : Nat P R₁) → HomOperad β
-                → lifting α β
+                → lifting P α β
 
 
-
+postulate
+  CofibrantWkLiftingEquivalence : ∀ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad P}} → CofibrantOp {m} {l} P
+                                → {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} → {{_ : Operad R₁}} → {{fib₁ : FibOp R₁}}
+                                → {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} → {{_ : Operad R₂}} → {{fib₂ : FibOp R₂}}
+                                → (α : Nat R₂ R₁) → HomOperad α → EquivOp α
+                                → (β : Nat P R₁) → HomOperad β
+                                → wkLifting P α β
 
