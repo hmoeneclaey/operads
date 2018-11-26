@@ -8,7 +8,6 @@ module FibrantUniverses where
 
 open import Data
 open import Agda.Primitive
-open import FiniteSet
 
 
 postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
@@ -81,12 +80,58 @@ eqe₁ p = dPath.deq₁ p
 
 
 
+--Basic properties of paths
 
+module _ {k} {X : Set k} where
+
+  hrefl : {x : X} → Path X x x
+  hrefl {x} = [ (λ i → x) , refl , refl ]
+
+  cstPath : {x y : X} → x ≡ y → Path X x y
+  cstPath {x} = λ p → [ (λ i → x) , refl , p ]
+
+  ≡Path : {x₁ x₂ y₁ y₂ : X} → Path X x₁ y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → Path X x₂ y₂
+  ≡Path p eq₁ eq₂ = [ (λ i → p $ i) ,
+                      ≡Trans (eqe₀ p) eq₁ ,
+                      ≡Trans (eqe₁ p) eq₂ ]
+
+
+module _ {k} {X : Set k} {{_ : Fib X}} where
+
+  inv : {x y : X} → Path X x y → Path X y x
+  inv [ p , refl , refl ] = J (λ p → Path X (p e₁) (p e₀)) (λ _ → hrefl) p
+
+  PathTrans : {x y z : X} → Path X x y → Path X y z → Path X x z
+  PathTrans {z = z} [ p , refl , refl ] = J (λ p₁ → (Path X (p₁ e₁) z → Path X (p₁ e₀) z)) (λ x q → q) p
+
+  _#_ : {x y z : X} → Path X x y → Path X y z → Path X x z
+  p # q = PathTrans p q
+
+
+
+module _ {k l} {X : Set k} {Y : Set l} where
+
+  hap : (f : X → Y) {x₁ x₂ : X} → Path X x₁ x₂ → Path Y (f x₁) (f x₂) 
+  hap f p = [ (λ i → f (p $ i)) ,
+              ap f (eqe₀ p) ,
+              ap f (eqe₁ p) ]
+
+  hfunext : {f g : X → Y} → ((x : X) → Path Y (f x) (g x)) → Path (X → Y) f g
+  hfunext Hyp = [ (λ i x → (Hyp x) $ i) ,
+                  funext (λ x → eqe₀ (Hyp x)) ,
+                  funext (λ x → eqe₁ (Hyp x)) ]
+
+
+
+
+--Define contractibility
 
 record Contr {k} (X : Set k) : Set k where
   field
     center : X
-    isContr : (y : X) → Path X center y
+    path : (y : X) → Path X center y
+
+
 
 
 --Properties of maps
@@ -103,7 +148,7 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
   Fibration = {y : Y} → Fib (fibre y)
 
   ContrMap : Set (k ⊔ l)
-  ContrMap = {y : Y} → Contr (fibre y)
+  ContrMap = (y : Y) → Contr (fibre y)
 
   record TrivialFibration : Set (k ⊔ l) where
     field
@@ -112,16 +157,112 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
   record Equiv : Set (k ⊔ l) where
     field
-      inv₁ : Y → X
-      invLeft : (y : Y) → Path Y y (f (inv₁ y))
-      inv₂ : Y → X
-      invRight : (x : X) → Path X x (inv₂ (f x))
+      hinv₁ : Y → X
+      hinvLeft : (y : Y) → Path Y y (f (hinv₁ y))
+      hinv₂ : Y → X
+      hinvRight : (x : X) → Path X x (hinv₂ (f x))
 
 
+
+
+
+--Results about equivalences
+
+
+
+--We will probably need something more, like Equiv g → Equiv (hap g)
+
+hapinv : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l}
+         {f : X → Y} {x y : X}
+         → Equiv f → Path Y (f x) (f y) → Path X x y
+
+hapinv {f = f} record { hinv₁ = _ ; hinvLeft = _ ; hinv₂ = g₂ ; hinvRight = hinvg₂ } p 
+             = hinvg₂ _ # (hap g₂ p # inv (hinvg₂ _))  
+
+
+
+module _ {k l m} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {Z : Set m} {{_ : Fib Z}} where
+  
+  EquivComp : {f : X → Y} {g : Y → Z} → Equiv f → Equiv g → Equiv (g o f)
+  EquivComp {f}{g}
+            record { hinv₁ = f₁ ;
+                     hinvLeft = hinvf₁ ;
+                     hinv₂ = f₂ ;
+                     hinvRight = hinvf₂ }
+            record { hinv₁ = g₁ ;
+                     hinvLeft = hinvg₁ ;
+                     hinv₂ = g₂ ;
+                     hinvRight = hinvg₂ }
+          = record { hinv₁ = f₁ o g₁ ;
+                     hinvLeft = λ z → hinvg₁ _ # hap g (hinvf₁ _) ;
+                     hinv₂ = f₂ o g₂ ;
+                     hinvRight = λ x → hinvf₂ _ # hap f₂ (hinvg₂ _) }
+
+  
+  EquivTwoThreeRight : {f : X → Y} {g : Y → Z} → Equiv g → Equiv (g o f) → Equiv f 
+  EquivTwoThreeRight {g = g}
+                     equivg
+                     record { hinv₁ = gf₁ ;
+                              hinvLeft = hinvgf₁ ;
+                              hinv₂ = gf₂ ;
+                              hinvRight = hinvgf₂ }
+                   = record { hinv₁ = gf₁ o g ;
+                              hinvLeft = λ y → hapinv equivg (hinvgf₁ _) ;
+                              hinv₂ = gf₂ o g ;
+                              hinvRight = λ x → hinvgf₂ _ }
+
+
+module _ {k l m} {X : Set k} {Y : Set l} {Z : Set m} where
+
+  EquivPreComp : {f : X → Y} → Equiv f → Equiv (preComp f {Z = Z})
+  EquivPreComp record { hinv₁ = g₁ ;
+                        hinvLeft = hinvLeft ;
+                        hinv₂ = g₂ ;
+                        hinvRight = hinvRight }
+             = record { hinv₁ = preComp g₂ ;
+                        hinvLeft = λ h → hfunext (λ x → hap h (hinvRight x)) ; 
+                        hinv₂ = preComp g₁ ;
+                        hinvRight = λ h → hfunext (λ y → hap h (hinvLeft y) ) } 
+
+  
+  EquivPostComp : {f : X → Y} → Equiv f → Equiv (postComp f {Z = Z})
+  EquivPostComp record { hinv₁ = g₁ ;
+                         hinvLeft = hinvLeft ;
+                         hinv₂ = g₂ ;
+                         hinvRight = hinvRight }
+              = record { hinv₁ = postComp g₁ ;
+                         hinvLeft = λ h → hfunext (λ z → hinvLeft (h z)) ;
+                         hinv₂ = postComp g₂ ;
+                         hinvRight = λ h → hfunext (λ z → hinvRight (h z)) }
+
+
+module _ {k l} {X : Set k} {Y : Set l} where
+
+  EquivTrivialFib : {f : X → Y} → TrivialFibration f → Equiv f
+  EquivTrivialFib {f} record { isFib = fibp ;
+                               isContr = contrp }
+                = let g = λ (y : Y) → fibre.point (Contr.center (contrp y))
+                  in record { hinv₁ = g ;
+                              hinvLeft = λ y → cstPath (≡Sym (fibre.equal (Contr.center (contrp y))));
+                              hinv₂ = g ;
+                              hinvRight = λ x → hap fibre.point (inv {{fibp}} (Contr.path (contrp (f x)) (x , refl))) } 
+
+
+  Equiv≡ext : {f g : X → Y} → ((x : X) → f x ≡ g x) → Equiv f → Equiv g
+  Equiv≡ext Hyp record { hinv₁ = g₁ ;
+                         hinvLeft = hinvLeft ;
+                         hinv₂ = g₂ ;
+                         hinvRight = hinvRight }
+              = record { hinv₁ = g₁ ;
+                         hinvLeft = λ y → ≡Path (hinvLeft y) refl (Hyp _) ;
+                         hinv₂ = g₂ ;
+                         hinvRight = λ x → ≡Path (hinvRight x) refl (ap g₂ (Hyp _)) }
 
 
 
 --Results about fibrancy
+
+open import FiniteSet
 
 finiteProdFib : ∀ {k} {X : Set k} {{_ : Fib X}} {n : ℕ} → Fib (Prod X n)
 finiteProdFib {n = O} = ⊤Fib
@@ -161,9 +302,9 @@ totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
                                  invLeft = invLeft ;
                                  invRight = _ } }
        record { center = x ;
-                isContr = contrX }
+                path = contrX }
      = record { center = f x ;
-                isContr = λ y → let p = contrX (g y) in
+                path = λ y → let p = contrX (g y) in
                                 [ (λ i → f (p $ i)) ,
                                   (ap f (eqe₀ p)) ,
                                   ≡Trans (ap f (eqe₁ p)) (≡Sym (invLeft y)) ] }
@@ -172,7 +313,7 @@ totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
 ΠContr : ∀ {k l} {X : Set k} {P : X → Set l} → ((x : X) → Contr (P x)) → Contr ((x : X) → P x)
 
 ΠContr contrP = record { center = λ x → Contr.center (contrP x) ;
-                         isContr = λ f → let p = λ x → Contr.isContr (contrP x) (f x) in
+                         path = λ f → let p = λ x → Contr.path (contrP x) (f x) in
                                      [ (λ i x → (p x) $ i) ,
                                        funext (λ x → eqe₀ (p x)) ,
                                        funext (λ x → eqe₁ (p x)) ] } 

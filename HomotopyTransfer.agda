@@ -88,37 +88,44 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
   module _ {{_ : Fib X}} {{_ : Fib Y}} where
 
-    fibreIsoProj₂Aux : (A : Set) → {{_ : FOSet A}} (g : End Y A) → Σ (End X A) (λ f → (x : A → X) → p (f x) ≡ g (p o x)) ≅ fibre (operadProj₂ A) g
+    fibreIsoProj₂Aux : (A : Set) → {{_ : FOSet A}} (g : End Y A)
+                       → Σ (End X A) (λ f → (x : A → X) → p (f x) ≡ g (p o x)) ≅ fibre (operadProj₂ A) g
+
     fibreIsoProj₂Aux A g = record { isoFun = λ {(f , eqf) → (f , g , eqf) , refl} ;
-                                     isIso = record { inv = λ {((f , g , eq₁) , refl) → (f , λ x → eq₁ x)} ;
-                                                      invLeft = λ {((f , g , eq₁) , refl) → refl} ;
-                                                      invRight = λ {(f , eqf) → refl} }}
-                                                      
-    fibreIsoProj₂ : (A : Set) → {{_ : FOSet A}} (g : End Y A) → ((x : A → X) → fibre p (g (p o x))) ≅ fibre (operadProj₂ A) g
+                                    isIso = record { inv = λ {((f , g , eq₁) , refl) → (f , λ x → eq₁ x)} ;
+                                                     invLeft = λ {((f , g , eq₁) , refl) → refl} ;
+                                                     invRight = λ {(f , eqf) → refl} }}
+
+
+    fibreIsoProj₂ : (A : Set) → {{_ : FOSet A}} (g : End Y A) → ((x : A → X)
+                    → fibre p (g (p o x))) ≅ fibre (operadProj₂ A) g
+
     fibreIsoProj₂ A g = ≅Trans (record { isoFun = λ sec → (fibre.point o sec) , λ x → fibre.equal (sec x) ;
                                          isIso = record { inv = λ {(f , eqf) x → (f x) , (eqf x)} ;
                                                           invLeft = λ {(f , eqf) → refl };
-                                                          invRight = λ sec → refl } })
-                               (fibreIsoProj₂Aux A g)
+                                                          invRight = λ sec → refl } }) (fibreIsoProj₂Aux A g)
 
 
     ContrProj₂ : ContrMap p → ContrMapOp operadProj₂
-    ContrProj₂ contrp A = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp))
+    ContrProj₂ contrp A _ = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp _))
 
     FibProj₂ : {{_ : Fibration p}} → FibrationOp operadProj₂
     FibProj₂ A =  ≅Fib (fibreIsoProj₂ A _)
 
-
     TrivialFibProj₂ : TrivialFibration p → TrivialFibrationOp operadProj₂
-    TrivialFibProj₂ record { isFib = fibp ; isContr = contrp } = record { isFibOp = FibProj₂ {{fibp}}; isContrOp = ContrProj₂ contrp }
-
+    TrivialFibProj₂ record { isFib = fibp ; isContr = contrp } = mkTrivialFibrationOp _ (FibProj₂ {{fibp}}) (ContrProj₂ contrp) 
 
     EndMorFib : TrivialFibration p →  {A : Set} → {{_ : FOSet A}} → Fib (EndMor A)
     EndMorFib record { isFib = fibp ; isContr = _ } {A} = totalSpaceFib {{FibProj₂ {{fibp}} A}}
   
-    postulate
-      EquivProj₁ : TrivialFibration p → EquivOp operadProj₁
-    
+    EquivProj₁ : TrivialFibration p → EquivOp operadProj₁
+    EquivProj₁ tfibp A = EquivTwoThreeRight {{EndMorFib tfibp}} {g = λ f → λ (s : A → X) → p (f s)}
+                                            (EquivPostComp (EquivTrivialFib tfibp))
+                                            (Equiv≡ext {f = (λ g s → g (p o s)) o (operadProj₂ A)}
+                                                       (λ { (π₁ , π₂ , equal) → funext λ s → ≡Sym (equal _)})
+                                                       (EquivComp {{EndMorFib tfibp}}
+                                                                  (EquivTrivialFib (TrivialFibProj₂ tfibp A))
+                                                                  (EquivPreComp (EquivPostComp (EquivTrivialFib tfibp)))))
 
 
 

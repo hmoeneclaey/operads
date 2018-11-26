@@ -237,13 +237,24 @@ isoInv : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} (isof : iso f) → iso 
 isoInv {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } 
              = record { inv = f ; invLeft = invRight ; invRight = invLeft }
 
+iso≡ext : ∀ {k l} {A : Set k} {B : Set l} {f g : A → B} → ((a : A) → f a ≡ g a) → iso f → iso g
+iso≡ext {f = f} {g = g} Hyp
+            record { inv = h ;
+                     invLeft = invLeft ;
+                     invRight = invRight }
+          = record { inv = h ;
+                     invLeft = λ b → ≡Trans (invLeft b) (Hyp _) ;
+                     invRight = λ a → ≡Trans (invRight a) (ap h (Hyp _)) }
+
 
 
 --Results about → and isomorphisms
 
-
 preComp : ∀ {k l m} {X : Set k} {Y : Set l} (f : X → Y) {Z : Set m} → (Y → Z) → (X → Z)
 preComp f g = g o f
+
+postComp : ∀ {k l m} {X : Set k} {Y : Set l} (f : X → Y) {Z : Set m} → (Z → X) → (Z → Y)
+postComp f g = f o g
 
 isoPreComp : ∀ {k l m} {X : Set k} {Y : Set l} {f : X → Y} {Z : Set m} → iso f → iso (preComp f {Z})
 isoPreComp {f = f} record { inv = g ;

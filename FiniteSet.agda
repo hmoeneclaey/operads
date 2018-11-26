@@ -95,7 +95,7 @@ module _ {k} {X : Set k} where
                         invLeft = funext o invLeftProdFun ;
                         invRight = invRightProdFun }
 
---open isoFiniteProduct using (prodFun; isoProdFun)
+
 
 
 --Prove finiteness of canonical finite sets
@@ -143,11 +143,13 @@ module ArithmeticForCanonicalSets where
 
 
   --This equality is useful for inductive case
-  equalFin+LeftRight : {m n : ℕ} → 
-                       (iso.inv isoFinSucc  o (∨Nat Id Fin+LeftRight) o ∨Assoc o (∨Nat FinSucc Id)) 
-                       ≡ Fin+LeftRight {m = s m} {n = n}
+  equalFin+LeftRight : {m n : ℕ} → (x : Fin (s m) ∨ Fin n) →
+                       (iso.inv isoFinSucc  o (∨Nat Id Fin+LeftRight) o ∨Assoc o (∨Nat FinSucc Id)) x
+                       ≡ Fin+LeftRight x
 
-  equalFin+LeftRight = funext (λ { (left fzero) → refl ; (left (fsucc a)) → refl ; (right a) → refl})
+  equalFin+LeftRight (left fzero) = refl
+  equalFin+LeftRight (left (fsucc a)) = refl
+  equalFin+LeftRight (right a) = refl
 
 
   isoFin+LeftRight : {m n : ℕ} → iso (Fin+LeftRight {m = m} {n = n})
@@ -156,7 +158,7 @@ module ArithmeticForCanonicalSets where
                                   invLeft = λ b → refl ; 
                                   invRight = λ { (left ()) ; (right a) → refl} }
 
-  isoFin+LeftRight {s m} = transport iso equalFin+LeftRight 
+  isoFin+LeftRight {s m} = iso≡ext equalFin+LeftRight 
                            (isoComp {f = ∨Nat Id Fin+LeftRight o ∨Assoc o ∨Nat FinSucc Id} {g = ∨Elim (λ _ → fzero) fsucc} 
                              (isoComp {f = ∨Assoc o ∨Nat FinSucc Id} {g = ∨Nat Id Fin+LeftRight}
                                 (isoComp {f = ∨Nat FinSucc Id} {g = ∨Assoc} 
@@ -184,9 +186,10 @@ module ArithmeticForCanonicalSets where
   
 
   --We use function extensionnality, but we can probably deal without
-  equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) 
-                    → (Fin+LeftRight  o (∨Nat Id (canonicalΣ (S o fsucc))) o (functionAux S)) ≡ canonicalΣ S
-  equalCanonicalΣ S = funext (λ { (fzero , b) → refl ; (fsucc a , b) → refl})
+  equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) (x : Σ (Fin (s n)) (λ k → Fin (S k)))
+                    → (Fin+LeftRight  o (∨Nat Id (canonicalΣ (S o fsucc))) o (functionAux S)) x ≡ canonicalΣ S x
+  equalCanonicalΣ S (fzero , b) = refl
+  equalCanonicalΣ S (fsucc a , b) = refl
 
 
 
@@ -196,7 +199,7 @@ module ArithmeticForCanonicalSets where
                                    invLeft = λ () ; 
                                    invRight = λ {(() , _)} }
 
-  isIsoCanonicalΣ {s n} S = transport iso (equalCanonicalΣ S) 
+  isIsoCanonicalΣ {s n} S = iso≡ext (equalCanonicalΣ S) 
                      (isoComp {f = (∨Nat Id (canonicalΣ (S o fsucc)) o functionAux S)} {g = ∨Elim Fin+Left Fin+Right} 
                         (isoComp {f = functionAux S} {g = ∨Nat (λ x → x) (canonicalΣ (S o fsucc))} 
                            (isoFunctionAux S) 

@@ -20,10 +20,12 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k}
   ContrMapOp : Set (lsuc lzero ⊔ (k ⊔ l))
   ContrMapOp = (A : Set) → {{_ : FOSet A}} → ContrMap (α A)
 
-  record TrivialFibrationOp :  Set (lsuc lzero ⊔ (k ⊔ l)) where
-    field
-      isFibOp : FibrationOp
-      isContrOp : ContrMapOp
+  TrivialFibrationOp :  Set (lsuc lzero ⊔ (k ⊔ l))
+  TrivialFibrationOp = (A : Set) → {{_ : FOSet A}} → TrivialFibration (α A)
+
+  mkTrivialFibrationOp : FibrationOp → ContrMapOp → TrivialFibrationOp
+  mkTrivialFibrationOp fibp contrp = λ A → record { isFib = fibp A ;
+                                                    isContr = contrp A }
 
   EquivOp : Set (lsuc lzero ⊔ (k ⊔ l))
   EquivOp = (A : Set) → {{_ : FOSet A}} → Equiv (α A)
@@ -59,6 +61,9 @@ CofibrantOp {k} {l} P = {R₁ : (A : Set) → {{_ : FOSet A}} → Set k} → {{_
                 → (β : Nat P R₁) → HomOperad β
                 → lifting P α β
 
+
+
+--Beware, the universe level are probably not true
 
 postulate
   CofibrantWkLiftingEquivalence : ∀ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad P}} → CofibrantOp {m} {l} P
