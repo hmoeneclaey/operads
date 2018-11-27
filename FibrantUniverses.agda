@@ -22,6 +22,15 @@ postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
 postulate
   I : Set
   e₀ e₁ : I
+  _⊓_ : I → I → I
+  
+infixl 32 _⊓_
+
+postulate
+  ⊓left₀ : {i : I} → e₀ ⊓ i ≡ e₀
+  ⊓right₀ : {i : I} → i ⊓ e₀ ≡ e₀
+  ⊓left₁ : {i : I} → e₁ ⊓ i ≡ i 
+  ⊓right₁ : {i : I} → i ⊓ e₁ ≡ i
 
 
 record dPath {k} (P : I → Set k) (x : P e₀) (y : P e₁) : Set k where
@@ -49,6 +58,7 @@ postulate
 
   ≅Fib : ∀ {k l} {X : Set k} {Y : Set l} → X ≅ Y → {{_ : Fib X}} → Fib Y
 
+
 module _ {k l} {X : Set k} {{_ : Fib X}} 
   (C : (I → X) → Set l) {{_ : (p : I → X) → Fib (C p)}} 
   (d : (x : X) → C (λ i → x)) where
@@ -67,7 +77,7 @@ Path : ∀ {k} (X : Set k) (x y : X) → Set k
 Path X x y = dPath (λ _ → X) x y
 
 _$_ : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} → dPath P x y → (i : I) → P i
-p $ i = (dPath.dpath p) i
+p $ i  = (dPath.dpath p) i
 
 infix 35 _$_
 
@@ -76,6 +86,7 @@ eqe₀ p = dPath.deq₀ p
 
 eqe₁ : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} (p : dPath P x y) → p $ e₁ ≡ y
 eqe₁ p = dPath.deq₁ p
+
 
 
 
@@ -90,10 +101,19 @@ module _ {k} {X : Set k} where
   cstPath : {x y : X} → x ≡ y → Path X x y
   cstPath {x} = λ p → [ (λ i → x) , refl , p ]
 
-  ≡Path : {x₁ x₂ y₁ y₂ : X} → Path X x₁ y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → Path X x₂ y₂
-  ≡Path p eq₁ eq₂ = [ (λ i → p $ i) ,
+  endpointPath : {x₁ x₂ y₁ y₂ : X} → Path X x₁ y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → Path X x₂ y₂
+  endpointPath p eq₁ eq₂ = [ (λ i → p $ i) ,
                       ≡Trans (eqe₀ p) eq₁ ,
                       ≡Trans (eqe₁ p) eq₂ ]
+
+  ≡PathAux : {x y : X} {p q : I → X} {eqp₀ : p e₀ ≡ x} {eqp₁ : p e₁ ≡ y} {eqq₀ : q e₀ ≡ x} {eqq₁ : q e₁ ≡ y}
+             → p ≡ q → [ p , eqp₀ , eqp₁ ] ≡ [ q , eqq₀ , eqq₁ ]
+  ≡PathAux {p = p} {eqp₀ = eqp₀} {eqq₁ = eqq₁} refl = ≡Trans {y = [ p , eqp₀ , eqq₁ ]}
+                                                             (ap (λ e → [ _ , _ , e ]) UIP)
+                                                             (ap (λ e → [ _ , e , _ ]) UIP) 
+
+  ≡Path : {x y : X} → {p q : Path X x y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
+  ≡Path {p = [ p , eqp₀ , eqp₁ ]} {[ q , eqq₀ , eqq₁ ]} hyp = ≡PathAux (funext hyp)
 
 
 module _ {k} {X : Set k} {{_ : Fib X}} where
@@ -123,7 +143,6 @@ module _ {k l} {X : Set k} {Y : Set l} where
 
 
 
-
 --Define contractibility
 
 record Contr {k} (X : Set k) : Set k where
@@ -138,17 +157,26 @@ record Contr {k} (X : Set k) : Set k where
 
 module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
+{-
+  fibre : Y → Set (k ⊔ l)
+  fibre y = Σ X (λ x → f x ≡ y)
+-}
+
   record fibre (y : Y) : Set (k ⊔ l) where
     constructor _,_
     field
       point : X
       equal : f point ≡ y
 
+  --We do not use record because we want hfibre to be fibrant using ΣFib
+  hfibre : (y : Y) → Set (k ⊔ l)
+  hfibre y = Σ X (λ x → Path Y (f x) y)
+
   Fibration : Set (k ⊔ l)
   Fibration = {y : Y} → Fib (fibre y)
 
   ContrMap : Set (k ⊔ l)
-  ContrMap = (y : Y) → Contr (fibre y)
+  ContrMap = {y : Y} → Contr (fibre y)
 
   record TrivialFibration : Set (k ⊔ l) where
     field
@@ -161,6 +189,14 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
       hinvLeft : (y : Y) → Path Y y (f (hinv₁ y))
       hinv₂ : Y → X
       hinvRight : (x : X) → Path X x (hinv₂ (f x))
+
+
+
+
+
+
+
+
 
 
 
@@ -241,11 +277,11 @@ module _ {k l} {X : Set k} {Y : Set l} where
   EquivTrivialFib : {f : X → Y} → TrivialFibration f → Equiv f
   EquivTrivialFib {f} record { isFib = fibp ;
                                isContr = contrp }
-                = let g = λ (y : Y) → fibre.point (Contr.center (contrp y))
+                = let g = λ (y : Y) → fibre.point (Contr.center contrp)
                   in record { hinv₁ = g ;
-                              hinvLeft = λ y → cstPath (≡Sym (fibre.equal (Contr.center (contrp y))));
+                              hinvLeft = λ y → cstPath (≡Sym (fibre.equal (Contr.center contrp)));
                               hinv₂ = g ;
-                              hinvRight = λ x → hap fibre.point (inv {{fibp}} (Contr.path (contrp (f x)) (x , refl))) } 
+                              hinvRight = λ x → hap fibre.point (inv {{fibp}} (Contr.path contrp (x , refl))) } 
 
 
   Equiv≡ext : {f g : X → Y} → ((x : X) → f x ≡ g x) → Equiv f → Equiv g
@@ -254,32 +290,37 @@ module _ {k l} {X : Set k} {Y : Set l} where
                          hinv₂ = g₂ ;
                          hinvRight = hinvRight }
               = record { hinv₁ = g₁ ;
-                         hinvLeft = λ y → ≡Path (hinvLeft y) refl (Hyp _) ;
+                         hinvLeft = λ y → endpointPath (hinvLeft y) refl (Hyp _) ;
                          hinv₂ = g₂ ;
-                         hinvRight = λ x → ≡Path (hinvRight x) refl (ap g₂ (Hyp _)) }
+                         hinvRight = λ x → endpointPath (hinvRight x) refl (ap g₂ (Hyp _)) }
 
 
 
 --Results about fibrancy
 
-open import FiniteSet
+module finiteProductFibrant {k} {X : Set k} {{_ : Fib X}} where
 
-finiteProdFib : ∀ {k} {X : Set k} {{_ : Fib X}} {n : ℕ} → Fib (Prod X n)
-finiteProdFib {n = O} = ⊤Fib
-finiteProdFib {n = s n} = ΣFib {{fibB = finiteProdFib}}
+  open import FiniteSet
 
-fibFiniteCanonical : ∀ {n : ℕ} {k} {X : Set k} {{_ : Fib X}} → Fib (Fin n → X)
-fibFiniteCanonical {n} {X = X} = ≅Fib {X = Prod X n}
-                                      (record { isoFun = prodFun ; isIso = isoProdFun })
-                                      {{finiteProdFib}}
+  finiteProdFib : {n : ℕ} → Fib (Prod X n)
+  finiteProdFib {O} = ⊤Fib
+  finiteProdFib {s n} = ΣFib {{fibB = finiteProdFib}}
 
-instance
-  FiniteCofib : ∀ {k} {A : Set} {{_ : FOSet A}} {X : Set k} {{_ : Fib X}} → Fib (A → X)
-  FiniteCofib {{ record { cardinal = card ; funFO = f ; isIsoFO = isof } }} {X} =
+  fibFiniteCanonical : ∀ {n : ℕ} → Fib (Fin n → X)
+  fibFiniteCanonical {n} = ≅Fib {X = Prod X n}
+                                (record { isoFun = prodFun ; isIso = isoProdFun })
+                                {{finiteProdFib}}
+
+  instance
+    FiniteCofib : {A : Set} {{_ : FOSet A}} → Fib (A → X)
+    FiniteCofib {{ record { cardinal = card ; funFO = f ; isIsoFO = isof } }} =
                 ≅Fib {X = Fin card → X}
                      (record { isoFun = preComp f ;
                                isIso = isoPreComp isof })
                      {{fibFiniteCanonical}}
+
+
+open finiteProductFibrant using (FiniteCofib)
 
 
 totalSpaceFib : ∀ {k l} {X : Set k} {Y : Set l} {p : X → Y} {{_ : Fibration p}} → {{_ : Fib Y}} → Fib X
@@ -293,6 +334,34 @@ totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
 
 
 --Results about contractibility
+
+
+--There is a bit of redundance here
+
+ContrSingAux : ∀ {k} {X : Set k} {x y₁ y₂ : X} {p₁ : Path X x y₁} {p₂ : Path X x y₂}
+               → y₁ ≡ y₂ → ((i : I) → p₁ $ i ≡ p₂ $ i) → Equal (Σ X (Path X x))(y₁ , p₁) (y₂ , p₂)
+ContrSingAux refl hyp = ap (λ p → _ , p) (≡Path hyp)
+
+ContrSing : ∀ {k} {X : Set k} {x : X} → Contr (Σ X (λ y → Path X x y))
+ContrSing {x = x} = record { center = x , hrefl ;
+                             path = λ { (y , p) → [ (λ i → (p $ i) , [ (λ j → p $ (i ⊓ j)) ,
+                                                                       ≡Trans (ap (λ i₁ → p $ i₁) ⊓right₀) (eqe₀ p) ,
+                                                                       ap (λ i₁ → p $ i₁) ⊓right₁ ]) ,
+                                                    ContrSingAux (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ⊓left₀) (eqe₀ p)) ,
+                                                    ContrSingAux (eqe₁ p) (λ i → ap (λ i₁ → p $ i₁) ⊓left₁) ]} }
+
+
+postulate
+  ContrHfibreEquiv : ∀ {k l} {X : Set k} {Y : Set l} {f : X → Y} → Equiv f → {y : Y} → Contr (hfibre f y)
+
+{-ContrHfibreEquiv record { hinv₁ = g₁ ;
+                          hinvLeft = hinv₁ ;
+                          hinv₂ = g₂ ;
+                          hinvRight = hinv₂ }
+               = record { center = {!!} ;
+                          path = {!!} } 
+-}
+
 
 
 ≅Contr : ∀ {k l} {X : Set k} {Y : Set l} → X ≅ Y → Contr X → Contr Y
@@ -317,3 +386,80 @@ totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
                                      [ (λ i x → (p x) $ i) ,
                                        funext (λ x → eqe₀ (p x)) ,
                                        funext (λ x → eqe₁ (p x)) ] } 
+
+
+
+
+
+--results of factorisation for fibrant types
+
+module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} (f : X → Y) where
+
+  record cocylinder : Set (k ⊔ l) where
+    constructor cyl_,_,_
+    field
+      piX : X
+      piY : Y
+      path : Path Y (f piX) piY
+
+  incCyl : X → cocylinder
+  incCyl x = cyl x , (f x) , hrefl
+
+  projCyl : cocylinder → Y
+  projCyl = cocylinder.piY
+
+  secCyl : cocylinder → X
+  secCyl = cocylinder.piX
+
+
+module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y} where
+
+  ≅Cocylinder : Σ X (λ x → Σ Y (λ y → Path Y (f x) y)) ≅ cocylinder f
+  ≅Cocylinder = record { isoFun = λ { (x , (y , p)) → cyl x , y , p} ;
+                         isIso = record { inv = λ { (cyl x , y , p) → x , (y , p)} ;
+                                          invLeft = λ { (cyl _ , _ , _) → refl} ;
+                                          invRight = λ { (_ , (_ , _)) → refl} } }
+                                          
+  instance
+    FibCocylinder : Fib (cocylinder f)
+    FibCocylinder = ≅Fib ≅Cocylinder
+
+
+  ≡cocylinder : {x₁ x₂ : X} {y₁ y₂ : Y} {p₁ : Path Y (f x₁) y₁} {p₂ : Path Y (f x₂) y₂}
+                → x₁ ≡ x₂ → y₁ ≡ y₂ → ((i : I) → p₁ $ i ≡ p₂ $ i)
+                → (cyl x₁ , y₁ , p₁) ≡ (cyl x₂ , y₂ , p₂)
+  ≡cocylinder refl refl hyp = ap (λ p → cyl _ , _ , p) (≡Path hyp)
+
+
+  ≅FibreProjCyl : {y : Y} → hfibre f y ≅ fibre (projCyl f) y
+  ≅FibreProjCyl {y} = record { isoFun = λ { (x , p) → (cyl x , y , p) , refl} ;
+                                 isIso = record { inv = λ { ((cyl x , y , p) , refl) → x , p} ;
+                                                  invLeft = λ { ((cyl piX , piY , path) , refl) → refl} ;
+                                                  invRight = λ {(x , p) → refl } } }
+
+  FibrationProjCyl : Fibration (projCyl f)
+  FibrationProjCyl = ≅Fib ≅FibreProjCyl
+
+  EquivIncCyl : Equiv (incCyl f)
+  EquivIncCyl = record { hinv₁ = secCyl f ;
+                         hinvLeft = λ { (cyl x , y , p) → inv [ (λ i → cyl x , (p $ i) , [ (λ j → p $ (i ⊓ j)) ,
+                                                                                           ≡Trans (ap (λ i₁ → p $ i₁) ⊓right₀) (eqe₀ p) ,
+                                                                                           ap (λ i₁ → p $ i₁) ⊓right₁ ]) ,
+                                                                ≡cocylinder refl (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ⊓left₀) (eqe₀ p)) ,
+                                                                ≡cocylinder refl (eqe₁ p) (λ i → (ap (λ i₁ → p $ i₁) ⊓left₁)) ]} ;
+                         hinv₂ = secCyl f ;
+                         hinvRight = λ x → hrefl }
+
+  ≅FibreSecCyl : {x : X} → Σ Y (λ y → Path Y (f x) y) ≅ fibre (secCyl f) x
+  ≅FibreSecCyl {x} = record { isoFun = λ { (y , p) → (cyl x , y , p) , refl} ;
+                              isIso = record { inv = λ { ((cyl _ , y , p) , refl) → y , p} ;
+                                               invLeft = λ { ((cyl _ , _ , _) , refl) → refl} ;
+                                               invRight = λ { (_ , _) → refl} } }
+
+  TrivFibSecCyl : TrivialFibration (secCyl f)
+  TrivFibSecCyl = record { isFib = ≅Fib ≅FibreSecCyl ;
+                           isContr = ≅Contr ≅FibreSecCyl ContrSing }
+
+  TrivFibProjCyl : Equiv f → TrivialFibration (projCyl f)
+  TrivFibProjCyl equivf = record { isFib = FibrationProjCyl ;
+                                   isContr = ≅Contr (≅FibreProjCyl) (ContrHfibreEquiv equivf) }

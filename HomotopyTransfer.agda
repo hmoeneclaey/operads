@@ -107,7 +107,7 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
     ContrProj₂ : ContrMap p → ContrMapOp operadProj₂
-    ContrProj₂ contrp A _ = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp _))
+    ContrProj₂ contrp A = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp))
 
     FibProj₂ : {{_ : Fibration p}} → FibrationOp operadProj₂
     FibProj₂ A =  ≅Fib (fibreIsoProj₂ A _)
@@ -132,27 +132,37 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 -- X -~->> Y gives Alg P Y ↔ Alg P X
 
-module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k}
-         {{_ : Operad P}} (cofibP : ∀ {n n'} → CofibrantOp {n} {n'} P)
-         {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
-         {p : X → Y} (tfibp : TrivialFibration p)  where
+module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
+         {{_ : Operad P}} (cofibP : ∀ {n n'} → CofibrantOp {n} {n'} P) where
 
-       algebraBackFibration : Algebra P Y → Algebra P X
+       module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}} (p : X → Y) (tfibp : TrivialFibration p) where
 
-       algebraBackFibration record { algebraStruct = εY ; isAlg = isAlgY } =
+         algebraBackFibration : Algebra P Y → Algebra P X
 
-                            let fill = cofibP (operadProj₂ _) (HomOpProj₂ _) (TrivialFibProj₂ _ tfibp) εY isAlgY in
+         algebraBackFibration record { algebraStruct = εY ; isAlg = isAlgY } =
+       
+                              let fill = cofibP (operadProj₂ _) (HomOpProj₂ _) (TrivialFibProj₂ _ tfibp) εY isAlgY in
 
-                            record { algebraStruct = operadProj₁ _ ∘ lifting.δ fill ;
-                                     isAlg = HomOpComp (HomOpProj₁ _) (lifting.homδ fill) }
+                              record { algebraStruct = operadProj₁ _ ∘ lifting.δ fill ;
+                                       isAlg = HomOpComp (HomOpProj₁ _) (lifting.homδ fill) }
 
 
-       algebraForwardFibration : Algebra P X → Algebra P Y
+         algebraForwardFibration : Algebra P X → Algebra P Y
 
-       algebraForwardFibration record { algebraStruct = εX ; isAlg = isAlgX } =
+         algebraForwardFibration record { algebraStruct = εX ; isAlg = isAlgX } =
+       
+                                 let fill = CofibrantWkLiftingEquivalence cofibP {{fib₂ = EndMorFib _ tfibp}}
+                                            (operadProj₁ p) (HomOpProj₁ p) (EquivProj₁ _ tfibp) εX isAlgX in
 
-                               let fill = CofibrantWkLiftingEquivalence cofibP {{fib₂ = EndMorFib _ tfibp}}
-                                          (operadProj₁ p) (HomOpProj₁ p) (EquivProj₁ _ tfibp) εX isAlgX in
+                                 record { algebraStruct = operadProj₂ _ ∘ wkLifting.δ fill ;
+                                          isAlg = HomOpComp (HomOpProj₂ _) (wkLifting.homδ fill) } 
 
-                               record { algebraStruct = operadProj₂ _ ∘ wkLifting.δ fill ;
-                                        isAlg = HomOpComp (HomOpProj₂ _) (wkLifting.homδ fill) } 
+
+--We conclude using the cocylinder factorisation
+
+       module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
+         {f : X → Y} (equivf : Equiv f) where
+
+         algebraInvariantEquiv : Algebra P Y → Algebra P X
+         algebraInvariantEquiv algY  = algebraForwardFibration (secCyl f) TrivFibSecCyl
+                                       (algebraBackFibration (projCyl f) (TrivFibProjCyl equivf) algY)
