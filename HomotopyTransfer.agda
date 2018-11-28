@@ -9,8 +9,18 @@ open import CofibrantOperads
 
 
 
+--In this file we show that algebra for cofibrant operads are invariant by equivalence
 
---First we define the endomorphism operad of a morphism
+
+
+{-
+  First we define the endomorphism operad of a morphism p : X → Y
+  The situation is that we have a diagram of operads
+
+      End X ← EndMor p → End Y
+
+  EndMor p is useful to link End X and End Y
+-}
 
 module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
@@ -22,18 +32,17 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
       equal : (d : A → X) → p (π₁ d) ≡ π₂ (p o d) 
 
 
- 
 
   mkEndMor : {A : Set} {{_ : FOSet A}}
                (c₁ : End X A) → (c₂ : End Y A) → ((d : A → X) → p (c₁ d) ≡ c₂ (p o d)) → EndMor A
   mkEndMor c₁ c₂ eq = (c₁ , c₂ , eq)
+
 
   ≡EndMor : {A : Set} {{_ : FOSet A}} → {x y : EndMor A}
               → EndMor.π₁ x ≡ EndMor.π₁ y → EndMor.π₂ x ≡ EndMor.π₂ y → x ≡ y
   ≡EndMor {x = ( π₁ , π₂ , _ )}
           {( _ , _ , _ )} refl refl = ap (mkEndMor π₁ π₂) (funext (λ a → UIP))
     
-
 
 
   EndMorFun : arrowAction EndMor
@@ -66,24 +75,29 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
   operadProj₁ A (π₁ , _ , _) = π₁
 
   HomOpProj₁ : HomOperad operadProj₁ 
-  HomOpProj₁ = record { HomCollection = refl ;
-                        HomOperadId = refl ;
-                        HomOperadγ = refl }
+  HomOpProj₁ = record { homNat = refl ;
+                        homId = refl ;
+                        homγ = refl }
 
   
   operadProj₂ : Nat EndMor (End Y)
   operadProj₂ A (_ , π₂ , _) = π₂
 
   HomOpProj₂ : HomOperad operadProj₂ 
-  HomOpProj₂ = record { HomCollection = refl ;
-                        HomOperadId = refl ;
-                        HomOperadγ = refl }
+  HomOpProj₂ = record { homNat = refl ;
+                        homId = refl ;
+                        homγ = refl }
 
 
 
 
 
 --Now we show that our situation is good when p is a trivial fibration and X and Y are fibrant
+{-In this case :
+  • All involved operads are fibrant
+  • Proj₂ is a trivial fibration
+  • Proj₁ is an equivalence
+-}
 
 
   module _ {{_ : Fib X}} {{_ : Fib Y}} where
@@ -130,10 +144,10 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
 
--- X -~->> Y gives Alg P Y ↔ Alg P X
+-- A trivial fibration X → Y gives us that Alg P Y ↔ Alg P X
 
 module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
-         {{_ : Operad P}} (cofibP : ∀ {n n'} → CofibrantOp {n} {n'} P) where
+         {{_ : Operad P}} (cofibP : ∀ {n₁ n₂} → CofibrantOp P {n₁ = n₁} {n₂ = n₂}) where
 
        module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}} (p : X → Y) (tfibp : TrivialFibration p) where
 
@@ -156,6 +170,7 @@ module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
 
                                  record { algebraStruct = operadProj₂ _ ∘ wkLifting.δ fill ;
                                           isAlg = HomOpComp (HomOpProj₂ _) (wkLifting.homδ fill) } 
+
 
 
 --We conclude using the cocylinder factorisation

@@ -1,8 +1,6 @@
 {-# OPTIONS --rewriting #-}
 
 
---This module will contains the fibrant universes and their homotopical structure. 
-
 module FibrantUniverses where
 
 
@@ -15,9 +13,12 @@ postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
 
 
 
+--This module will contains the fibrant universes and their homotopical structure. 
+
+
 
 --Here we write every postulate for the fibrant universes
---Q : Fib Set k → Set is okay ?
+--Question :  is  Fib Set k → Set is okay ?
 
 postulate
   I : Set
@@ -108,9 +109,7 @@ module _ {k} {X : Set k} where
 
   ≡PathAux : {x y : X} {p q : I → X} {eqp₀ : p e₀ ≡ x} {eqp₁ : p e₁ ≡ y} {eqq₀ : q e₀ ≡ x} {eqq₁ : q e₁ ≡ y}
              → p ≡ q → [ p , eqp₀ , eqp₁ ] ≡ [ q , eqq₀ , eqq₁ ]
-  ≡PathAux {p = p} {eqp₀ = eqp₀} {eqq₁ = eqq₁} refl = ≡Trans {y = [ p , eqp₀ , eqq₁ ]}
-                                                             (ap (λ e → [ _ , _ , e ]) UIP)
-                                                             (ap (λ e → [ _ , e , _ ]) UIP) 
+  ≡PathAux {p = p} refl = ap₂ (λ e₁ e₂ → [ p , e₁ , e₂ ]) UIP UIP
 
   ≡Path : {x y : X} → {p q : Path X x y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
   ≡Path {p = [ p , eqp₀ , eqp₁ ]} {[ q , eqq₀ , eqq₁ ]} hyp = ≡PathAux (funext hyp)
@@ -153,14 +152,10 @@ record Contr {k} (X : Set k) : Set k where
 
 
 
---Properties of maps
+--Homotopical properties of maps between types
 
 module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
-{-
-  fibre : Y → Set (k ⊔ l)
-  fibre y = Σ X (λ x → f x ≡ y)
--}
 
   record fibre (y : Y) : Set (k ⊔ l) where
     constructor _,_
@@ -168,9 +163,12 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
       point : X
       equal : f point ≡ y
 
+
   --We do not use record because we want hfibre to be fibrant using ΣFib
+
   hfibre : (y : Y) → Set (k ⊔ l)
   hfibre y = Σ X (λ x → Path Y (f x) y)
+
 
   Fibration : Set (k ⊔ l)
   Fibration = {y : Y} → Fib (fibre y)
@@ -197,15 +195,10 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
 
 
-
-
-
-
-
 --Results about equivalences
 
 
-
+--Auxiliary Lemma hapinv
 --We will probably need something more, like Equiv g → Equiv (hap g)
 
 hapinv : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l}
@@ -298,6 +291,9 @@ module _ {k l} {X : Set k} {Y : Set l} where
 
 --Results about fibrancy
 
+
+--We show A → X fibrant for A finite and X fibrant
+
 module finiteProductFibrant {k} {X : Set k} {{_ : Fib X}} where
 
   open import FiniteSet
@@ -322,6 +318,8 @@ module finiteProductFibrant {k} {X : Set k} {{_ : Fib X}} where
 
 open finiteProductFibrant using (FiniteCofib)
 
+
+--We show the total space of a fibration with fibrant base is fibrant
 
 totalSpaceFib : ∀ {k l} {X : Set k} {Y : Set l} {p : X → Y} {{_ : Fibration p}} → {{_ : Fib Y}} → Fib X
 totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
@@ -391,7 +389,14 @@ postulate
 
 
 
---results of factorisation for fibrant types
+{-
+We define the cocylinder fibration for fibrant types
+It factors a map f between fibrant types as 
+  • first the section (called incCyl) of a trivial fibration (called secCyl)
+  • followed by a fibration (called projCyl)
+Moreover projCyl is a trivial fibration if f si an equivalence
+-}
+
 
 module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} (f : X → Y) where
 

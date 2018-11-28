@@ -3,11 +3,10 @@ module Operad where
 
 open import Agda.Primitive
 open import Data
-
---Preliminary about finite sets
 open import FiniteSet
 
 
+--In this file we define operads and morphisms between them
 
 
 
@@ -15,10 +14,12 @@ open import FiniteSet
 
 arrowAction : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
 arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B} 
-                      (f : A → B) {{_ : HomFO {{Afinite}} {{Bfinite}} f}} 
-                      → P A {{Afinite}} → P B {{Bfinite}}
+                (f : A → B) {{_ : HomFO {{Afinite}} {{Bfinite}} f}} 
+                → P A {{Afinite}} → P B {{Bfinite}}
 
-Nat : ∀ {k l} (P₁ : (A : Set) → {{_ : FOSet A}} → Set k) (P₂ : (A : Set) → {{_ : FOSet A}} → Set l) → Set (lsuc lzero ⊔ (k ⊔ l))
+Nat : ∀ {k l} (P₁ : (A : Set) → {{_ : FOSet A}} → Set k)
+              (P₂ : (A : Set) → {{_ : FOSet A}} → Set l)
+              → Set (lsuc lzero ⊔ (k ⊔ l))
 Nat P₁ P₂ = (A : Set) → {{_ : FOSet A}} → P₁ A → P₂ A
 
 
@@ -72,26 +73,30 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
 open Operad {{...}} public
 
 
+
+--We define morphisms of operads
+
 record HomOperad {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : Set) → {{_ : FOSet A}} → Set l}
                  {{_ : Operad P₁}} {{_ : Operad P₂}}
                  (α : Nat P₁ P₂) : Set (lsuc lzero ⊔ (k ⊔ l)) where
        field
 
-         HomCollection : {A : Set} {{_ : FOSet A}} {B : Set} {{_ : FOSet B}} {f : A → B} {{homf : HomFO f}}
-                         → {c : P₁ A} → α _ (functor f c) ≡ functor f (α _ c)
+         homNat : {A : Set} {{_ : FOSet A}} {B : Set} {{_ : FOSet B}} {f : A → B} {{homf : HomFO f}}
+                  → {c : P₁ A} → α _ (functor f c) ≡ functor f (α _ c)
 
-         HomOperadId : α _ id ≡ id
+         homId : α _ id ≡ id
 
-         HomOperadγ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}}
+         homγ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}}
                       {c : P₁ A} {d : (a : A) → P₁ (B a)}
                       → α _ (γ c d) ≡ γ (α _ c) (λ a → α _ (d a))
 
+open HomOperad {{...}} public
 
+
+
+--We define composition of morphism fo operads
 
 module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : Set) → {{_ : FOSet A}} → Set l} {P₃ : (A : Set) → {{_ : FOSet A}} → Set m} where 
-
-       idtest : {A : Set} → A → A
-       idtest {A} = λ x → x
 
        _∘_ : Nat P₂ P₃ → Nat P₁ P₂ → Nat P₁ P₃
        (β ∘ α) A = (β A) o (α A)
@@ -100,11 +105,11 @@ module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : 
        HomOpComp : {{_ : Operad P₁}} {{_ : Operad P₂}} {{_ : Operad P₃}} → {α : Nat P₁ P₂} → {β : Nat P₂ P₃}  → HomOperad β →  HomOperad α  → HomOperad (β ∘ α)
 
        HomOpComp {α = α} {β = β}
-                 record { HomCollection = homNatβ ; HomOperadId = homIdβ ; HomOperadγ = homγβ }
-                 record { HomCollection = homNatα ; HomOperadId = homIdα ; HomOperadγ = homγα } =
-                 record { HomCollection = ≡Trans (ap (β _) homNatα) homNatβ ;
-                          HomOperadId = ≡Trans (ap (β _) homIdα) homIdβ ;
-                          HomOperadγ = ≡Trans (ap (β _) homγα) homγβ }
+                 record { homNat = homNatβ ;homId = homIdβ ; homγ = homγβ }
+                 record { homNat = homNatα ; homId = homIdα ; homγ = homγα } =
+                 record { homNat = ≡Trans (ap (β _) homNatα) homNatβ ;
+                          homId = ≡Trans (ap (β _) homIdα) homIdβ ;
+                          homγ = ≡Trans (ap (β _) homγα) homγβ }
 
 
 {-
@@ -141,7 +146,7 @@ OpMon = record
 
 
 
---The endomorphism operad
+--Define the endomorphism operad and algebras for an operad
 
 End : ∀ {k} (X : Set k) (A : Set) {{_ : FOSet A}} → Set k
 End X A = (A → X) → X
@@ -165,7 +170,8 @@ instance
               }
 
 
-record Algebra {k l} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} (X : Set l) : Set (lsuc lzero ⊔ (k ⊔ l)) where
+record Algebra {k l} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}}
+                     (X : Set l) : Set (lsuc lzero ⊔ (k ⊔ l)) where
   field
     algebraStruct : Nat P (End X)
     isAlg : HomOperad algebraStruct

@@ -147,7 +147,11 @@ transport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} → x ≡ y → B 
 transport B refl x = x
 
 ap : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
-ap f refl = refl 
+ap f refl = refl
+
+ap₂ : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → B → C) {a₁ a₂ : A} {b₁ b₂ : B}
+      → a₁ ≡ a₂ → b₁ ≡ b₂ → f a₁ b₁ ≡ f a₂ b₂ 
+ap₂ f refl refl = refl
 
 ≡Sym : ∀ {k} {A : Set k} {x y : A} → x ≡ y → y ≡ x
 ≡Sym refl = refl

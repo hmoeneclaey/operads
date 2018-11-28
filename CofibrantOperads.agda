@@ -8,6 +8,7 @@ open import FibrantUniverses
 
 
 
+--We define fibrations / trivial fibrations / equivalence between operads
 
 
 module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k}
@@ -31,12 +32,13 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k}
   EquivOp = (A : Set) → {{_ : FOSet A}} → Equiv (α A)
 
 
---It is not good that we ask for lifting only in one universe
 
-module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} where
 
-  FibOp : Set (lsuc lzero ⊔ k)
-  FibOp = {A : Set} → {{_ : FOSet A}} → Fib (P A)
+
+
+--We define lifting properties for morphism of operad
+
+module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} where
 
   module _ {l m} {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad R₁}}
                  {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R₂}}
@@ -54,22 +56,70 @@ module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} wher
              homδ : HomOperad δ
 
 
-CofibrantOp : ∀ {k l m} (P : (A : Set) → {{_ : FOSet A}} → Set m) {{_ : Operad P}} → Set (lsuc k ⊔ (lsuc l ⊔ m)) 
-CofibrantOp {k} {l} P = {R₁ : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad R₁}}
-              → {R₂ : (A : Set) → {{_ : FOSet A}} → Set l} → {{_ : Operad R₂}}
-                → (α : Nat R₂ R₁) → HomOperad α → TrivialFibrationOp α
-                → (β : Nat P R₁) → HomOperad β
-                → lifting P α β
+
+--We define fibrant and cofibrant operads
+
+module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} where
+
+  FibOp : Set (lsuc lzero ⊔ k)
+  FibOp = {A : Set} → {{_ : FOSet A}} → Fib (P A)
+
+
+  --Note that being cofibrant is not a type (it is in Setω)
+  
+  CofibrantOp : ∀ {n₁ n₂} → Set (k ⊔ (lsuc n₁ ⊔ lsuc n₂)) 
+  CofibrantOp {n₁} {n₂} = {R₁ : (A : Set) → {{_ : FOSet A}} → Set n₁} → {{_ : Operad R₁}}
+                  → {R₂ : (A : Set) → {{_ : FOSet A}} → Set n₂} → {{_ : Operad R₂}}
+                  → (α : Nat R₂ R₁) → HomOperad α → TrivialFibrationOp α
+                  → (β : Nat P R₁) → HomOperad β
+                  → lifting α β
 
 
 
---Beware, the universe level are probably not true
 
-postulate
-  CofibrantWkLiftingEquivalence : ∀ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad P}} → CofibrantOp {m} {l} P
-                                → {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} → {{_ : Operad R₁}} → {{fib₁ : FibOp R₁}}
-                                → {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} → {{_ : Operad R₂}} → {{fib₂ : FibOp R₂}}
-                                → (α : Nat R₂ R₁) → HomOperad α → EquivOp α
-                                → (β : Nat P R₁) → HomOperad β
-                                → wkLifting P α β
+--Now we show that a cofibrant operads has weak lifting for equivalence between fibrant operads
+--We use the cocylinder foactorisation for operads
+
+open import OperadCocylinder
+
+
+module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P₁}} {{_ : FibOp P₁}}
+         {P₂ : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad P₂}} {{_ : FibOp P₂}}
+         {α : Nat P₁ P₂} {{homα : HomOperad α}} where
+
+       HomOpSecCyl : HomOperad (secCylOp α)
+       HomOpSecCyl = record { homNat = refl ;
+                                homId = refl ;
+                                homγ = refl }
+
+       HomOpProjCyl : HomOperad (projCylOp α)
+       HomOpProjCyl = record { homNat = refl ;
+                               homId = refl ;
+                               homγ = refl }
+
+--       TrivFibSecCylOp : TrivialFibrationOp (secCylOp α)
+--       TrivFibSecCylOp = λ _ → TrivFibSecCyl
+
+       TrivFibProjCylOp : EquivOp α → TrivialFibrationOp (projCylOp α)
+       TrivFibProjCylOp equivα _ = TrivFibProjCyl (equivα _)
+
+
+
+module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} (cofibP : ∀ {n₁ n₂} → CofibrantOp P {n₁ = n₁} {n₂ = n₂})
+                 {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad R₁}} {{fib₁ : FibOp R₁}}
+                 {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R₂}} {{fib₂ : FibOp R₂}}
+                 (α : Nat R₂ R₁) (homα : HomOperad α) (equivα : EquivOp α)
+                 (β : Nat P R₁) (homβ : HomOperad β) where
+
+
+       fillAux : {{_ : HomOperad α}} → lifting (projCylOp α) β
+       fillAux = cofibP (projCylOp α) HomOpProjCyl (TrivFibProjCylOp equivα) β homβ
+
+
+       CofibrantWkLiftingEquivalence : wkLifting α β
+
+       CofibrantWkLiftingEquivalence = let fill = fillAux {{homα}} in
+
+                                       record { δ = secCylOp α ∘ lifting.δ fill ;
+                                                homδ = HomOpComp (HomOpSecCyl {{homα = homα}} ) (lifting.homδ fill)  }
 
