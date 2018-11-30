@@ -50,7 +50,10 @@ postulate
   
     ΠFib : ∀ {k l} {A : Set k} {{_ : Fib A}} {B : A → Set l} {{_ : {a : A} → Fib (B a)}}
            → Fib ((a : A) → B a)
-         
+{-
+    ΠFibImp :  ∀ {k l} {A : Set k} {{_ : Fib A}} {B : A → Set l} {{_ : {a : A} → Fib (B a)}}
+               → Fib ({a : A} → B a)
+-}
     ΣFib : ∀ {k l} {A : Set k} {{_ : Fib A}} {B : A → Set l} {{fibB : {a : A} → Fib (B a)}}
            → Fib (Σ A B)
          
@@ -61,7 +64,7 @@ postulate
 
 
 module _ {k l} {X : Set k} {{_ : Fib X}} 
-  (C : (I → X) → Set l) {{_ : (p : I → X) → Fib (C p)}} 
+  (C : (I → X) → Set l) {{_ : {p : I → X} → Fib (C p)}} 
   (d : (x : X) → C (λ i → x)) where
   postulate
     J : (p : I → X) → C p
@@ -71,11 +74,33 @@ module _ {k l} {X : Set k} {{_ : Fib X}}
 
 
 
+--A kind of weird fibrancy result
+
+module _ {k l} {A : Set k} {{_ : Fib A}} {B : A → Set l} {{_ : {a : A} → Fib (B a)}} where
+
+  ≅ImpAux : ((a : A) → B a) ≅ ({a : A} → B a)
+  ≅ImpAux = record { isoFun = λ f → λ {x} → f x ;
+                     isIso = record { inv = λ f x → f {x} ;
+                                      invLeft = λ _ → refl ;
+                                      invRight = λ _ → refl } }
+
+  instance
+    ΠFibImp : Fib ({a : A} → B a)
+    ΠFibImp = ≅Fib ≅ImpAux
+
+
+
 
 --Now we give definition of paths
 
 Path : ∀ {k} (X : Set k) (x y : X) → Set k
 Path X x y = dPath (λ _ → X) x y
+
+_~~>_ : ∀ {k} {X : Set k} (x y : X) → Set k
+x ~~> y = Path _ x y
+
+infix 34 _~~>_
+
 
 _$_ : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} → dPath P x y → (i : I) → P i
 p $ i  = (dPath.dpath p) i
@@ -96,13 +121,14 @@ eqe₁ p = dPath.deq₁ p
 
 module _ {k} {X : Set k} where
 
-  hrefl : {x : X} → Path X x x
+  hrefl : {x : X} → x ~~> x
   hrefl {x} = [ (λ i → x) , refl , refl ]
 
-  cstPath : {x y : X} → x ≡ y → Path X x y
+
+  cstPath : {x y : X} → x ≡ y → x ~~> y
   cstPath {x} = λ p → [ (λ i → x) , refl , p ]
 
-  endpointPath : {x₁ x₂ y₁ y₂ : X} → Path X x₁ y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → Path X x₂ y₂
+  endpointPath : {x₁ x₂ y₁ y₂ : X} → x₁ ~~> y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → x₂ ~~> y₂
   endpointPath p eq₁ eq₂ = [ (λ i → p $ i) ,
                       ≡Trans (eqe₀ p) eq₁ ,
                       ≡Trans (eqe₁ p) eq₂ ]
@@ -111,31 +137,76 @@ module _ {k} {X : Set k} where
              → p ≡ q → [ p , eqp₀ , eqp₁ ] ≡ [ q , eqq₀ , eqq₁ ]
   ≡PathAux {p = p} refl = ap₂ (λ e₁ e₂ → [ p , e₁ , e₂ ]) UIP UIP
 
-  ≡Path : {x y : X} → {p q : Path X x y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
+  ≡Path : {x y : X} → {p q : x ~~> y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
   ≡Path {p = [ p , eqp₀ , eqp₁ ]} {[ q , eqq₀ , eqq₁ ]} hyp = ≡PathAux (funext hyp)
 
 
 module _ {k} {X : Set k} {{_ : Fib X}} where
 
-  inv : {x y : X} → Path X x y → Path X y x
-  inv [ p , refl , refl ] = J (λ p → Path X (p e₁) (p e₀)) (λ _ → hrefl) p
+  JPath : ∀ {l} (C : {x y : X} → (p : x ~~> y) → Set l)
+          {{_ : {x y : X} → {p : x ~~> y} → Fib (C p)}}
+          → (d : (x : X) → C (hrefl {x = x}))
+          → {x y : X} (p : x ~~> y) → C p
+  JPath C d [ p , refl , refl ] = J (λ p₁ → C [ p₁ , refl , refl ]) (λ x → d x) p
 
-  PathTrans : {x y z : X} → Path X x y → Path X y z → Path X x z
-  PathTrans {z = z} [ p , refl , refl ] = J (λ p₁ → (Path X (p₁ e₁) z → Path X (p₁ e₀) z)) (λ x q → q) p
+  --We define htransport as it is easier to use than JPath
 
-  _#_ : {x y z : X} → Path X x y → Path X y z → Path X x z
+  htransport : ∀ {l} (P : X → Set l) {{_ : {x : X} → Fib (P x)}}
+              {x y : X} → x ~~> y → P x → P y
+  htransport P = JPath _ (λ _ a → a)
+
+
+
+{-
+  module testingRewriting {l} (P : X → Set l) {{_ : {x : X} → Fib (P x)}}
+                     {x y : X} {tx : P x} where
+    
+         test1 : htransport P hrefl tx ≡ tx
+         test1 = refl
+-}
+
+
+module _ {k} {X : Set k} {{_ : Fib X}} where
+
+  inv : {x y : X} → x ~~> y → y ~~> x
+  inv = JPath _ (λ _ → hrefl)
+
+  PathTrans : {x y z : X} → x ~~> y → y ~~> z → x ~~> z
+  PathTrans = JPath _ (λ _ q → q) 
+
+  _#_ : {x y z : X} → x ~~> y → y ~~> z → x ~~> z
   p # q = PathTrans p q
+
+  infix 47 _#_
+
+  #Nat : {x y z : X} {p₁ p₂ : x ~~> y} {q₁ q₂ : y ~~> z} → p₁ ~~> p₂ → q₁ ~~> q₂ → p₁ # q₁ ~~> p₂ # q₂
+  #Nat {p₁ = p₁} {p₂ = p₂} {q₁ = q₁} {q₂ = q₂} r₁ r₂ = htransport (λ p → p₁ # q₁ ~~> p # q₂) r₁
+                                                        (htransport (λ q → p₁ # q₁ ~~> p₁ # q) r₂ hrefl)
+
+  #Hrefl : {x y : X} {p : x ~~> y} → p # hrefl ~~> p
+  #Hrefl {p = p} = JPath (λ {x} {y} p → p # hrefl ~~> p) (λ _ → hrefl) p
+
+  #InvLeft : {x y : X} {p : x ~~> y} → p # inv p ~~> hrefl
+  #InvLeft {p = p} = JPath (λ p → p # inv p ~~> hrefl) (λ _ → hrefl) p
+
+  #InvRight : {x y : X} {p : x ~~> y} → inv p # p ~~> hrefl
+  #InvRight {p = p} = JPath (λ p → inv p # p ~~> hrefl) (λ _ → hrefl) p
+
+  #Assoc : {x₁ x₂ x₃ x₄ : X} {p : x₁ ~~> x₂} {q : x₂ ~~> x₃} {r : x₃ ~~> x₄}
+           → p # (q # r) ~~> (p # q) # r
+  #Assoc {p = p} {q = q} {r = r} = JPath (λ {x₁} {x₂} p → {x₃ x₄ : X} → {q : x₂ ~~> x₃} → {r : x₃ ~~> x₄} → p # (q # r) ~~> (p # q) # r)
+                                         (λ _ → hrefl) p 
 
 
 
 module _ {k l} {X : Set k} {Y : Set l} where
 
-  hap : (f : X → Y) {x₁ x₂ : X} → Path X x₁ x₂ → Path Y (f x₁) (f x₂) 
+  hap : (f : X → Y) {x y : X} → x ~~> y → (f x) ~~> (f y) 
   hap f p = [ (λ i → f (p $ i)) ,
               ap f (eqe₀ p) ,
               ap f (eqe₁ p) ]
 
-  hfunext : {f g : X → Y} → ((x : X) → Path Y (f x) (g x)) → Path (X → Y) f g
+  hfunext : {f g : X → Y} → ((x : X) → (f x) ~~> (g x)) → f ~~> g
   hfunext Hyp = [ (λ i x → (Hyp x) $ i) ,
                   funext (λ x → eqe₀ (Hyp x)) ,
                   funext (λ x → eqe₁ (Hyp x)) ]
@@ -147,7 +218,7 @@ module _ {k l} {X : Set k} {Y : Set l} where
 record Contr {k} (X : Set k) : Set k where
   field
     center : X
-    path : (y : X) → Path X center y
+    path : (y : X) → center ~~> y
 
 
 
@@ -167,7 +238,7 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
   --We do not use record because we want hfibre to be fibrant using ΣFib
 
   hfibre : (y : Y) → Set (k ⊔ l)
-  hfibre y = Σ X (λ x → Path Y (f x) y)
+  hfibre y = Σ X (λ x → (f x) ~~> y)
 
 
   Fibration : Set (k ⊔ l)
@@ -184,11 +255,49 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
   record Equiv : Set (k ⊔ l) where
     field
       hinv₁ : Y → X
-      hinvLeft : (y : Y) → Path Y y (f (hinv₁ y))
+      hinvLeft : (y : Y) → y ~~> (f (hinv₁ y))
       hinv₂ : Y → X
-      hinvRight : (x : X) → Path X x (hinv₂ (f x))
+      hinvRight : (x : X) → x ~~> (hinv₂ (f x))
 
 
+  record adjEquiv : Set (k ⊔ l) where
+    field
+      hinv : Y → X
+      hinvLeft : (y : Y) → y ~~> f (hinv y)
+      hinvRight : (x : X) → x ~~> hinv (f x)
+      zig : (x : X) → hinvLeft (f x) ~~> hap f (hinvRight x)
+
+--Results about path in hfibre
+
+{-
+PathHfibreAux : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
+             {f : X → Y} {x₁ x₂ : X} {y : Y}
+             → (p : x₁ ~~> x₂) (p₁ : (f x₁) ~~> y) (p₂ : (f x₂) ~~> y)
+             → p₁ ~~> ((hap f p) # p₂) → Path (hfibre f y) (x₁ , p₁) (x₂ , p₂)
+PathHfibreAux {Y = Y} {f = f} {y = y} [ p , refl , refl ]  = J (λ p₁ →
+                                                               (p₂ : (f (p₁ e₀)) ~~> y) →
+                                                               (p₃ : (f (p₁ e₁)) ~~> y) →
+                                                               p₂ ~~> (hap f [ p₁ , refl , refl ] # p₃) →
+                                                               Path (hfibre f _) (p₁ e₀ , p₂) (p₁ e₁ , p₃))
+                                                            ( λ x p₂ p₃ r → [ (λ i → x , (r $ i)) ,
+                                                                                 equalΣ refl (eqe₀ r) ,
+                                                                                 equalΣ refl (eqe₁ r) ] ) p
+                                                                                 -}
+
+PathHfibre :  ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
+             {f : X → Y} {x₁ x₂ : X} {y : Y}
+             → (p : x₁ ~~> x₂) {p₁ : (f x₁) ~~> y} {p₂ : (f x₂) ~~> y}
+             → p₁ ~~> ((hap f p) # p₂) → Path (hfibre f y) (x₁ , p₁) (x₂ , p₂)
+
+PathHfibre {f = f} {y = y} p r = JPath
+                                   (λ {x₁} {x₂} p₁ →
+                                      {p₂ : f x₁ ~~> y} {p₃ : f x₂ ~~> y} →
+                                      p₂ ~~> hap f p₁ # p₃ → Path (hfibre f y) (x₁ , p₂) (x₂ , p₃))
+                                   (λ x r → [ (λ i → x , [ (λ j → (r $ i) $ j) ,
+                                                           (eqe₀ (r $ i)) ,
+                                                           (eqe₁ (r $ i)) ]) ,
+                                              equalΣ refl (≡Path (λ i → ap (λ p → p $ i) (eqe₀ r))) ,
+                                              equalΣ refl (≡Path (λ i → ap (λ p → p $ i) (eqe₁ r))) ]) p r 
 
 
 
@@ -198,17 +307,39 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 --Results about equivalences
 
 
---Auxiliary Lemma hapinv
---We will probably need something more, like Equiv g → Equiv (hap g)
+--Equivalence implies adjoint equivalences
 
-hapinv : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l}
-         {f : X → Y} {x y : X}
-         → Equiv f → Path Y (f x) (f y) → Path X x y
-
-hapinv {f = f} record { hinv₁ = _ ; hinvLeft = _ ; hinv₂ = g₂ ; hinvRight = hinvg₂ } p 
-             = hinvg₂ _ # (hap g₂ p # inv (hinvg₂ _))  
+adjEquivEquiv : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
+                {f : X → Y} → Equiv f → adjEquiv f
+adjEquivEquiv = {!!}
 
 
+
+--hap and equivalences
+
+module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
+         {f : X → Y} where
+
+       module _ (aequivf : adjEquiv f) where
+
+         hapinv : {x y : X} → Path Y (f x) (f y) → Path X x y
+         hapinv p = let g = adjEquiv.hinv aequivf in
+                    let η = adjEquiv.hinvRight aequivf in 
+                    η _ # (hap g p # inv (η _))
+               
+         postulate EquivHapAux : {x y : X} → Equiv (hap f {x = x} {y = y})
+         --EquivHapAux = record { hinv₁ = hapinv ;
+           --                     hinvLeft = {!!} ;
+             --                   hinv₂ = hapinv ;
+               --                 hinvRight = JPath (λ {x₁} {y₁} p₁ → p₁ ~~> hapinv (hap f {x = x₁} {y = y₁} p₁))
+                 --                               (λ _ → inv #InvLeft) }
+
+       EquivHap : {x y : X} → Equiv f → Equiv (hap f {x = x} {y = y})
+       EquivHap equivf = EquivHapAux (adjEquivEquiv equivf)
+
+
+
+--Equivalence obeys two out of three
 
 module _ {k l m} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {Z : Set m} {{_ : Fib Z}} where
   
@@ -229,14 +360,14 @@ module _ {k l m} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {Z : Set m}
 
   
   EquivTwoThreeRight : {f : X → Y} {g : Y → Z} → Equiv g → Equiv (g o f) → Equiv f 
-  EquivTwoThreeRight {g = g}
+  EquivTwoThreeRight {f = f} {g = g}
                      equivg
                      record { hinv₁ = gf₁ ;
                               hinvLeft = hinvgf₁ ;
                               hinv₂ = gf₂ ;
                               hinvRight = hinvgf₂ }
                    = record { hinv₁ = gf₁ o g ;
-                              hinvLeft = λ y → hapinv equivg (hinvgf₁ _) ;
+                              hinvLeft = λ y → Equiv.hinv₁ (EquivHap equivg) (hinvgf₁ (g y)) ; 
                               hinv₂ = gf₂ o g ;
                               hinvRight = λ x → hinvgf₂ _ }
 
@@ -336,11 +467,11 @@ totalSpaceFib {Y = Y} {p = p} = ≅Fib {X = Σ Y (λ y → fibre p y)}
 
 --There is a bit of redundance here
 
-ContrSingAux : ∀ {k} {X : Set k} {x y₁ y₂ : X} {p₁ : Path X x y₁} {p₂ : Path X x y₂}
+ContrSingAux : ∀ {k} {X : Set k} {x y₁ y₂ : X} {p₁ : x ~~> y₁} {p₂ : x ~~> y₂}
                → y₁ ≡ y₂ → ((i : I) → p₁ $ i ≡ p₂ $ i) → Equal (Σ X (Path X x))(y₁ , p₁) (y₂ , p₂)
 ContrSingAux refl hyp = ap (λ p → _ , p) (≡Path hyp)
 
-ContrSing : ∀ {k} {X : Set k} {x : X} → Contr (Σ X (λ y → Path X x y))
+ContrSing : ∀ {k} {X : Set k} {x : X} → Contr (Σ X (λ y → x ~~> y))
 ContrSing {x = x} = record { center = x , hrefl ;
                              path = λ { (y , p) → [ (λ i → (p $ i) , [ (λ j → p $ (i ⊓ j)) ,
                                                                        ≡Trans (ap (λ i₁ → p $ i₁) ⊓right₀) (eqe₀ p) ,
@@ -349,15 +480,36 @@ ContrSing {x = x} = record { center = x , hrefl ;
                                                     ContrSingAux (eqe₁ p) (λ i → ap (λ i₁ → p $ i₁) ⊓left₁) ]} }
 
 
-postulate
-  ContrHfibreEquiv : ∀ {k l} {X : Set k} {Y : Set l} {f : X → Y} → Equiv f → {y : Y} → Contr (hfibre f y)
 
-{-ContrHfibreEquiv record { hinv₁ = g₁ ;
-                          hinvLeft = hinv₁ ;
-                          hinv₂ = g₂ ;
-                          hinvRight = hinv₂ }
-               = record { center = {!!} ;
-                          path = {!!} } 
+ContrHfibreEquiv : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y} → Equiv f → {y : Y} → Contr (hfibre f y)
+ContrHfibreEquiv {f = f} equivf {y = y} = let x₁ = Equiv.hinv₁ equivf y in
+                                  let p₁ = Equiv.hinvLeft equivf y in
+
+                                  record { center = x₁ , inv (p₁) ;
+                                           path = λ { (x₂ , p₂) → PathHfibre
+                                                                  (Equiv.hinv₁ (EquivHap equivf) (inv p₁ # inv p₂))
+                                                                  (PathTrans {y = inv p₁ # hrefl}
+                                                                        (inv #Hrefl)
+                                                                        (PathTrans {y = inv p₁ # (inv p₂ # p₂)}
+                                                                              (#Nat hrefl (inv #InvRight))
+                                                                              (PathTrans {y = (inv p₁ # inv p₂) # p₂}
+                                                                                    #Assoc (#Nat {p₁ = inv p₁ # inv p₂}
+                                                                                                 {p₂ = hap _ (Equiv.hinv₁ (EquivHap equivf) (inv p₁ # inv p₂))}
+                                                                                    (Equiv.hinvLeft (EquivHap equivf) (inv p₁ # inv p₂)) hrefl)))  ) } }
+
+{-
+                                                                             (inv #Hrefl)
+                                                                             (PathTrans (#Nat hrefl (inv #InvRight))
+                                                                                        (PathTrans #Assoc
+                                                                                        (#Nat {!!} hrefl)))) }}
+-}
+--(PathTrans {!!} (#Nat (Equiv.hinvLeft (EquivHap equivf) _) hrefl)) }}
+
+{-
+                                                                  (PathTrans (PathTrans (inv #Hrefl)
+                                                                                        (PathTrans (#Nat hrefl (inv #InvRight))
+                                                                                                    #Assoc))
+                                                                             (#Nat (Equiv.hinvLeft (EquivHap equivf) _) hrefl) )}}
 -}
 
 
@@ -405,7 +557,7 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} (f : X → Y)
     field
       piX : X
       piY : Y
-      path : Path Y (f piX) piY
+      path : (f piX) ~~> piY
 
   incCyl : X → cocylinder
   incCyl x = cyl x , (f x) , hrefl
@@ -419,7 +571,7 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} (f : X → Y)
 
 module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y} where
 
-  ≅Cocylinder : Σ X (λ x → Σ Y (λ y → Path Y (f x) y)) ≅ cocylinder f
+  ≅Cocylinder : Σ X (λ x → Σ Y (λ y → (f x) ~~> y)) ≅ cocylinder f
   ≅Cocylinder = record { isoFun = λ { (x , (y , p)) → cyl x , y , p} ;
                          isIso = record { inv = λ { (cyl x , y , p) → x , (y , p)} ;
                                           invLeft = λ { (cyl _ , _ , _) → refl} ;
@@ -430,7 +582,7 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y}
     FibCocylinder = ≅Fib ≅Cocylinder
 
 
-  ≡cocylinder : {x₁ x₂ : X} {y₁ y₂ : Y} {p₁ : Path Y (f x₁) y₁} {p₂ : Path Y (f x₂) y₂}
+  ≡cocylinder : {x₁ x₂ : X} {y₁ y₂ : Y} {p₁ : (f x₁) ~~> y₁} {p₂ : (f x₂) ~~> y₂}
                 → x₁ ≡ x₂ → y₁ ≡ y₂ → ((i : I) → p₁ $ i ≡ p₂ $ i)
                 → (cyl x₁ , y₁ , p₁) ≡ (cyl x₂ , y₂ , p₂)
   ≡cocylinder refl refl hyp = ap (λ p → cyl _ , _ , p) (≡Path hyp)
@@ -455,7 +607,7 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y}
                          hinv₂ = secCyl f ;
                          hinvRight = λ x → hrefl }
 
-  ≅FibreSecCyl : {x : X} → Σ Y (λ y → Path Y (f x) y) ≅ fibre (secCyl f) x
+  ≅FibreSecCyl : {x : X} → Σ Y (λ y → (f x) ~~> y) ≅ fibre (secCyl f) x
   ≅FibreSecCyl {x} = record { isoFun = λ { (y , p) → (cyl x , y , p) , refl} ;
                               isIso = record { inv = λ { ((cyl _ , y , p) , refl) → y , p} ;
                                                invLeft = λ { ((cyl _ , _ , _) , refl) → refl} ;
@@ -468,3 +620,4 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y}
   TrivFibProjCyl : Equiv f → TrivialFibration (projCyl f)
   TrivFibProjCyl equivf = record { isFib = FibrationProjCyl ;
                                    isContr = ≅Contr (≅FibreProjCyl) (ContrHfibreEquiv equivf) }
+

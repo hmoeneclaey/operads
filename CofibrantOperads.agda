@@ -78,8 +78,8 @@ module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} wher
 
 
 --Now we show that a cofibrant operads has weak lifting for equivalence between fibrant operads
---We use the cocylinder foactorisation for operads
 
+--We use the cocylinder factorisation for operads
 open import OperadCocylinder
 
 
