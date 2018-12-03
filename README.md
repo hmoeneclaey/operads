@@ -24,7 +24,7 @@ Main results :
 Contains the definition of ns-operads and their algebras.
 
 
-## FibrantUniverses.agda
+## FibrantUniverse.agda
 
 Contains the definition of the fibrant structure. This is where almost all our postulates are (except strict function extesionnality).
 
@@ -39,7 +39,7 @@ It contains basic definition of HoTT and
 I am thinking about separating HoTT results from the rest.
 
 
-## CofibrantOperads.agda
+## CofibrantOperad.agda
 
 Contains the definition of cofibrant operads (as left lifting property against trivial fibrations), and shows that they have the left lifting property against equivalences between fibrant operads.
 
