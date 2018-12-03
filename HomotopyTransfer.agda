@@ -9,7 +9,7 @@ open import CofibrantOperads
 
 
 
---In this file we show that algebra for cofibrant operads are invariant by equivalence
+--In this file we show that algebras for cofibrant operads are invariant by equivalence
 
 
 
@@ -22,6 +22,7 @@ open import CofibrantOperads
   EndMor p is useful to link End X and End Y
 -}
 
+
 module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
   record EndMor (A : Set) {{_ : FOSet A}} : Set (k ⊔ l) where
@@ -32,20 +33,15 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
       equal : (d : A → X) → p (π₁ d) ≡ π₂ (p o d) 
 
 
-
-  mkEndMor : {A : Set} {{_ : FOSet A}}
-               (c₁ : End X A) → (c₂ : End Y A) → ((d : A → X) → p (c₁ d) ≡ c₂ (p o d)) → EndMor A
-  mkEndMor c₁ c₂ eq = (c₁ , c₂ , eq)
-
-
   ≡EndMor : {A : Set} {{_ : FOSet A}} → {x y : EndMor A}
               → EndMor.π₁ x ≡ EndMor.π₁ y → EndMor.π₂ x ≡ EndMor.π₂ y → x ≡ y
+
   ≡EndMor {x = ( π₁ , π₂ , _ )}
-          {( _ , _ , _ )} refl refl = ap (mkEndMor π₁ π₂) (funext (λ a → UIP))
+          {( _ , _ , _ )} refl refl = ap (λ eq → (π₁ , π₂ , eq)) (funext (λ a → UIP))
     
 
 
-  EndMorFun : arrowAction EndMor
+  EndMorFun : arrowAction EndMor  
   EndMorFun f {{homf}} (c₁ , c₂ , eq)
             = functor f {{homf}} c₁ ,
               functor f {{homf}} c₂ ,
@@ -54,6 +50,7 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
   instance
     OpEndMor : Operad EndMor
+    
     OpEndMor = record
                  { functor = EndMorFun
                  ; functorId = λ _ → refl
@@ -121,18 +118,27 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
     ContrProj₂ : ContrMap p → ContrMapOp operadProj₂
+    
     ContrProj₂ contrp A = ≅Contr (fibreIsoProj₂ A _) (ΠContr (λ x → contrp))
 
+
     FibProj₂ : {{_ : Fibration p}} → FibrationOp operadProj₂
+    
     FibProj₂ A =  ≅Fib (fibreIsoProj₂ A _)
 
+
     TrivialFibProj₂ : TrivialFibration p → TrivialFibrationOp operadProj₂
+    
     TrivialFibProj₂ record { isFib = fibp ; isContr = contrp } = mkTrivialFibrationOp _ (FibProj₂ {{fibp}}) (ContrProj₂ contrp) 
 
+
     EndMorFib : TrivialFibration p →  {A : Set} → {{_ : FOSet A}} → Fib (EndMor A)
+    
     EndMorFib record { isFib = fibp ; isContr = _ } {A} = totalSpaceFib {{FibProj₂ {{fibp}} A}}
-  
+
+
     EquivProj₁ : TrivialFibration p → EquivOp operadProj₁
+    
     EquivProj₁ tfibp A = EquivTwoThreeRight {{EndMorFib tfibp}} {g = λ f → λ (s : A → X) → p (f s)}
                                             (EquivPostComp (EquivTrivialFib tfibp))
                                             (Equiv≡ext {f = (λ g s → g (p o s)) o (operadProj₂ A)}
@@ -144,12 +150,18 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
 
--- A trivial fibration X → Y gives us that Alg P Y ↔ Alg P X
+
 
 module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
          {{_ : Operad P}} (cofibP : ∀ {n₁ n₂} → CofibrantOp P {n₁ = n₁} {n₂ = n₂}) where
 
-       module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}} (p : X → Y) (tfibp : TrivialFibration p) where
+
+       module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
+                (p : X → Y) (tfibp : TrivialFibration p) where
+
+
+       -- A trivial fibration X → Y gives us that Alg P Y ↔ Alg P X
+
 
          algebraBackFibration : Algebra P Y → Algebra P X
 
@@ -173,10 +185,10 @@ module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
 
 
 
---We conclude using the cocylinder factorisation
+       --We conclude using the cocylinder factorisation
 
        module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
-         {f : X → Y} (equivf : Equiv f) where
+                {f : X → Y} (equivf : Equiv f) where
 
          algebraInvariantEquiv : Algebra P Y → Algebra P X
          algebraInvariantEquiv algY  = algebraForwardFibration (secCyl f) TrivFibSecCyl
