@@ -1,4 +1,4 @@
-# Formalising an A_\infty Operad in Two-Level type theory 
+# Formalising ∞-Monoids in Two-Level Type Theory 
 
 
 ## Data.agda
