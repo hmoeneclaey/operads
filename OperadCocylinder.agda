@@ -4,7 +4,7 @@ open import Agda.Primitive
 open import Data
 open import FiniteSet
 open import Operad
-open import FibrantUniverses
+open import FibrantUniverse
 
 
 --In this file we define the cocylinder of operads. It takes ~1 min to typecheck

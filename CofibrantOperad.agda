@@ -1,11 +1,10 @@
-module CofibrantOperads where
+module CofibrantOperad where
 
 open import Agda.Primitive
 open import Data
 open import FiniteSet
 open import Operad
-open import FibrantUniverses
-
+open import FibrantUniverse
 
 
 --We define fibrations / trivial fibrations / equivalence between operads

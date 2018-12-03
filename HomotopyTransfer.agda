@@ -4,8 +4,8 @@ open import Agda.Primitive
 open import Data
 open import FiniteSet
 open import Operad
-open import FibrantUniverses
-open import CofibrantOperads
+open import FibrantUniverse
+open import CofibrantOperad
 
 
 

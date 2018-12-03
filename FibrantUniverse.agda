@@ -1,7 +1,7 @@
 {-# OPTIONS --rewriting #-}
 
 
-module FibrantUniverses where
+module FibrantUniverse where
 
 
 open import Data
