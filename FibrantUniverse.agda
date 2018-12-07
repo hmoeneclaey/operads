@@ -8,9 +8,6 @@ open import Data
 open import Agda.Primitive
 
 
-postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
-{-# BUILTIN REWRITE _↦_ #-}
-
 
 
 --This module will contains the fibrant universes and their homotopical structure. 

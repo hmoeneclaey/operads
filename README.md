@@ -26,7 +26,7 @@ Contains the definition of ns-operads and their algebras.
 
 ## FibrantUniverse.agda
 
-Contains the definition of the fibrant structure. This is where almost all our postulates are (except strict function extesionnality).
+Contains the definition of the fibrant structure. This is where almost all our postulates are (except strict function extensionnality).
 
 It contains basic definition of HoTT and
 
@@ -45,7 +45,7 @@ Contains the definition of cofibrant operads (as left lifting property against t
 
 ## OperadCocylinder.agda
 
-Auxiliary file for CofibrantOperads.agda, it takes ~2 min to typecheck.
+Auxiliary file for CofibrantOperad.agda, it takes ~2 min to typecheck.
 
 ## HomotopyTransfer.agda
 

@@ -1,7 +1,13 @@
+{-# OPTIONS --rewriting #-}
+
 module Data where
 
 open import Agda.Primitive
 
+
+
+postulate _↦_ : ∀ {i} {A : Set i} → A → A → Set
+{-# BUILTIN REWRITE _↦_ #-}
 
 
 --Composition and identity

@@ -46,8 +46,14 @@ pred : ℕ → ℕ
 pred O = O
 pred (s n) = n 
 
+
+FinConcatAux : {m n : ℕ} → (k : Fin (s n)) → Fin (n + m) → Fin (s n) ∨ Fin m 
+FinConcatAux fzero = {!!}
+FinConcatAux (fsucc k) = {!!}
+
 FinConcat : ∀ {k} {A : Set k} {m n : ℕ} → (f : Fin n → A) → (k : Fin n) → (g : Fin m → A) → Fin (pred n + m) → A 
-FinConcat f k g = {!!}
+FinConcat f fzero g l = ∨Elim f g (FinConcatAux fzero l)
+FinConcat f (fsucc k) g l = ∨Elim f g (FinConcatAux (fsucc k) l) 
 
 
 
@@ -114,3 +120,21 @@ module _ {k} {P : Qtree → Set k} (d : (t : Ltree) → P [ t ])
     QtreeElim : (x : Qtree) → P x
     QtreeCompute : (t : Ltree) → QtreeElim [ t ] ↦ d t 
     {-# REWRITE QtreeCompute #-}
+
+
+
+
+module tests where
+
+  tree1 : Ltree
+  tree1 = cons {n = s (s O)} (λ { fzero → ∅+ ;
+                                  (fsucc _) → ∅+})
+                                  
+  a : arity tree1
+  a = arCons _ fzero ar∅+
+
+  tree3 : Ltree
+  tree3 = cons {n = (s (s O))} (λ { fzero → addLbl e₀ tree1 ; (fsucc _) → ∅+})
+
+  testingmore : graft tree1 a e₀ tree1 ≡ tree3
+  testingmore = ap cons (funext (λ { fzero → refl ; (fsucc k) → refl})) 

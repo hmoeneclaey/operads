@@ -41,6 +41,15 @@ infix 56 _<<_
 
 
 
+
+--Prove finiteness of canonical finite sets
+instance
+  canonicalFOSet : {n : ℕ} → FOSet (Fin n)
+  canonicalFOSet {n} = record { cardinal = n ; funFO = Id ; isIsoFO = isoId }
+
+
+
+
 --Very basic facts about the order
 
 <Irefl : {n : ℕ} (a : Fin n) → ¬ (a < a)
@@ -54,7 +63,7 @@ infix 56 _<<_
 
 
 
---Various properties of finite sets
+--Injectivity of successor
 
 injectiveFsucc : {n : ℕ} → injective (fsucc {n})
 injectiveFsucc {n} {x} {y} refl = refl
@@ -66,9 +75,14 @@ finiteSum {s n} f = f (fzero) + finiteSum (f o fsucc)
 
 
 
+
+--An interlude about finite product
+
+
 Prod : ∀ {k} (X : Set k) → ℕ → Set k
 Prod X O = ⊤
 Prod X (s n) = X ∧ Prod X n
+
 
 module _ {k} {X : Set k} where
 
@@ -98,12 +112,15 @@ module _ {k} {X : Set k} where
 
 
 
---Prove finiteness of canonical finite sets
-instance
-  canonicalFOSet : {n : ℕ} → FOSet (Fin n)
-  canonicalFOSet {n} = record { cardinal = n ; funFO = Id ; isIsoFO = isoId }
 
 
+Fin+Left : {m n : ℕ} → Fin m → Fin (m + n)
+Fin+Left fzero = fzero
+Fin+Left (fsucc a) = fsucc (Fin+Left a)
+  
+Fin+Right : {m n : ℕ} → Fin n → Fin (m + n)
+Fin+Right {O} = Id
+Fin+Right {s m} = fsucc o Fin+Right
 
 
 
@@ -113,14 +130,6 @@ module ArithmeticForCanonicalSets where
 
 
 --First we define the function canoncialΣ : Σ Fin Fin → Fin
-
-  Fin+Left : {m n : ℕ} → Fin m → Fin (m + n)
-  Fin+Left fzero = fzero
-  Fin+Left (fsucc a) = fsucc (Fin+Left a)
-  
-  Fin+Right : {m n : ℕ} → Fin n → Fin (m + n)
-  Fin+Right {O} = Id
-  Fin+Right {s m} = fsucc o Fin+Right
 
   canonicalΣ : {n : ℕ} (S : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (S x)) → Fin (finiteSum S)
   canonicalΣ S (fzero , b) = Fin+Left b
