@@ -127,6 +127,8 @@ _+_ : ℕ → ℕ → ℕ
 O + n = n
 s m + n = s(m + n)
 
+infixl 46 _+_
+
 
 
 
@@ -173,6 +175,21 @@ transportComp refl F = refl
 transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} (p q : x ≡ y) 
                       → p ≡ q → transport B p b ≡ transport B q b
 transportEqualPaths p q refl = refl
+
+transportConst : ∀ {k l} {A : Set k} {B : Set l} {x y : A} {p : x ≡ y} {b : B} → transport (λ _ → B) p b ≡ b
+transportConst {p = refl} = refl
+
+
+
+--Results about natural number and equality
+
++O : {n : ℕ} → n + O ≡ n
++O {O} = refl
++O {s n} = ap s +O
+
++Assoc : {l m n : ℕ} → (l + m) + n ≡ l + (m + n)
++Assoc {O} = refl
++Assoc {s l} = ap s (+Assoc {l = l})
 
 
 

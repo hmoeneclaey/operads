@@ -20,15 +20,16 @@ open import Agda.Primitive
 postulate
   I : Set
   e₀ e₁ : I
-  _⊓_ : I → I → I
+  _∩_ : I → I → I
+  _∪_ : I → I → I
   
-infixl 32 _⊓_
+infixl 32 _∩_
 
 postulate
-  ⊓left₀ : {i : I} → e₀ ⊓ i ≡ e₀
-  ⊓right₀ : {i : I} → i ⊓ e₀ ≡ e₀
-  ⊓left₁ : {i : I} → e₁ ⊓ i ≡ i 
-  ⊓right₁ : {i : I} → i ⊓ e₁ ≡ i
+  ∩left₀ : {i : I} → e₀ ∩ i ≡ e₀
+  ∩right₀ : {i : I} → i ∩ e₀ ≡ e₀
+  ∩left₁ : {i : I} → e₁ ∩ i ≡ i 
+  ∩right₁ : {i : I} → i ∩ e₁ ≡ i
 
 
 record dPath {k} (P : I → Set k) (x : P e₀) (y : P e₁) : Set k where
@@ -605,11 +606,11 @@ ContrSingAux refl hyp = ap (λ p → _ , p) (≡Path hyp)
 ContrSing : ∀ {k} {X : Set k} {x : X} → Contr (Σ X (λ y → x ~~> y))
 
 ContrSing {x = x} = record { center = x , hrefl ;
-                             path = λ { (y , p) → [ (λ i → (p $ i) , [ (λ j → p $ (i ⊓ j)) ,
-                                                                       ≡Trans (ap (λ i₁ → p $ i₁) ⊓right₀) (eqe₀ p) ,
-                                                                       ap (λ i₁ → p $ i₁) ⊓right₁ ]) ,
-                                                    ContrSingAux (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ⊓left₀) (eqe₀ p)) ,
-                                                    ContrSingAux (eqe₁ p) (λ i → ap (λ i₁ → p $ i₁) ⊓left₁) ]} }
+                             path = λ { (y , p) → [ (λ i → (p $ i) , [ (λ j → p $ (i ∩ j)) ,
+                                                                       ≡Trans (ap (λ i₁ → p $ i₁) ∩right₀) (eqe₀ p) ,
+                                                                       ap (λ i₁ → p $ i₁) ∩right₁ ]) ,
+                                                    ContrSingAux (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ∩left₀) (eqe₀ p)) ,
+                                                    ContrSingAux (eqe₁ p) (λ i → ap (λ i₁ → p $ i₁) ∩left₁) ]} }
 
 
 
@@ -753,11 +754,11 @@ module _ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}} {f : X → Y}
   
   EquivIncCyl = record { hinv₁ = secCyl f ;
                          hinvLeft = λ { (cyl x , y , p) → inv [ (λ i → cyl x , (p $ i) ,
-                                                                [ (λ j → p $ (i ⊓ j)) ,
-                                                                  ≡Trans (ap (λ i₁ → p $ i₁) ⊓right₀) (eqe₀ p) ,
-                                                                  ap (λ i₁ → p $ i₁) ⊓right₁ ]) ,
-                                                                ≡cocylinder refl (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ⊓left₀) (eqe₀ p)) ,
-                                                                ≡cocylinder refl (eqe₁ p) (λ i → (ap (λ i₁ → p $ i₁) ⊓left₁)) ]} ;
+                                                                [ (λ j → p $ (i ∩ j)) ,
+                                                                  ≡Trans (ap (λ i₁ → p $ i₁) ∩right₀) (eqe₀ p) ,
+                                                                  ap (λ i₁ → p $ i₁) ∩right₁ ]) ,
+                                                                ≡cocylinder refl (eqe₀ p) (λ i → ≡Trans (ap (λ i₁ → p $ i₁) ∩left₀) (eqe₀ p)) ,
+                                                                ≡cocylinder refl (eqe₁ p) (λ i → (ap (λ i₁ → p $ i₁) ∩left₁)) ]} ;
                          hinv₂ = secCyl f ;
                          hinvRight = λ x → hrefl }
 
