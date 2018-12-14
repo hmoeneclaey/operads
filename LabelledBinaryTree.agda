@@ -116,7 +116,7 @@ normalFormCons t₁ (cons t₂ t₃) = cons (normalFormCons+ t₁ t₂) t₃
 normalFormCons t₁ t₂ = cons t₁ t₂
 
 
---Output the normal form of a labbeled tree
+--Output the normal form of a tree with labels at the root
 normalForm+ : Ltree+ → Ltree+
 normalForm+ ∅ = ∅
 normalForm+ • = •
@@ -132,7 +132,8 @@ normalForm (cons t₁ t₂) = normalFormCons (normalForm+ t₁) (normalForm+ t�
 
 
 
---Now we need lemma to help show that f normalForm t ≡ f t
+
+--Now we need lemma to help show that f normalForm t ≡ f t for f inductively define
 
 module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A) where
 
@@ -143,73 +144,77 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
   elimLtree+ (cons t₁ t₂) = tcons (elimLtree+ t₁) (elimLtree+ t₂)
   elimLtree+ (lcons i t₁ t₂) = tlcons i (elimLtree+ t₁) (elimLtree+ t₂)
 
-  module _ (eq₁ : {a : A} → tcons a t• ≡ a)
-           (eq₂ : {a : A} → tcons t• a ≡ a)
-           (eq₃ : {a b c : A} → tcons a (tcons b c) ≡ tcons (tcons a b) c) where
+  module _ (eq₁ : (t : Ltree+) → tcons (elimLtree+ t) t• ≡ elimLtree+ t)
+           (eq₂ : (t : Ltree+) → tcons t• (elimLtree+ t) ≡ elimLtree+ t)
+           (eq₃ : (t₁ t₂ t₃ : Ltree+) → tcons (elimLtree+ t₁) (tcons (elimLtree+ t₂) (elimLtree+ t₃))
+                                      ≡ tcons (tcons (elimLtree+ t₁) (elimLtree+ t₂)) (elimLtree+ t₃)) where
 
-         equalNormalFormCons+ : {t₁ t₂ : Ltree+} → elimLtree+ (cons t₁ t₂) ≡ elimLtree+ (normalFormCons+ t₁ t₂)
-         equalNormalFormCons+ {∅} {∅} = refl
-         equalNormalFormCons+ {∅} {•} = eq₁
-         equalNormalFormCons+ {∅} {l• i} = refl
-         equalNormalFormCons+ {∅} {cons t₂ t₃} = ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {∅} {t₂}) refl)
-         equalNormalFormCons+ {∅} {lcons i t₂ t₃} = refl
-         equalNormalFormCons+ {•} {∅} = eq₂
-         equalNormalFormCons+ {•} {•} = eq₂
-         equalNormalFormCons+ {•} {l• i} = eq₂
-         equalNormalFormCons+ {•} {cons t₂ t₃} = eq₂
-         equalNormalFormCons+ {•} {lcons i t₂ t₃} = eq₂
-         equalNormalFormCons+ {l• i} {∅} = refl
-         equalNormalFormCons+ {l• i} {•} = eq₁
-         equalNormalFormCons+ {l• i} {l• i₁} = refl
-         equalNormalFormCons+ {l• i} {cons t₂ t₃} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {l• i} {t₂}) refl)
-         equalNormalFormCons+ {l• i} {lcons i₁ t₂ t₃} = refl
-         equalNormalFormCons+ {cons t₁ t₃} {∅} = refl
-         equalNormalFormCons+ {cons t₁ t₃} {•} = eq₁
-         equalNormalFormCons+ {cons t₁ t₃} {l• i} = refl
-         equalNormalFormCons+ {cons t₁ t₃} {cons t₂ t₄} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {cons t₁ t₃} {t₂}) refl)
-         equalNormalFormCons+ {cons t₁ t₃} {lcons i t₂ t₄} = refl
-         equalNormalFormCons+ {lcons i t₁ t₃} {∅} = refl
-         equalNormalFormCons+ {lcons i t₁ t₃} {•} = eq₁
-         equalNormalFormCons+ {lcons i t₁ t₃} {l• i₁} = refl
-         equalNormalFormCons+ {lcons i t₁ t₃} {cons t₂ t₄} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {lcons i t₁ t₃} {t₂}) refl)
-         equalNormalFormCons+ {lcons i t₁ t₃} {lcons i₁ t₂ t₄} = refl
 
-         module _ (eq₁ : {i : I} → tlcons i t• t∅ ≡ t∅)
-                  (eq₂ : {i : I} → tlcons i t• t• ≡ tl• i)
-                  (eq₃ : {i j : I} → tlcons i t• (tl• j) ≡ tl• (i ∪ j))
-                  (eq₄ : {i : I} {a b : A} → tlcons i (tcons a b) t• ≡ tlcons i a b)
-                  (eq₅ : {i j : I} {a b : A} → tlcons i t• (tlcons j a b) ≡ tlcons (i ∪ j) a b)
-                  (eq₆ : {i : I} → tlcons i t∅ t• ≡ t∅)
-                  (eq₇ : {i j : I} → tlcons i (tl• j) t• ≡ tl• (i ∪ j))
-                  (eq₈ : {i j : I} {a b : A} → tlcons i (tlcons j a b) t• ≡ tlcons (i ∪ j) a b)
-                  (eq₉ : {i : I} {a b c : A} → tlcons i a (tcons b c) ≡ tlcons i (tcons a b) c) where
+         equalNormalFormCons+ : (t₁ t₂ : Ltree+) → elimLtree+ (cons t₁ t₂) ≡ elimLtree+ (normalFormCons+ t₁ t₂)
+         
+         equalNormalFormCons+ ∅ ∅ = refl
+         equalNormalFormCons+ ∅ • = eq₁ ∅
+         equalNormalFormCons+ ∅ (l• i) = refl
+         equalNormalFormCons+ ∅ (cons t₂ t₃) = ≡Trans (eq₃ ∅ t₂ t₃) (ap₂ tcons (equalNormalFormCons+ ∅ t₂) refl)
+         equalNormalFormCons+ ∅ (lcons i t₂ t₃) = refl
+         equalNormalFormCons+ • ∅ = eq₂ ∅
+         equalNormalFormCons+ • • = eq₂ •
+         equalNormalFormCons+ • (l• i) = eq₂ (l• i)
+         equalNormalFormCons+ • (cons t₂ t₃) = eq₂ (cons t₂ t₃)
+         equalNormalFormCons+ • (lcons i t₂ t₃) = eq₂ (lcons i t₂ t₃)
+         equalNormalFormCons+ (l• i) ∅ = refl
+         equalNormalFormCons+ (l• i) • = eq₁ (l• i)
+         equalNormalFormCons+ (l• i) (l• i₁) = refl
+         equalNormalFormCons+ (l• i) (cons t₂ t₃) =  ≡Trans (eq₃ (l• i) t₂ t₃) (ap₂ tcons (equalNormalFormCons+ (l• i) t₂) refl)
+         equalNormalFormCons+ (l• i) (lcons i₁ t₂ t₃) = refl
+         equalNormalFormCons+ (cons t₁ t₃) ∅ = refl
+         equalNormalFormCons+ (cons t₁ t₃) • = eq₁ (cons t₁ t₃)
+         equalNormalFormCons+ (cons t₁ t₃) (l• i) = refl
+         equalNormalFormCons+ (cons t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (cons t₁ t₃) t₂ t₄) (ap₂ tcons (equalNormalFormCons+ (cons t₁ t₃) t₂) refl)
+         equalNormalFormCons+ (cons t₁ t₃) (lcons i t₂ t₄) = refl
+         equalNormalFormCons+ (lcons i t₁ t₃) ∅ = refl
+         equalNormalFormCons+ (lcons i t₁ t₃) • = eq₁ (lcons i t₁ t₃)
+         equalNormalFormCons+ (lcons i t₁ t₃) (l• i₁) = refl
+         equalNormalFormCons+ (lcons i t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (lcons i t₁ t₃) t₂ t₄) (ap₂ tcons (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
+         equalNormalFormCons+ (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
 
-                equalNormalFormLcons+ : {i : I} {t₁ t₂ : Ltree+} → elimLtree+ (lcons i t₁ t₂) ≡ elimLtree+ (normalFormLcons+ i t₁ t₂)
-                equalNormalFormLcons+ {i} {∅} {∅} = refl
-                equalNormalFormLcons+ {i} {∅} {•} = eq₆
-                equalNormalFormLcons+ {i} {∅} {l• i₁} = refl
-                equalNormalFormLcons+ {i} {∅} {cons t₂ t₃} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = ∅} {t₂ = t₂}) refl)
-                equalNormalFormLcons+ {i} {∅} {lcons i₁ t₂ t₃} = refl
-                equalNormalFormLcons+ {i} {•} {∅} = eq₁
-                equalNormalFormLcons+ {i} {•} {•} = eq₂
-                equalNormalFormLcons+ {i} {•} {l• i₁} = eq₃
-                equalNormalFormLcons+ {i} {•} {cons t₂ t₃} = {!!} --≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = •} {t₂ = t₂}) refl)
-                equalNormalFormLcons+ {i} {•} {lcons i₁ t₂ t₃} = eq₅
-                equalNormalFormLcons+ {i} {l• i₁} {∅} = refl
-                equalNormalFormLcons+ {i} {l• i₁} {•} = eq₇
-                equalNormalFormLcons+ {i} {l• i₁} {l• i₂} = refl
-                equalNormalFormLcons+ {i} {l• i₁} {cons t₂ t₃} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = l• i₁} {t₂ = t₂}) refl)
-                equalNormalFormLcons+ {i} {l• i₁} {lcons i₂ t₂ t₃} = refl
-                equalNormalFormLcons+ {i} {cons t₁ t₃} {∅} = refl
-                equalNormalFormLcons+ {i} {cons t₁ t₃} {•} = eq₄
-                equalNormalFormLcons+ {i} {cons t₁ t₃} {l• i₁} = refl
-                equalNormalFormLcons+ {i} {cons t₁ t₃} {cons t₂ t₄} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = cons t₁ t₃} {t₂ = t₂}) refl)
-                equalNormalFormLcons+ {i} {cons t₁ t₃} {lcons i₁ t₂ t₄} = refl
-                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {∅} = refl
-                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {•} = eq₈
-                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {l• i₂} = refl
-                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {cons t₂ t₄} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = lcons i₁ t₁ t₃} {t₂ = t₂}) refl)
-                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {lcons i₂ t₂ t₄} = refl
+         module _ (eq₄ : {i : I} (t₁ : Ltree+) → tlcons i (elimLtree+ t₁) t• ≡ elimLtree+ (addLbl+ i t₁))
+                  (eq₅ : {i : I} (t₂ : Ltree+) → tlcons i t• (elimLtree+ t₂) ≡ elimLtree+ (addLbl+ i t₂))
+                  (eq₆ : {i : I} (t₁ t₂ t₃ : Ltree+) → tlcons i (elimLtree+ t₁) (tcons (elimLtree+ t₂) (elimLtree+ t₃))
+                                                     ≡ tlcons i (tcons (elimLtree+ t₁) (elimLtree+ t₂)) (elimLtree+ t₃)) where
+
+
+                equalNormalFormLcons+ : {i : I} (t₁ t₂ : Ltree+) → elimLtree+ (lcons i t₁ t₂) ≡ elimLtree+ (normalFormLcons+ i t₁ t₂)
+                
+                equalNormalFormLcons+ ∅ ∅ = refl
+                equalNormalFormLcons+ ∅ • = eq₄ ∅
+                equalNormalFormLcons+ ∅ (l• i) = refl
+                equalNormalFormLcons+ ∅ (cons t₂ t₃) = ≡Trans (eq₆ ∅ t₂ t₃)
+                                                              (ap₂ (tlcons _) (equalNormalFormCons+ ∅ t₂) refl)
+                equalNormalFormLcons+ ∅ (lcons i t₂ t₃) = refl
+                equalNormalFormLcons+ • ∅ = eq₅ ∅
+                equalNormalFormLcons+ • • = eq₅ •
+                equalNormalFormLcons+ • (l• i) = eq₅ (l• i)
+                equalNormalFormLcons+ • (cons t₂ t₃) = eq₅ (cons t₂ t₃)
+                equalNormalFormLcons+ • (lcons i t₂ t₃) = eq₅ (lcons i t₂ t₃)
+                equalNormalFormLcons+ (l• i) ∅ = refl
+                equalNormalFormLcons+ (l• i) • = eq₄ (l• i)
+                equalNormalFormLcons+ (l• i) (l• j) = refl
+                equalNormalFormLcons+ (l• i) (cons t₂ t₃) = ≡Trans (eq₆ (l• i) t₂ t₃)
+                                                                   (ap₂ (tlcons _) (equalNormalFormCons+ (l• i) t₂) refl)
+                equalNormalFormLcons+ (l• i) (lcons i₁ t₂ t₃) = refl
+                equalNormalFormLcons+ (cons t₁ t₃) ∅ = refl
+                equalNormalFormLcons+ (cons t₁ t₃) • = eq₄ (cons t₁ t₃)
+                equalNormalFormLcons+ (cons t₁ t₃) (l• i) = refl
+                equalNormalFormLcons+ (cons t₁ t₃) (cons t₂ t₄) = ≡Trans (eq₆ (cons t₁ t₃) t₂ t₄)
+                                                                         (ap₂ (tlcons _) (equalNormalFormCons+ (cons t₁ t₃) t₂) refl)
+                equalNormalFormLcons+ (cons t₁ t₃) (lcons i t₂ t₄) = refl
+                equalNormalFormLcons+ (lcons i t₁ t₃) ∅ = refl
+                equalNormalFormLcons+ (lcons i t₁ t₃) • = eq₄ (lcons i t₁ t₃)
+                equalNormalFormLcons+ (lcons i t₁ t₃) (l• i₁) = refl
+                equalNormalFormLcons+ (lcons i t₁ t₃) (cons t₂ t₄) = ≡Trans (eq₆ (lcons i t₁ t₃) t₂ t₄)
+                                                                            (ap₂ (tlcons _) (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
+                equalNormalFormLcons+ (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
   
                 equalNormalForm+ : {t : Ltree+} → elimLtree+ t ≡ elimLtree+ (normalForm+ t)
                 equalNormalForm+ {∅} = refl
@@ -217,47 +222,69 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
                 equalNormalForm+ {l• i} = refl
                 equalNormalForm+ {cons t₁ t₂} = ≡Trans {y = tcons (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
                                                   (ap₂ tcons (equalNormalForm+ {t₁}) (equalNormalForm+{t₂}))
-                                                  (equalNormalFormCons+ {normalForm+ t₁} {normalForm+ t₂})
+                                                  (equalNormalFormCons+ (normalForm+ t₁) (normalForm+ t₂))
                 equalNormalForm+ {lcons i t₁ t₂} = ≡Trans {y = tlcons i (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
                                                      (ap₂ (tlcons i) (equalNormalForm+ {t₁}) (equalNormalForm+ {t₂}))
-                                                     (equalNormalFormLcons+ {i} {normalForm+ t₁} {normalForm+ t₂})
-
-{-
-module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A)
-         (tt∅ : A) (tt• : A) (ttcons : A → A → A) where
-      
-   elimLtree : Ltree → A
-   elimLtree ∅ = tt∅
-   elimLtree • = tt•
-   elimLtree (cons t₁ t₂) = ttcons (elimLtree+ t₁) (elimLtree+ t₂)
--}
-
---                  module _ where
-
---                    equalNormalCons : {t₁ t₂ : Ltree+} → elimLtree (cons t₁ t₂) ≡ elimLtree (normalFormCons t₁ t₂)
-  --                  equalNormalCons = {!!}
+                                                     (equalNormalFormLcons+ (normalForm+ t₁) (normalForm+ t₂))
 
 
---we give a full version when they ignore label
+
+
+module _  {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A)
+          (tt∅ : A) (tt• : A) (ttcons : A → A → A) where
+
+       elimLtreeAux = elimLtree+ t∅ t• tl• tcons tlcons
+
+       elimLtree : Ltree → A
+       elimLtree ∅ = tt∅
+       elimLtree • = tt•
+       elimLtree (cons t₁ t₂) = ttcons (elimLtreeAux t₁) (elimLtreeAux t₂)
+
+       module _ (eq₁ : (t : Ltree+) → tcons (elimLtreeAux t) t• ≡ elimLtreeAux t)
+                (eq₂ : (t : Ltree+) → tcons t• (elimLtreeAux t) ≡ elimLtreeAux t)
+                (eq₃ : (t₁ t₂ t₃ : Ltree+) → tcons (elimLtreeAux t₁) (tcons (elimLtreeAux t₂) (elimLtreeAux t₃))
+                                      ≡ tcons (tcons (elimLtreeAux t₁) (elimLtreeAux t₂)) (elimLtreeAux t₃))
+                (eq₄ : {i : I} (t₁ : Ltree+) → tlcons i (elimLtreeAux t₁) t• ≡ elimLtreeAux (addLbl+ i t₁))
+                (eq₅ : {i : I} (t₂ : Ltree+) → tlcons i t• (elimLtreeAux t₂) ≡ elimLtreeAux (addLbl+ i t₂))
+                (eq₆ : {i : I} (t₁ t₂ t₃ : Ltree+) → tlcons i (elimLtreeAux t₁) (tcons (elimLtreeAux t₂) (elimLtreeAux t₃))
+                                                     ≡ tlcons i (tcons (elimLtreeAux t₁) (elimLtreeAux t₂)) (elimLtreeAux t₃))
+                (eq₇ : (t₁ : Ltree+) → ttcons (elimLtreeAux t₁) tt• ≡ elimLtree (forgetLbl t₁))
+                (eq₈ : (t₂ : Ltree+) → ttcons tt• (elimLtreeAux t₂) ≡ elimLtree (forgetLbl t₂))
+                (eq₉ : (t₁ t₂ t₃ : Ltree+) → ttcons (elimLtreeAux t₁) (tcons (elimLtreeAux t₂) (elimLtreeAux t₃))
+                                           ≡ ttcons (tcons (elimLtreeAux t₁) (elimLtreeAux t₂)) (elimLtreeAux t₃)) where
+
+
+              equalNormalFormCons : (t₁ t₂ : Ltree+) → elimLtree (cons t₁ t₂) ≡ elimLtree (normalFormCons t₁ t₂)
+              equalNormalFormCons = {!!}
+
+              equalNormalForm : (t : Ltree) → elimLtree t ≡ elimLtree (normalForm t)
+              equalNormalForm = {!!}
+
+
+
+-- We give a lemma useful to show that a function ignoring label pass through quotients
+
 module _ {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A) where
 
-  elimLtree+-NoLabel : Ltree+ → A
-  elimLtree+-NoLabel ∅ = t∅
-  elimLtree+-NoLabel • = t•
-  elimLtree+-NoLabel (l• i) = t•
-  elimLtree+-NoLabel (cons t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
-  elimLtree+-NoLabel (lcons i t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
-
   elimLtree-NoLabel : Ltree → A
-  elimLtree-NoLabel ∅ = t∅
-  elimLtree-NoLabel • = t•
-  elimLtree-NoLabel (cons t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
+  elimLtree-NoLabel = elimLtree t∅ t• (λ _ → t•) tcons (λ _ → tcons) t∅ t• tcons
 
-  normalFormElimNoLabel : (eq₁ : {a : A} → tcons a t• ≡ a)
-                          (eq₂ : {a : A} → tcons t• a ≡ a)
-                          (eq₃ : {a b c : A} → tcons a (tcons b c) ≡ tcons (tcons a b) c)
-                          → {t : Ltree} → elimLtree-NoLabel t ≡ elimLtree-NoLabel (normalForm t)
-  normalFormElimNoLabel = {!!}
+  module _ (eq₁ : {a : A} → tcons a t• ≡ a)
+           (eq₂ : {a : A} → tcons t• a ≡ a)
+           (eq₃ : {a b c : A} → tcons a (tcons b c) ≡ tcons (tcons a b) c) where
+
+         normalFormElimNoLabel : {t : Ltree} → elimLtree-NoLabel t ≡ elimLtree-NoLabel (normalForm t)
+                          
+         normalFormElimNoLabel {t} = equalNormalForm t∅ t• (λ _ → t•) tcons (λ _ → tcons) t∅ t• tcons
+                                                     (λ _ → eq₁)
+                                                     (λ t₁ → eq₂)
+                                                     (λ t₁ t₂ t₃ → eq₃)
+                                                     (λ { ∅ → eq₁ ; • → eq₁ ; (l• i) → eq₁ ; (cons t₁ t₂) → eq₁ ; (lcons i t₁ t₂) → eq₁})
+                                                     (λ { ∅ → eq₂ ; • → eq₂ ; (l• i) → eq₂ ; (cons t₂ t₃) → eq₂ ; (lcons i t₂ t₃) → eq₂})
+                                                     (λ t₁ t₂ t₃ → eq₃)
+                                                     (λ { ∅ → eq₁ ; • → eq₁ ; (l• i) → eq₁ ; (cons t₁ t₂) → eq₁ ; (lcons i t₁ t₂) → eq₁})
+                                                     (λ { ∅ → eq₂ ; • → eq₂ ; (l• i) → eq₂ ; (cons t₂ t₃) → eq₂ ; (lcons i t₂ t₃) → eq₂})
+                                                     (λ t₁ t₂ t₃ → eq₃) t
                 
 
 
