@@ -50,6 +50,13 @@ addLbl i ∅ = ∅
 addLbl i • = l• i
 addLbl i (cons t₁ t₂) = lcons i t₁ t₂
 
+addLbl+ : I → Ltree+ → Ltree+
+addLbl+ i ∅ = ∅
+addLbl+ i • = l• i
+addLbl+ i (l• j) = l• (i ∪ j)
+addLbl+ i (cons t₁ t₂) = lcons i t₁ t₂
+addLbl+ i (lcons j t₁ t₂) = lcons (i ∪ j) t₁ t₂
+
 
 
 -- We define grafting
@@ -74,8 +81,7 @@ graft (cons t₁ t₃) (arConsR a) t₂ = cons t₁ (graft+ t₃ a t₂)
 
 
 
---We list all the cases, so that we do not forget anything
---This should be changed at some point...
+-- Here we define normal form of tree
 
 -- A tree is in normal form if :
 -- No • appear in it (except •, which is a normal form)
@@ -92,78 +98,12 @@ normalFormCons+ t₁ (cons t₂ t₃) = cons (normalFormCons+ t₁ t₂) t₃
 normalFormCons+ t₁ t₂ = cons t₁ t₂
 
 
-{- We write the full form for "clarity"...
-
-normalFormCons+ : Ltree+ → Ltree+ → Ltree+
-normalFormCons+ ∅ ∅ = cons ∅ ∅
-normalFormCons+ ∅ • = ∅
-normalFormCons+ ∅ (l• i) = cons ∅ (l• i)
-normalFormCons+ ∅ (cons t₂ t₃) = cons (normalFormCons+ ∅ t₂) t₃
-normalFormCons+ ∅ (lcons i t₂ t₃) = cons ∅ (lcons i t₂ t₃)
-normalFormCons+ • ∅ = ∅
-normalFormCons+ • • = •
-normalFormCons+ • (l• i) = l• i
-normalFormCons+ • (cons t₂ t₃) = cons t₂ t₃
-normalFormCons+ • (lcons i t₂ t₃) = lcons i t₂ t₃
-normalFormCons+ (l• i) ∅ = cons (l• i) ∅
-normalFormCons+ (l• i) • = l• i
-normalFormCons+ (l• i) (l• j) = cons (l• i) (l• j)
-normalFormCons+ (l• i) (cons t₂ t₃) = cons (normalFormCons+ (l• i) t₂) t₃
-normalFormCons+ (l• i) (lcons j t₂ t₃) = cons (l• i) (lcons j t₂ t₃)
-normalFormCons+ (cons t₁ t₃) ∅ = cons (cons t₁ t₃) ∅
-normalFormCons+ (cons t₁ t₃) • = cons t₁ t₃
-normalFormCons+ (cons t₁ t₃) (l• i) = cons (cons t₁ t₃) (l• i)
-normalFormCons+ (cons t₁ t₃) (cons t₂ t₄) = cons (normalFormCons+ (cons t₁ t₃) t₂) t₄
-normalFormCons+ (cons t₁ t₃) (lcons i t₂ t₄) = cons (cons t₁ t₃) (lcons i t₂ t₄)
-normalFormCons+ (lcons i t₁ t₃) ∅ = cons (lcons i t₁ t₃) ∅
-normalFormCons+ (lcons i t₁ t₃) • = lcons i t₁ t₃
-normalFormCons+ (lcons i t₁ t₃) (l• j) = cons (lcons i t₁ t₃) (l• j)
-normalFormCons+ (lcons i t₁ t₃) (cons t₂ t₄) = cons (normalFormCons+ (lcons i t₁ t₃) t₂) t₄
-normalFormCons+ (lcons i t₁ t₃) (lcons j t₂ t₄) = cons (lcons i t₁ t₃) (lcons j t₂ t₄)
--}
-
-
 --Output the normal form of lcons  i t₁ t₂ for t₁ and t₂ in normal form
 normalFormLcons+ : I → Ltree+ → Ltree+ → Ltree+
-normalFormLcons+ i • • = l• i
-normalFormLcons+ i (l• j) • = l• (i ∪ j)
-normalFormLcons+ i (lcons j t₁ t₂) • = lcons (i ∪ j) t₁ t₂
-normalFormLcons+ i (cons t₁ t₂) • = lcons i t₁ t₂
-normalFormLcons+ i ∅ • = ∅
-normalFormLcons+ i • ∅ = ∅
-normalFormLcons+ i • (l• j) = l• (i ∪ j)
-normalFormLcons+ i • (lcons j t₂ t₃) = lcons (i ∪ j) t₂ t₃
+normalFormLcons+ i t₁ • = addLbl+ i t₁
+normalFormLcons+ i • t₂ = addLbl+ i t₂
 normalFormLcons+ i t₁ (cons t₂ t₃) = lcons i (normalFormCons+ t₁ t₂) t₃
 normalFormLcons+ i t₁ t₂ = lcons i t₁ t₂
-
-{-
-normalFormLcons+ : I → Ltree+ → Ltree+ → Ltree+
-normalFormLcons+ i ∅ ∅ = lcons i ∅ ∅
-normalFormLcons+ i ∅ • = ∅
-normalFormLcons+ i ∅ (l• j) = lcons i ∅ (l• j)
-normalFormLcons+ i ∅ (cons t₂ t₃) = lcons i (normalFormCons+ ∅ t₂) t₃
-normalFormLcons+ i ∅ (lcons j t₂ t₃) = lcons i ∅ (lcons j t₂ t₃)
-normalFormLcons+ i • ∅ = ∅
-normalFormLcons+ i • • = l• i
-normalFormLcons+ i • (l• j) = l• (i ∪ j)
-normalFormLcons+ i • (cons t₂ t₃) = lcons i t₂ t₃
-normalFormLcons+ i • (lcons j t₂ t₃) = lcons (i ∪ j) t₂ t₃
-normalFormLcons+ i (l• j) ∅ = lcons i (l• j) ∅
-normalFormLcons+ i (l• j) • = l• (i ∪ j)
-normalFormLcons+ i (l• j) (l• k) = lcons i (l• j) (l• k)
-normalFormLcons+ i (l• j) (cons t₂ t₃) = lcons i (normalFormCons+ (l• j) t₂) t₃
-normalFormLcons+ i (l• j) (lcons k t₂ t₃) = lcons i (l• j) (lcons k t₂ t₃)
-normalFormLcons+ i (cons t₁ t₃) ∅ = lcons i (cons t₁ t₃) ∅
-normalFormLcons+ i (cons t₁ t₃) • = lcons i t₁ t₃
-normalFormLcons+ i (cons t₁ t₃) (l• j) = lcons i (cons t₁ t₃) (l• j)
-normalFormLcons+ i (cons t₁ t₃) (cons t₂ t₄) = lcons i (normalFormCons+ (cons t₁ t₃) t₂) t₄
-normalFormLcons+ i (cons t₁ t₃) (lcons j t₂ t₄) = lcons i (cons t₁ t₃) (lcons j t₂ t₄)
-normalFormLcons+ i (lcons j t₁ t₃) ∅ = lcons i (lcons j t₁ t₃) ∅
-normalFormLcons+ i (lcons j t₁ t₃) • = lcons (i ∪ j) t₁ t₃
-normalFormLcons+ i (lcons j t₁ t₃) (l• k) = lcons i (lcons j t₁ t₃) (l• k)
-normalFormLcons+ i (lcons j t₁ t₃) (cons t₂ t₄) = lcons i (normalFormCons+ (lcons j t₁ t₃) t₂) t₄
-normalFormLcons+ i (lcons j t₁ t₃) (lcons k t₂ t₄) = lcons i (lcons j t₁ t₃) (lcons k t₂ t₄)
--}
 
 
 
@@ -174,35 +114,6 @@ normalFormCons t₁ • = forgetLbl t₁
 normalFormCons • t₂ = forgetLbl t₂
 normalFormCons t₁ (cons t₂ t₃) = cons (normalFormCons+ t₁ t₂) t₃
 normalFormCons t₁ t₂ = cons t₁ t₂
-
-{-
-normalFormCons : Ltree+ → Ltree+ → Ltree
-normalFormCons ∅ ∅ = cons ∅ ∅
-normalFormCons ∅ • = ∅
-normalFormCons ∅ (l• i) = cons ∅ (l• i)
-normalFormCons ∅ (cons t₂ t₃) = cons (normalFormCons+ ∅ t₂) t₃
-normalFormCons ∅ (lcons i t₂ t₃) = cons ∅ (lcons i t₂ t₃)
-normalFormCons • ∅ = ∅
-normalFormCons • • = •
-normalFormCons • (l• i) = •
-normalFormCons • (cons t₂ t₃) = cons t₂ t₃
-normalFormCons • (lcons i t₂ t₃) = cons t₂ t₃
-normalFormCons (l• i) ∅ = cons (l• i) ∅
-normalFormCons (l• i) • = •
-normalFormCons (l• i) (l• j) = cons (l• i) (l• j)
-normalFormCons (l• i) (cons t₂ t₃) = cons (normalFormCons+ (l• i) t₂) t₃
-normalFormCons (l• i) (lcons j t₂ t₃) = cons (l• i) (lcons j t₂ t₃)
-normalFormCons (cons t₁ t₃) ∅ = cons (cons t₁ t₃) ∅
-normalFormCons (cons t₁ t₃) • = cons t₁ t₃
-normalFormCons (cons t₁ t₃) (l• i) = cons (cons t₁ t₃) (l• i)
-normalFormCons (cons t₁ t₃) (cons t₂ t₄) = cons (normalFormCons+ (cons t₁ t₃) t₂) t₄
-normalFormCons (cons t₁ t₃) (lcons i t₂ t₄) = cons (cons t₁ t₃) (lcons i t₂ t₄)
-normalFormCons (lcons i t₁ t₃) ∅ = cons (lcons i t₁ t₃) ∅
-normalFormCons (lcons i t₁ t₃) • = cons t₁ t₃
-normalFormCons (lcons i t₁ t₃) (l• j) = cons (lcons i t₁ t₃) (l• j)
-normalFormCons (lcons i t₁ t₃) (cons t₂ t₄) = cons (normalFormCons+ (lcons i t₁ t₃) t₂) t₄
-normalFormCons (lcons i t₁ t₃) (lcons j t₂ t₄) = cons (lcons i t₁ t₃) (lcons j t₂ t₄)
--}
 
 
 --Output the normal form of a labbeled tree
@@ -219,6 +130,135 @@ normalForm ∅ = ∅
 normalForm • = •
 normalForm (cons t₁ t₂) = normalFormCons (normalForm+ t₁) (normalForm+ t₂)
 
+
+
+--Now we need lemma to help show that f normalForm t ≡ f t
+
+module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A) where
+
+  elimLtree+ : Ltree+ → A
+  elimLtree+ ∅ = t∅
+  elimLtree+ • = t•
+  elimLtree+ (l• i) = tl• i
+  elimLtree+ (cons t₁ t₂) = tcons (elimLtree+ t₁) (elimLtree+ t₂)
+  elimLtree+ (lcons i t₁ t₂) = tlcons i (elimLtree+ t₁) (elimLtree+ t₂)
+
+  module _ (eq₁ : {a : A} → tcons a t• ≡ a)
+           (eq₂ : {a : A} → tcons t• a ≡ a)
+           (eq₃ : {a b c : A} → tcons a (tcons b c) ≡ tcons (tcons a b) c) where
+
+         equalNormalFormCons+ : {t₁ t₂ : Ltree+} → elimLtree+ (cons t₁ t₂) ≡ elimLtree+ (normalFormCons+ t₁ t₂)
+         equalNormalFormCons+ {∅} {∅} = refl
+         equalNormalFormCons+ {∅} {•} = eq₁
+         equalNormalFormCons+ {∅} {l• i} = refl
+         equalNormalFormCons+ {∅} {cons t₂ t₃} = ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {∅} {t₂}) refl)
+         equalNormalFormCons+ {∅} {lcons i t₂ t₃} = refl
+         equalNormalFormCons+ {•} {∅} = eq₂
+         equalNormalFormCons+ {•} {•} = eq₂
+         equalNormalFormCons+ {•} {l• i} = eq₂
+         equalNormalFormCons+ {•} {cons t₂ t₃} = eq₂
+         equalNormalFormCons+ {•} {lcons i t₂ t₃} = eq₂
+         equalNormalFormCons+ {l• i} {∅} = refl
+         equalNormalFormCons+ {l• i} {•} = eq₁
+         equalNormalFormCons+ {l• i} {l• i₁} = refl
+         equalNormalFormCons+ {l• i} {cons t₂ t₃} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {l• i} {t₂}) refl)
+         equalNormalFormCons+ {l• i} {lcons i₁ t₂ t₃} = refl
+         equalNormalFormCons+ {cons t₁ t₃} {∅} = refl
+         equalNormalFormCons+ {cons t₁ t₃} {•} = eq₁
+         equalNormalFormCons+ {cons t₁ t₃} {l• i} = refl
+         equalNormalFormCons+ {cons t₁ t₃} {cons t₂ t₄} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {cons t₁ t₃} {t₂}) refl)
+         equalNormalFormCons+ {cons t₁ t₃} {lcons i t₂ t₄} = refl
+         equalNormalFormCons+ {lcons i t₁ t₃} {∅} = refl
+         equalNormalFormCons+ {lcons i t₁ t₃} {•} = eq₁
+         equalNormalFormCons+ {lcons i t₁ t₃} {l• i₁} = refl
+         equalNormalFormCons+ {lcons i t₁ t₃} {cons t₂ t₄} =  ≡Trans eq₃ (ap₂ tcons (equalNormalFormCons+ {lcons i t₁ t₃} {t₂}) refl)
+         equalNormalFormCons+ {lcons i t₁ t₃} {lcons i₁ t₂ t₄} = refl
+
+         module _ (eq₁ : {i : I} → tlcons i t• t∅ ≡ t∅)
+                  (eq₂ : {i : I} → tlcons i t• t• ≡ tl• i)
+                  (eq₃ : {i j : I} → tlcons i t• (tl• j) ≡ tl• (i ∪ j))
+                  (eq₄ : {i : I} {a b : A} → tlcons i (tcons a b) t• ≡ tlcons i a b)
+                  (eq₅ : {i j : I} {a b : A} → tlcons i t• (tlcons j a b) ≡ tlcons (i ∪ j) a b)
+                  (eq₆ : {i : I} → tlcons i t∅ t• ≡ t∅)
+                  (eq₇ : {i j : I} → tlcons i (tl• j) t• ≡ tl• (i ∪ j))
+                  (eq₈ : {i j : I} {a b : A} → tlcons i (tlcons j a b) t• ≡ tlcons (i ∪ j) a b)
+                  (eq₉ : {i : I} {a b c : A} → tlcons i a (tcons b c) ≡ tlcons i (tcons a b) c) where
+
+                equalNormalFormLcons+ : {i : I} {t₁ t₂ : Ltree+} → elimLtree+ (lcons i t₁ t₂) ≡ elimLtree+ (normalFormLcons+ i t₁ t₂)
+                equalNormalFormLcons+ {i} {∅} {∅} = refl
+                equalNormalFormLcons+ {i} {∅} {•} = eq₆
+                equalNormalFormLcons+ {i} {∅} {l• i₁} = refl
+                equalNormalFormLcons+ {i} {∅} {cons t₂ t₃} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = ∅} {t₂ = t₂}) refl)
+                equalNormalFormLcons+ {i} {∅} {lcons i₁ t₂ t₃} = refl
+                equalNormalFormLcons+ {i} {•} {∅} = eq₁
+                equalNormalFormLcons+ {i} {•} {•} = eq₂
+                equalNormalFormLcons+ {i} {•} {l• i₁} = eq₃
+                equalNormalFormLcons+ {i} {•} {cons t₂ t₃} = {!!} --≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = •} {t₂ = t₂}) refl)
+                equalNormalFormLcons+ {i} {•} {lcons i₁ t₂ t₃} = eq₅
+                equalNormalFormLcons+ {i} {l• i₁} {∅} = refl
+                equalNormalFormLcons+ {i} {l• i₁} {•} = eq₇
+                equalNormalFormLcons+ {i} {l• i₁} {l• i₂} = refl
+                equalNormalFormLcons+ {i} {l• i₁} {cons t₂ t₃} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = l• i₁} {t₂ = t₂}) refl)
+                equalNormalFormLcons+ {i} {l• i₁} {lcons i₂ t₂ t₃} = refl
+                equalNormalFormLcons+ {i} {cons t₁ t₃} {∅} = refl
+                equalNormalFormLcons+ {i} {cons t₁ t₃} {•} = eq₄
+                equalNormalFormLcons+ {i} {cons t₁ t₃} {l• i₁} = refl
+                equalNormalFormLcons+ {i} {cons t₁ t₃} {cons t₂ t₄} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = cons t₁ t₃} {t₂ = t₂}) refl)
+                equalNormalFormLcons+ {i} {cons t₁ t₃} {lcons i₁ t₂ t₄} = refl
+                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {∅} = refl
+                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {•} = eq₈
+                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {l• i₂} = refl
+                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {cons t₂ t₄} = ≡Trans eq₉ (ap₂ (tlcons i) (equalNormalFormCons+ {t₁ = lcons i₁ t₁ t₃} {t₂ = t₂}) refl)
+                equalNormalFormLcons+ {i} {lcons i₁ t₁ t₃} {lcons i₂ t₂ t₄} = refl
+  
+                equalNormalForm+ : {t : Ltree+} → elimLtree+ t ≡ elimLtree+ (normalForm+ t)
+                equalNormalForm+ {∅} = refl
+                equalNormalForm+ {•} = refl
+                equalNormalForm+ {l• i} = refl
+                equalNormalForm+ {cons t₁ t₂} = ≡Trans {y = tcons (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
+                                                  (ap₂ tcons (equalNormalForm+ {t₁}) (equalNormalForm+{t₂}))
+                                                  (equalNormalFormCons+ {normalForm+ t₁} {normalForm+ t₂})
+                equalNormalForm+ {lcons i t₁ t₂} = ≡Trans {y = tlcons i (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
+                                                     (ap₂ (tlcons i) (equalNormalForm+ {t₁}) (equalNormalForm+ {t₂}))
+                                                     (equalNormalFormLcons+ {i} {normalForm+ t₁} {normalForm+ t₂})
+
+{-
+module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A)
+         (tt∅ : A) (tt• : A) (ttcons : A → A → A) where
+      
+   elimLtree : Ltree → A
+   elimLtree ∅ = tt∅
+   elimLtree • = tt•
+   elimLtree (cons t₁ t₂) = ttcons (elimLtree+ t₁) (elimLtree+ t₂)
+-}
+
+--                  module _ where
+
+--                    equalNormalCons : {t₁ t₂ : Ltree+} → elimLtree (cons t₁ t₂) ≡ elimLtree (normalFormCons t₁ t₂)
+  --                  equalNormalCons = {!!}
+
+
+--we give a full version when they ignore label
+module _ {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A) where
+
+  elimLtree+-NoLabel : Ltree+ → A
+  elimLtree+-NoLabel ∅ = t∅
+  elimLtree+-NoLabel • = t•
+  elimLtree+-NoLabel (l• i) = t•
+  elimLtree+-NoLabel (cons t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
+  elimLtree+-NoLabel (lcons i t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
+
+  elimLtree-NoLabel : Ltree → A
+  elimLtree-NoLabel ∅ = t∅
+  elimLtree-NoLabel • = t•
+  elimLtree-NoLabel (cons t₁ t₂) = tcons (elimLtree+-NoLabel t₁) (elimLtree+-NoLabel t₂)
+
+  normalFormElimNoLabel : (eq₁ : {a : A} → tcons a t• ≡ a)
+                          (eq₂ : {a : A} → tcons t• a ≡ a)
+                          (eq₃ : {a b c : A} → tcons a (tcons b c) ≡ tcons (tcons a b) c)
+                          → {t : Ltree} → elimLtree-NoLabel t ≡ elimLtree-NoLabel (normalForm t)
+  normalFormElimNoLabel = {!!}
+                
 
 
 {-
@@ -265,6 +305,9 @@ module test where
   l8 : test8 ≡ cons ∅ (l• (i ∪ j))
   l8 = refl
 -}
+
+
+
 
 
 --We define labbelled trees quotiented, toward ∞-Mon
@@ -318,112 +361,15 @@ QtreeRec d eq₁ eq₂ eq₃ = QtreeElim d (≡Trans transportConst eq₁)
 
 --We define arity of trees, as a natural number
 
-Arity+ : Ltree+ → ℕ
-Arity+ ∅ = s O
-Arity+ • = O
-Arity+ (l• i) = O
-Arity+ (cons t₁ t₂) = Arity+ t₁ + Arity+ t₂
-Arity+ (lcons i t₁ t₂) = Arity+ t₁ + Arity+ t₂
-
 Arity : Ltree → ℕ
-Arity ∅ = s O
-Arity • = O
-Arity (cons t₁ t₂) = Arity+ t₁ + Arity+ t₂
-
-
-{-ArityNormalFormCons+ : {t₁ t₂ : Ltree+} → Arity+ t₁ + Arity+ t₂ ≡ Arity+ (normalFormCons+ t₁ t₂)
-ArityNormalFormCons+ {t₁} {•} = {!!}
-ArityNormalFormCons+ {•} {t₂} = {!!}
-ArityNormalFormCons+ {t₁} {cons t₂ t₃} = {!!}
-ArityNormalFormCons+ {t₁} {t₂} = {!!}-}
-
-
-ArityNormalFormCons+ : {t₁ t₂ : Ltree+} → Arity+ t₁ + Arity+ t₂ ≡ Arity+ (normalFormCons+ t₁ t₂)
-ArityNormalFormCons+ {∅} {∅} = refl
-ArityNormalFormCons+ {∅} {•} = refl
-ArityNormalFormCons+ {∅} {l• i} = refl
-ArityNormalFormCons+ {∅} {cons t₂ t₃} = ap₂ (_+_) (ArityNormalFormCons+ {t₁ = ∅} {t₂ = t₂}) refl
-ArityNormalFormCons+ {∅} {lcons i t₂ t₃} = refl
-ArityNormalFormCons+ {•} {∅} = refl
-ArityNormalFormCons+ {•} {•} = refl
-ArityNormalFormCons+ {•} {l• i} = refl
-ArityNormalFormCons+ {•} {cons t₂ t₃} = refl
-ArityNormalFormCons+ {•} {lcons i t₂ t₃} = refl
-ArityNormalFormCons+ {l• i} {∅} = refl
-ArityNormalFormCons+ {l• i} {•} = refl
-ArityNormalFormCons+ {l• i} {l• i₁} = refl
-ArityNormalFormCons+ {l• i} {cons t₂ t₃} = ap₂ (_+_) (ArityNormalFormCons+ {t₁ = l• i} {t₂ = t₂}) refl
-ArityNormalFormCons+ {l• i} {lcons i₁ t₂ t₃} = refl
-ArityNormalFormCons+ {cons t₁ t₃} {∅} = refl
-ArityNormalFormCons+ {cons t₁ t₃} {•} = +O
-ArityNormalFormCons+ {cons t₁ t₃} {l• i} = refl
-ArityNormalFormCons+ {cons t₁ t₃} {cons t₂ t₄} = ≡Trans (≡Sym (+Assoc {l = Arity+ t₁ + Arity+ t₃}))
-                                                        (ap₂ (_+_) (ArityNormalFormCons+ {t₁ = cons t₁ t₃} {t₂ = t₂})
-                                                                   (refl {a = Arity+ t₄}))
-ArityNormalFormCons+ {cons t₁ t₃} {lcons i t₂ t₄} = refl
-ArityNormalFormCons+ {lcons i t₁ t₃} {∅} = refl
-ArityNormalFormCons+ {lcons i t₁ t₃} {•} = +O
-ArityNormalFormCons+ {lcons i t₁ t₃} {l• i₁} = refl
-ArityNormalFormCons+ {lcons i t₁ t₃} {cons t₂ t₄} = ≡Trans (≡Sym (+Assoc {l = Arity+ t₁ + Arity+ t₃}))
-                                                           (ap₂ (_+_) (ArityNormalFormCons+ {t₁ = lcons i t₁ t₃} {t₂ = t₂})
-                                                                      (refl {a = Arity+ t₄}))
-ArityNormalFormCons+ {lcons i t₁ t₃} {lcons i₁ t₂ t₄} = refl
-
-
-{-
-ArityNormalFormCons : {t₁ t₂ : Ltree+} → Arity+ t₁ + Arity+ t₂ ≡ Arity (normalFormCons t₁ t₂)
-ArityNormalFormCons {∅} {∅} = refl
-ArityNormalFormCons {∅} {•} = refl
-ArityNormalFormCons {∅} {l• i} = refl
-ArityNormalFormCons {∅} {cons t₂ t₃} = ap₂ (_+_) (ArityNormalFormCons+ {t₁ = ∅} {t₂ = t₂}) refl
-ArityNormalFormCons {∅} {lcons i t₂ t₃} = refl
-ArityNormalFormCons {•} {∅} = refl
-ArityNormalFormCons {•} {•} = refl
-ArityNormalFormCons {•} {l• i} = refl
-ArityNormalFormCons {•} {cons t₂ t₃} = refl
-ArityNormalFormCons {•} {lcons i t₂ t₃} = refl
-ArityNormalFormCons {l• i} {∅} = refl
-ArityNormalFormCons {l• i} {•} = refl
-ArityNormalFormCons {l• i} {l• i₁} = refl
-ArityNormalFormCons {l• i} {cons t₂ t₃} = ap₂ (_+_) (ArityNormalFormCons+ {t₁ = l• i} {t₂ = t₂}) refl
-ArityNormalFormCons {l• i} {lcons i₁ t₂ t₃} = refl
-ArityNormalFormCons {cons t₁ t₃} {∅} = refl
-ArityNormalFormCons {cons t₁ t₃} {•} = +O
-ArityNormalFormCons {cons t₁ t₃} {l• i} = refl
-ArityNormalFormCons {cons t₁ t₃} {cons t₂ t₄} = ≡Trans (≡Sym (+Assoc {l = Arity+ t₁ + Arity+ t₃}))
-                                                       (ap₂ (_+_) (ArityNormalFormCons+ {t₁ = cons t₁ t₃} {t₂ = t₂})
-                                                                  (refl {a = Arity+ t₄}))
-ArityNormalFormCons {cons t₁ t₃} {lcons i t₂ t₄} = refl
-ArityNormalFormCons {lcons i t₁ t₃} {∅} = refl
-ArityNormalFormCons {lcons i t₁ t₃} {•} = +O
-ArityNormalFormCons {lcons i t₁ t₃} {l• i₁} = refl
-ArityNormalFormCons {lcons i t₁ t₃} {cons t₂ t₄} =  ≡Trans (≡Sym (+Assoc {l = Arity+ t₁ + Arity+ t₃}))
-                                                           (ap₂ (_+_) (ArityNormalFormCons+ {t₁ = lcons i t₁ t₃} {t₂ = t₂})
-                                                                      (refl {a = Arity+ t₄}))
-ArityNormalFormCons {lcons i t₁ t₃} {lcons i₁ t₂ t₄} = refl
-
-
-ArityNormalForm+ : {t : Ltree+} → Arity+ t ≡ Arity+ (normalForm+ t)
-ArityNormalForm+ {∅} = refl
-ArityNormalForm+ {•} = refl
-ArityNormalForm+ {l• i} = refl
-ArityNormalForm+ {cons t₁ t₂} =  ≡Trans {y = Arity+ (normalForm+ t₁) + Arity+ (normalForm+ t₂)}
-                                        (ap₂ (_+_) (ArityNormalForm+ {t = t₁}) (ArityNormalForm+ {t = t₂}))
-                                        (ArityNormalFormCons+ {t₁ = normalForm+ t₁} {t₂ = normalForm+ t₂})
-ArityNormalForm+ {lcons i t t₁} = {!!}
-
-
-ArityNormalForm : {t : Ltree} → Arity t ≡ Arity (normalForm t)
-ArityNormalForm {∅} = refl
-ArityNormalForm {•} = refl
-ArityNormalForm {cons t₁ t₂} = ≡Trans {y = Arity+ (normalForm+ t₁) + Arity+ (normalForm+ t₂)}
-                                      (ap₂ (_+_) (ArityNormalForm+ {t = t₁}) (ArityNormalForm+ {t = t₂}))
-                                      (ArityNormalFormCons {t₁ = normalForm+ t₁} {t₂ = normalForm+ t₂})
-
+Arity = elimLtree-NoLabel (s O) O (_+_)
 
 QArity : Qtree → ℕ
-QArity = QtreeRec Arity
-                  (λ {t} → ArityNormalForm {t})
-                  {!!}
-                  {!!}
--}
+QArity = QtreeRec Arity (λ {t} → normalFormElimNoLabel (s O) O (_+_)
+                                                       +O
+                                                       refl
+                                                       (λ {a b c} → ≡Sym (+Assoc {a} {b} {c})) {t})
+                        {!!}
+                        {!!}
+
+
