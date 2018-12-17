@@ -1,10 +1,10 @@
 {-# OPTIONS --rewriting #-}
 
-module QuotientLabelledBinaryTree where
+module QuotientLabelledTree where
 
 open import Data
 open import FibrantUniverse
-open import LabelledBinaryTree
+open import LabelledTree
 
 
 --We define labbelled trees quotiented, toward ∞-Mon
