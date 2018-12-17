@@ -1,6 +1,3 @@
-{-# OPTIONS --rewriting #-}
-
-
 module LabelledBinaryTree where
 
 
@@ -133,6 +130,10 @@ normalForm (cons t₁ t₂) = normalFormCons (normalForm+ t₁) (normalForm+ t�
 
 
 
+
+
+
+
 --Now we need lemma to help show that f normalForm t ≡ f t for f inductively define
 
 module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → A → A) (tlcons : I → A → A → A) where
@@ -216,15 +217,15 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
                                                                             (ap₂ (tlcons _) (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
                 equalNormalFormLcons+ (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
   
-                equalNormalForm+ : {t : Ltree+} → elimLtree+ t ≡ elimLtree+ (normalForm+ t)
-                equalNormalForm+ {∅} = refl
-                equalNormalForm+ {•} = refl
-                equalNormalForm+ {l• i} = refl
-                equalNormalForm+ {cons t₁ t₂} = ≡Trans {y = tcons (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
-                                                  (ap₂ tcons (equalNormalForm+ {t₁}) (equalNormalForm+{t₂}))
+                equalNormalForm+ : (t : Ltree+) → elimLtree+ t ≡ elimLtree+ (normalForm+ t)
+                equalNormalForm+ ∅ = refl
+                equalNormalForm+ • = refl
+                equalNormalForm+ (l• i) = refl
+                equalNormalForm+ (cons t₁ t₂) = ≡Trans {y = tcons (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
+                                                  (ap₂ tcons (equalNormalForm+ t₁) (equalNormalForm+ t₂))
                                                   (equalNormalFormCons+ (normalForm+ t₁) (normalForm+ t₂))
-                equalNormalForm+ {lcons i t₁ t₂} = ≡Trans {y = tlcons i (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
-                                                     (ap₂ (tlcons i) (equalNormalForm+ {t₁}) (equalNormalForm+ {t₂}))
+                equalNormalForm+ (lcons i t₁ t₂) = ≡Trans {y = tlcons i (elimLtree+ (normalForm+ t₁)) (elimLtree+ (normalForm+ t₂))}
+                                                     (ap₂ (tlcons i) (equalNormalForm+ t₁) (equalNormalForm+ t₂))
                                                      (equalNormalFormLcons+ (normalForm+ t₁) (normalForm+ t₂))
 
 
@@ -248,17 +249,54 @@ module _  {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A →
                 (eq₅ : {i : I} (t₂ : Ltree+) → tlcons i t• (elimLtreeAux t₂) ≡ elimLtreeAux (addLbl+ i t₂))
                 (eq₆ : {i : I} (t₁ t₂ t₃ : Ltree+) → tlcons i (elimLtreeAux t₁) (tcons (elimLtreeAux t₂) (elimLtreeAux t₃))
                                                      ≡ tlcons i (tcons (elimLtreeAux t₁) (elimLtreeAux t₂)) (elimLtreeAux t₃))
-                (eq₇ : (t₁ : Ltree+) → ttcons (elimLtreeAux t₁) tt• ≡ elimLtree (forgetLbl t₁))
-                (eq₈ : (t₂ : Ltree+) → ttcons tt• (elimLtreeAux t₂) ≡ elimLtree (forgetLbl t₂))
+                (eq₇ : (t₁ : Ltree+) → ttcons (elimLtreeAux t₁) t• ≡ elimLtree (forgetLbl t₁))
+                (eq₈ : (t₂ : Ltree+) → ttcons t• (elimLtreeAux t₂) ≡ elimLtree (forgetLbl t₂))
                 (eq₉ : (t₁ t₂ t₃ : Ltree+) → ttcons (elimLtreeAux t₁) (tcons (elimLtreeAux t₂) (elimLtreeAux t₃))
                                            ≡ ttcons (tcons (elimLtreeAux t₁) (elimLtreeAux t₂)) (elimLtreeAux t₃)) where
 
 
+              equalCons+ = equalNormalFormCons+ t∅ t• tl• tcons tlcons eq₁ eq₂ eq₃
+
+              equal+ = equalNormalForm+ t∅ t• tl• tcons tlcons eq₁ eq₂ eq₃ eq₄ eq₅ eq₆
+
+
               equalNormalFormCons : (t₁ t₂ : Ltree+) → elimLtree (cons t₁ t₂) ≡ elimLtree (normalFormCons t₁ t₂)
-              equalNormalFormCons = {!!}
+
+              equalNormalFormCons ∅ ∅ = refl
+              equalNormalFormCons ∅ • = eq₇ ∅
+              equalNormalFormCons ∅ (l• i) = refl
+              equalNormalFormCons ∅ (cons t₂ t₃) = ≡Trans (eq₉ ∅ t₂ t₃)
+                                                          (ap₂ ttcons (equalCons+ ∅ t₂) refl) 
+              equalNormalFormCons ∅ (lcons i t₂ t₃) = refl
+              equalNormalFormCons • ∅ = eq₈ ∅
+              equalNormalFormCons • • = eq₈ •
+              equalNormalFormCons • (l• i) = eq₈ (l• i)
+              equalNormalFormCons • (cons t₂ t₃) = eq₈ (cons t₂ t₃)
+              equalNormalFormCons • (lcons i t₂ t₃) = eq₈ (lcons i t₂ t₃)
+              equalNormalFormCons (l• i) ∅ = refl
+              equalNormalFormCons (l• i) • = eq₇ (l• i)
+              equalNormalFormCons (l• i) (l• i₁) = refl
+              equalNormalFormCons (l• i) (cons t₂ t₃) =  ≡Trans (eq₉ (l• i) t₂ t₃)
+                                                                (ap₂ ttcons (equalCons+ (l• i) t₂) refl) 
+              equalNormalFormCons (l• i) (lcons i₁ t₂ t₃) = refl
+              equalNormalFormCons (cons t₁ t₃) ∅ = refl
+              equalNormalFormCons (cons t₁ t₃) • = eq₇ (cons t₁ t₃)
+              equalNormalFormCons (cons t₁ t₃) (l• i) = refl
+              equalNormalFormCons (cons t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₉ (cons t₁ t₃) t₂ t₄)
+                                                                      (ap₂ ttcons (equalCons+ (cons t₁ t₃) t₂) refl) 
+              equalNormalFormCons (cons t₁ t₃) (lcons i t₂ t₄) = refl
+              equalNormalFormCons (lcons i t₁ t₃) ∅ = refl
+              equalNormalFormCons (lcons i t₁ t₃) • = eq₇ (lcons i t₁ t₃)
+              equalNormalFormCons (lcons i t₁ t₃) (l• i₁) = refl
+              equalNormalFormCons (lcons i t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₉ (lcons i t₁ t₃) t₂ t₄)
+                                                                         (ap₂ ttcons (equalCons+ (lcons i t₁ t₃) t₂) refl) 
+              equalNormalFormCons (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
 
               equalNormalForm : (t : Ltree) → elimLtree t ≡ elimLtree (normalForm t)
-              equalNormalForm = {!!}
+              equalNormalForm ∅ = refl
+              equalNormalForm • = refl
+              equalNormalForm (cons t₁ t₂) = ≡Trans (ap₂ ttcons (equal+ t₁) (equal+ t₂))
+                                                    (equalNormalFormCons (normalForm+ t₁) (normalForm+ t₂))
 
 
 
@@ -266,8 +304,52 @@ module _  {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A →
 
 module _ {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A) where
 
+
+  elimLtree-NoLabel+ : Ltree+ → A
+  elimLtree-NoLabel+ = elimLtreeAux t∅ t• (λ _ → t•) tcons (λ _ → tcons) t∅ t• tcons
+
   elimLtree-NoLabel : Ltree → A
   elimLtree-NoLabel = elimLtree t∅ t• (λ _ → t•) tcons (λ _ → tcons) t∅ t• tcons
+
+
+
+  --We show that elimLtree-NoLabel is preserve by grafting with label i
+
+  elimLtreeGraft•-NoLabel+ :  {i : I} {t : Ltree+} → (a : arity+ t)
+                              → elimLtree-NoLabel+ (graft+ t a (l• i)) ≡ elimLtree-NoLabel+ (graft+ t a •)
+                              
+  elimLtreeGraft•-NoLabel+ ar∅+ = refl
+  elimLtreeGraft•-NoLabel+ (arConsL+ a) = ap₂ tcons (elimLtreeGraft•-NoLabel+ a) refl
+  elimLtreeGraft•-NoLabel+ (arConsR+ a) = ap₂ tcons refl (elimLtreeGraft•-NoLabel+ a)
+  elimLtreeGraft•-NoLabel+ (arlConsL+ a) = ap₂ tcons (elimLtreeGraft•-NoLabel+ a) refl
+  elimLtreeGraft•-NoLabel+ (arlConsR+ a) = ap₂ tcons refl (elimLtreeGraft•-NoLabel+ a)
+  
+  
+  elimLtreeGraft•-NoLabel : {i : I} {t : Ltree} → (a : arity t)
+                            → elimLtree-NoLabel (graft t a (l• i)) ≡ elimLtree-NoLabel (graft t a •)
+                            
+  elimLtreeGraft•-NoLabel ar∅ = refl
+  elimLtreeGraft•-NoLabel (arConsL a) = ap₂ tcons (elimLtreeGraft•-NoLabel+ a) refl
+  elimLtreeGraft•-NoLabel (arConsR a) = ap₂ tcons refl (elimLtreeGraft•-NoLabel+ a)
+  
+
+  elimLtreeGraftCons-NoLabel+ :  {i : I} {t : Ltree+} → (a : arity+ t) {t₁ t₂ : Ltree+}
+                                 → elimLtree-NoLabel+ (graft+ t a (lcons i t₁ t₂)) ≡ elimLtree-NoLabel+ (graft+ t a (cons t₁ t₂))
+                                 
+  elimLtreeGraftCons-NoLabel+ ar∅+ = refl
+  elimLtreeGraftCons-NoLabel+ (arConsL+ a) = ap₂ tcons (elimLtreeGraftCons-NoLabel+ a) refl
+  elimLtreeGraftCons-NoLabel+ (arConsR+ a) = ap₂ tcons refl (elimLtreeGraftCons-NoLabel+ a)
+  elimLtreeGraftCons-NoLabel+ (arlConsL+ a) = ap₂ tcons (elimLtreeGraftCons-NoLabel+ a) refl
+  elimLtreeGraftCons-NoLabel+ (arlConsR+ a) = ap₂ tcons refl (elimLtreeGraftCons-NoLabel+ a)
+
+  elimLtreeGraftCons-NoLabel : {i : I} {t : Ltree} → (a : arity t) → {t₁ t₂ : Ltree+}
+                               → elimLtree-NoLabel (graft t a (lcons i t₁ t₂)) ≡  elimLtree-NoLabel (graft t a (cons t₁ t₂))
+  elimLtreeGraftCons-NoLabel ar∅ = refl
+  elimLtreeGraftCons-NoLabel (arConsL a) = ap₂ tcons (elimLtreeGraftCons-NoLabel+ a) refl
+  elimLtreeGraftCons-NoLabel (arConsR a) = ap₂ tcons refl (elimLtreeGraftCons-NoLabel+ a)
+
+
+  --Now we show a condition for elimLtree-NoLabel to be invariant by normalisation of tree
 
   module _ (eq₁ : {a : A} → tcons a t• ≡ a)
            (eq₂ : {a : A} → tcons t• a ≡ a)
@@ -332,71 +414,5 @@ module test where
   l8 : test8 ≡ cons ∅ (l• (i ∪ j))
   l8 = refl
 -}
-
-
-
-
-
---We define labbelled trees quotiented, toward ∞-Mon
-
-postulate
-  Qtree : Set
-  [_] : Ltree → Qtree
-
-  qNormal : {t : Ltree} → [ t ] ≡ [ normalForm t ]
-  
-  qe₀• : {t : Ltree} (a : arity t) → [ graft t a (l• e₀) ] ≡ [ graft t a • ]
-
-  qe₀cons : {t : Ltree} (a : arity t) {t₁ t₂ : Ltree+} → [ graft t a (lcons e₀ t₁ t₂) ] ≡ [ graft t a (cons t₁ t₂) ]
-
-
-module _ {k} {P : Qtree → Set k} (d : (t : Ltree) → P [ t ] )
-
-  (_ : {t : Ltree} → transport P qNormal (d t) ≡ (d (normalForm t)))
-  
-  (_ : {t : Ltree} → (a : arity t)
-       → transport P (qe₀• a) (d (graft t a (l• e₀))) ≡ d (graft t a •))
-       
-  (_ : {t : Ltree} → (a : arity t) → {t₁ t₂ : Ltree+}
-       → transport P (qe₀cons a) (d (graft t a (lcons e₀ t₁ t₂))) ≡ d (graft t a (cons t₁ t₂)))
-       
-  where
-  postulate
-    QtreeElim : (t : Qtree) → P t
-    QtreeCompute : (t : Ltree) → QtreeElim [ t ] ↦ d t
-    {-# REWRITE QtreeCompute #-}
-
-
-
-
-QtreeRec : ∀ {k} {A : Set k} (d : Ltree → A)
-           → ({t : Ltree} → d t ≡ d (normalForm t))
-           → ({t : Ltree} → (a : arity t) → d (graft t a (l• e₀)) ≡ d (graft t a •))
-           → ({t : Ltree} → (a : arity t) → {t₁ t₂ : Ltree+} → d (graft t a (lcons e₀ t₁ t₂)) ≡ d (graft t a (cons t₁ t₂)))
-           → Qtree → A
-QtreeRec d eq₁ eq₂ eq₃ = QtreeElim d (≡Trans transportConst eq₁)
-                                     (λ a → ≡Trans transportConst (eq₂ a))
-                                     λ a → ≡Trans transportConst (eq₃ a) 
-
-
-
-
-
-
-
-
-
---We define arity of trees, as a natural number
-
-Arity : Ltree → ℕ
-Arity = elimLtree-NoLabel (s O) O (_+_)
-
-QArity : Qtree → ℕ
-QArity = QtreeRec Arity (λ {t} → normalFormElimNoLabel (s O) O (_+_)
-                                                       +O
-                                                       refl
-                                                       (λ {a b c} → ≡Sym (+Assoc {a} {b} {c})) {t})
-                        {!!}
-                        {!!}
 
 
