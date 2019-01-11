@@ -39,7 +39,10 @@ _<<_ {A} {{Afinite}} x y = funFO x < funFO y
 
 infix 56 _<<_
 
-
+{-
+order : {A : Set} {{Afinite : FOSet A}} → A → A → Set
+order x y = x << y
+-}
 
 
 --Prove finiteness of canonical finite sets
@@ -312,7 +315,7 @@ module FiniteUnionOfFiniteSets where
 
     FOΣ {A} {{Afinite}} {B} {{Bfinite}} 
               = let S = Σcardinal A B in let F = Σfibre A B in
-                   record { cardinal = finiteSum (Σcardinal A B) ; 
+                   record { cardinal = finiteSum S ; 
                             funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} funFO F) ;
                             isIsoFO = isoComp 
                                       (isoΣfun (isIsoFO)
@@ -390,51 +393,52 @@ record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → 
     isoHomFO : iso f
     orderPreserving : (x y : A) → x << y ↔ f x << f y
 
-open HomFO {{...}} public
+--open HomFO {{...}} public
 
 
 
 
 
 --We construct the basic instance needed for FOSet to be a category
---In the end we do not use them so much, I think of removing them
 
 
-instance
-  HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
-  HomFOId = record { isoHomFO = isoId ; 
-                     orderPreserving = λ x y → ↔Refl }
+--instance
+HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
+HomFOId = record { isoHomFO = isoId ; 
+                   orderPreserving = λ x y → ↔Refl }
 
 
-HomFOComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
-            (f : A → B) (g : B → C) {{homf : HomFO f}} {{homg : HomFO g}}
-            → HomFO (g o f)
+HomFOComp : {A B C : Set} {Afinite : FOSet A} {Bfinite : FOSet B} {Cfinite : FOSet C} 
+            {f : A → B} {g : B → C}
+            → HomFO {{Afinite}} {{Bfinite}} f
+            → HomFO {{Bfinite}} {{Cfinite}} g
+            → HomFO {{Afinite}} {{Cfinite}} (g o f)
 
-HomFOComp f g
-            {{record { isoHomFO = isof ; orderPreserving = orderf } }}
-            {{record { isoHomFO = isog ; orderPreserving = orderg } }}
-          = record { isoHomFO = isoComp isof isog ; 
-                     orderPreserving = λ x y → ↔Trans (f x << f y) (orderf _ _) (orderg _ _) }
+HomFOComp record { isoHomFO = isof ; orderPreserving = orderf } 
+          record { isoHomFO = isog ; orderPreserving = orderg } 
+        = record { isoHomFO = isoComp isof isog ; 
+                   orderPreserving = λ x y → ↔Trans _ (orderf _ _) (orderg _ _) }
 
 
 HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
               {B₁ : A₁ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {B₂ : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
-              {f : A₁ → A₂} {{homf : HomFO f}}
-              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} {{homF : {a₁ : A₁} → HomFO (F {a₁})}}
+              {f : A₁ → A₂} (homf : HomFO f)
+              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} (homF : {a₁ : A₁} → HomFO (F {a₁}))
               → HomFO (Σfun {B₂ = B₂} f F)
 
-HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} {{ record { isoHomFO = isof ; orderPreserving = orderf } }} {F = F} {{homF}} 
-               = record { isoHomFO = isoΣfun isof (λ a₁ → isoHomFO {f = F {a₁}} {{homF {a₁}}}) ; 
+HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} record { isoHomFO = isof ; orderPreserving = orderf } {F = F} homF
+               = record { isoHomFO = isoΣfun isof (λ a₁ → HomFO.isoHomFO {f = F {a₁}} (homF {a₁})) ; 
                           orderPreserving = λ {(a₁ , b₁) (a₂ , b₂) 
                                             → ↔Trans (Σord a₁ b₁ a₂ b₂) 
                                                      (Σorder {B = B₁}) 
                                                      (↔Trans (Σord {B = B₂} (f a₁) (F b₁) (f a₂) (F b₂)) 
                                                               (∨Nat↔ (orderf _ _) 
                                                                      (↔Trans (Σ (a₁ ≡ a₂) (λ p → transport B₂ (ap f p) (F b₁) << F b₂))
-                                                                        ((λ {(refl , q) → refl , ∧left (orderPreserving {f = F {a₁}} b₁ b₂) q}) , 
-                                                                          λ {(refl , q) → refl , (∧right (orderPreserving {f = F {a₁}} b₁ b₂) q)}) 
+                                                                        ((λ {(refl , q) → refl , ∧left (HomFO.orderPreserving {f = F {a₁}} homF b₁ b₂) q}) , 
+                                                                          λ {(refl , q) → refl , (∧right (HomFO.orderPreserving {f = F {a₁}} homF b₁ b₂) q)}) 
                                                                         (injectiveEqual (λ p → transport B₂ p (F b₁) << F b₂) (injectiveIso isof)))) 
                                                               (↔Sym (Σorder {B = B₂})))} }
+
 
 
 --We construct the isomorphism needed for the definition of operads
@@ -462,13 +466,13 @@ HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ;
                          orderPreserving = λ x y → ΣorderSnd {B = B} } 
 
 
-instance
-  HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
 
-  HomFOη₂ = record { isoHomFO = record { inv = λ { (a , _) → a} ; 
-                                         invLeft = λ { (a , fzero) → refl} ; 
-                                         invRight = λ _ → refl } ; 
-                     orderPreserving = λ x y → ↔Trans (x << y ∨ Σ (x ≡ y) (λ _ → ord (Fin (s O)) fzero fzero)) 
+HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
+
+HomFOη₂ = record { isoHomFO = record { inv = λ { (a , _) → a} ; 
+                                       invLeft = λ { (a , fzero) → refl} ; 
+                                       invRight = λ _ → refl } ;
+                   orderPreserving = λ x y → ↔Trans (x << y ∨ Σ (x ≡ y) (λ _ → ord (Fin (s O)) fzero fzero)) 
                                                    ((λ q → left q) ,
                                                     (λ { (left q) → q ; (right (_ , ()) )}))
                                                    (↔Sym (Σorder {B = λ _ → Fin (s O)})) } 
@@ -503,3 +507,45 @@ HomFOψ {A} {B} {C} = record { isoHomFO = record { inv = λ {((a , b) , c) → (
                                              (∨Nat↔ (↔Sym (Σorder {B = B})) 
                                                      ↔Refl)) 
                                              (↔Sym (Σorder {B = C})))} }
+
+
+
+
+
+
+
+--We show that being a morphism of FOSet is a property
+
+Prop< : {n : ℕ} {a₁ a₂ : Fin n} → isProp (a₁ < a₂)
+Prop< {.(s _)} {fzero} {fzero} = Prop⊥
+Prop< {.(s _)} {fzero} {fsucc a₂} = Prop⊤
+Prop< {.(s _)} {fsucc a₁} {fzero} = Prop⊥
+Prop< {.(s _)} {fsucc a₁} {fsucc a₂} = Prop< {a₁ = a₁} {a₂ = a₂}
+
+Prop<< : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → isProp (a₁ << a₂)
+Prop<< {a₁ = a₁} {a₂ = a₂} = Prop< {a₁ = funFO a₁} {a₂ = funFO a₂}
+
+
+PropOrderPreserving : {A B : Set} {{Afinite : FOSet A}} {{_ : FOSet B}} {f : A → B}
+                      → isProp ((x y : A) → x << y ↔ f x << f y)
+PropOrderPreserving {A} {B} = Prop→ (Prop→ (Prop↔ (Prop<< {A}) (Prop<< {B}))) 
+
+
+PropHomFOAux : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f : A → B} {homf₁ homf₂ : HomFO f}
+               → HomFO.isoHomFO homf₁ ≡ HomFO.isoHomFO homf₂ → HomFO.orderPreserving homf₁ ≡ HomFO.orderPreserving homf₂
+               → homf₁ ≡ homf₂
+               
+PropHomFOAux {homf₁ = record { isoHomFO = iso₁ ; orderPreserving = ord₁ }}
+             {record { isoHomFO = iso₂ ; orderPreserving = ord₂ }}
+             refl refl = refl
+
+PropHomFO : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f : A → B} → isProp (HomFO f)
+
+PropHomFO {A} {B} = PropHomFOAux PropIso (PropOrderPreserving {A} {B})
+
+
+
+--We show that morphisms between FOSet are unique
+
+postulate
+  HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g

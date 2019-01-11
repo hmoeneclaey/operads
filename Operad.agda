@@ -14,7 +14,7 @@ open import FiniteSet
 
 arrowAction : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
 arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B} 
-                (f : A → B) {{_ : HomFO {{Afinite}} {{Bfinite}} f}} 
+                (f : A → B) → HomFO {{Afinite}} {{Bfinite}} f 
                 → P A {{Afinite}} → P B {{Bfinite}}
 
 Nat : ∀ {k l} (P₁ : (A : Set) → {{_ : FOSet A}} → Set k)
@@ -33,11 +33,11 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
                 functor : arrowAction P
 
                 functorId : {A : Set} {{_ : FOSet A}} (c : P A)
-                           → functor (Id {A = A}) c ≡ c
+                           → functor (Id {A = A}) HomFOId c ≡ c
 
                 functorComp : {A B C : Set} {{_ : FOSet A}} {{_ : FOSet B}} {{_ : FOSet C}} 
-                              {f : A → B} {g : B → C} {{homf : HomFO f}} {{homg : HomFO g}}
-                              → (c : P A) → functor g {{homg}} (functor f c) ≡ functor (g o f) {{HomFOComp f g}} c
+                              {f : A → B} {g : B → C} {homf : HomFO f} {homg : HomFO g}
+                              → (c : P A) → functor g homg (functor f homf c) ≡ functor (g o f) (HomFOComp homf homg) c
 
                 id : P (Fin (s O))
 
@@ -46,28 +46,28 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
 
                 unitLeft : {A : Set} {{_ : FOSet A}} 
                            (c : P A) 
-                           → γ c (λ _ → id) ≡ functor (η₂ A) c
+                           → γ c (λ _ → id) ≡ functor (η₂ A) HomFOη₂ c
 
                 unitRight : {B : Fin (s O) → Set} {{_ : {x : Fin (s O)} → FOSet (B x)}}
                             (d : (x : Fin(s O)) → P (B x))
-                            → γ id d ≡ functor (η₁ B) {{HomFOη₁}} (d fzero)
+                            → γ id d ≡ functor (η₁ B) HomFOη₁ (d fzero)
 
                 naturalityFiber : {A : Set} {{_ : FOSet A}} 
                            {B₁ B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}} 
-                           (F : {a : A} → B₁ a → B₂ a) {{_ : {a : A} → HomFO (F {a})}}
+                           (F : {a : A} → B₁ a → B₂ a) (homF : {a : A} → HomFO (F {a}))
                            (c : P A) (d : (a : A) → P (B₁ a))
-                           → functor (Σfun (Id {A = A}) F) {{HomFOΣfun}} (γ c d) ≡ γ c (λ a → functor (F {a}) (d a) )
+                           → functor (Σfun (Id {A = A}) F) (HomFOΣfun HomFOId homF) (γ c d) ≡ γ c (λ a → functor (F {a}) homF (d a) )
 
                 naturalityBase : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
                           {B : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B a₂)}}
-                          (f : A₁ → A₂) {{_ : HomFO f}}
+                          (f : A₁ → A₂) (homf : HomFO f)
                           (c : P A₁) (d : (a₂ : A₂) → P (B a₂)) 
-                          → functor (Σfun {B₂ = B} f Id) {{HomFOΣfun}} (γ c (d o f)) ≡ γ (functor f c) d
+                          → functor (Σfun {B₂ = B} f Id) (HomFOΣfun homf HomFOId) (γ c (d o f)) ≡ γ (functor f homf c) d
 
                 assoc : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
                         {C : Σ A B → Set} {{Cfinite : {x : Σ A B} → FOSet (C x)}}
                         (c : P A) (d : (a : A) → P (B a)) (e : (x : Σ A B) → P (C x)) 
-                        → γ (γ c d) e ≡ functor (ψ A B C) {{HomFOψ}} (γ c (λ a → γ (d a) (λ b → e (a , b))))
+                        → γ (γ c d) e ≡ functor (ψ A B C) HomFOψ (γ c (λ a → γ (d a) (λ b → e (a , b))))
 
 
 open Operad {{...}} public
@@ -81,8 +81,8 @@ record HomOperad {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : 
                  (α : Nat P₁ P₂) : Set (lsuc lzero ⊔ (k ⊔ l)) where
        field
 
-         homNat : {A : Set} {{_ : FOSet A}} {B : Set} {{_ : FOSet B}} {f : A → B} {{homf : HomFO f}}
-                  → {c : P₁ A} → α _ (functor f c) ≡ functor f (α _ c)
+         homNat : {A : Set} {{_ : FOSet A}} {B : Set} {{_ : FOSet B}} {f : A → B} (homf : HomFO f)
+                  → {c : P₁ A} → α _ (functor f homf c) ≡ functor f homf (α _ c)
 
          homId : α _ id ≡ id
 
@@ -107,7 +107,7 @@ module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : 
        HomOpComp {α = α} {β = β}
                  record { homNat = homNatβ ;homId = homIdβ ; homγ = homγβ }
                  record { homNat = homNatα ; homId = homIdα ; homγ = homγα } =
-                 record { homNat = ≡Trans (ap (β _) homNatα) homNatβ ;
+                 record { homNat = λ homf → ≡Trans (ap (β _) (homNatα homf)) (homNatβ homf) ;
                           homId = ≡Trans (ap (β _) homIdα) homIdβ ;
                           homγ = ≡Trans (ap (β _) homγα) homγβ }
 
@@ -152,20 +152,20 @@ End : ∀ {k} (X : Set k) (A : Set) {{_ : FOSet A}} → Set k
 End X A = (A → X) → X
 
 EndFun : ∀ {k} (X : Set k) → arrowAction (End X)
-EndFun X f = λ c g → c (g o f)
+EndFun X f homf = λ c g → c (g o f)
 
 instance
   OpEnd : ∀ {k} {X : Set k} → Operad (End X)
   OpEnd = record
-              { functor = λ f c g → c (g o f)
+              { functor = λ f homf c g → c (g o f)
               ; functorId = λ _ → refl
               ; functorComp = λ _ → refl
               ; id = λ c → c fzero
               ; γ = λ c d f → c (λ a → d a (λ b → f (a , b)))
               ; unitLeft = λ _ → refl
               ; unitRight = λ _ → refl
-              ; naturalityFiber = λ _ _ _ → refl
-              ; naturalityBase = λ _ _ _ → refl
+              ; naturalityFiber = λ _ _ _ _ → refl
+              ; naturalityBase = λ _ _ _ _ → refl
               ; assoc = λ _ _ _ → refl
               }
 

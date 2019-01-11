@@ -483,3 +483,53 @@ iso∨⊥right {A = A} {B = B} B⊥ = ≅Trans (B ∨ A) (iso∨⊥left B⊥) �
 
 
 
+
+
+--Consideration about properties (in the strict sense)
+
+isProp : ∀ {k} (A : Set k) → Set k
+isProp A = {x y : A} → x ≡ y
+
+Prop⊤ : ∀ {k} → isProp (⊤ {k})
+Prop⊤ = refl
+
+Prop⊥ : isProp ⊥
+Prop⊥ {()} 
+
+Prop→ : ∀ {k l} {A : Set k} {B : A → Set l} → ({a : A} → isProp (B a)) → isProp ((a : A) → B a)
+Prop→ propB = funext (λ a → propB)
+
+Prop∧ : ∀ {k l} {A : Set k} {B : Set l} → isProp A → isProp B → isProp (A ∧ B)
+Prop∧ propA propB {x₁ , y₁} {x₂ , y₂} = equalΣ propA propB
+
+Prop↔ : ∀ {k l} {A : Set k} {B : Set l} → isProp A → isProp B → isProp (A ↔ B)
+Prop↔ propA propB = Prop∧ (Prop→ propB) (Prop→ propA)
+
+
+
+--We show that being an isomorphism is a property
+
+
+PropIsoAux : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} {isof₁ isof₂ : iso f}
+             → iso.inv isof₁ ≡ iso.inv isof₂ → isof₁ ≡ isof₂
+
+PropIsoAux {isof₁ = record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ } }
+           {record { inv = g₂ ; invLeft = invLeft₂ ; invRight = invRight₂ } }
+           refl = ap₂ (λ x y → record { inv = g₁ ; invLeft = x ; invRight = y })
+                      (funext (λ a → UIP)) (funext (λ a → UIP))
+
+
+InvUnique : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} {isof₁ isof₂ : iso f}
+            → iso.inv isof₁ ≡ iso.inv isof₂
+
+InvUnique {f = f}
+          {record { inv = g₁ ; invLeft = invLeft₁ ; invRight = invRight₁ }}
+          {record { inv = g₂ ; invLeft = invLeft₂ ; invRight = invRight₂ } }
+          = funext (λ b → ≡Trans {y = g₁ (f (g₂ b))}
+                                 (ap g₁ (invLeft₂ b))
+                                 (≡Sym (invRight₁ (g₂ b))))
+
+
+PropIso : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → isProp (iso f)
+
+PropIso {x = isof₁} {y = isof₂} = PropIsoAux (InvUnique {isof₁ = isof₁} {isof₂ = isof₂})

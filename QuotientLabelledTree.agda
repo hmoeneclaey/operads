@@ -77,8 +77,11 @@ module _  {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A)
 --Arity : Ltree → ℕ
 --Arity = elimLtree-NoLabel (s O) O (_+_)
 
-QArity : Qtree → ℕ
-QArity = QtreeRec-NoLabel (s O) O (_+_)
+Arity : Qtree → ℕ
+Arity = QtreeRec-NoLabel (s O) O (_+_)
                           +O refl (λ {a b c} → ≡Sym (+Assoc {a} {b} {c}))
 
 
+module test where
+  test1 : Arity [ ∅ ] ≡ s O
+  test1 = refl
