@@ -45,6 +45,7 @@ QtreeRec : ∀ {k} {A : Set k} (d : Ltree → A)
            → ({t : Ltree} → (a : arity t) → d (graft t a (l• e₀)) ≡ d (graft t a •))
            → ({t : Ltree} → (a : arity t) → {t₁ t₂ : Ltree+} → d (graft t a (lcons e₀ t₁ t₂)) ≡ d (graft t a (cons t₁ t₂)))
            → Qtree → A
+           
 QtreeRec d eq₁ eq₂ eq₃ = elimQtree d (≡Trans transportConst eq₁)
                                      (λ a → ≡Trans transportConst (eq₂ a))
                                      λ a → ≡Trans transportConst (eq₃ a) 

@@ -156,7 +156,8 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
          equalNormalFormCons+ ∅ ∅ = refl
          equalNormalFormCons+ ∅ • = eq₁ ∅
          equalNormalFormCons+ ∅ (l• i) = refl
-         equalNormalFormCons+ ∅ (cons t₂ t₃) = ≡Trans (eq₃ ∅ t₂ t₃) (ap₂ tcons (equalNormalFormCons+ ∅ t₂) refl)
+         equalNormalFormCons+ ∅ (cons t₂ t₃) = ≡Trans (eq₃ ∅ t₂ t₃)
+                                                      (ap₂ tcons (equalNormalFormCons+ ∅ t₂) refl)
          equalNormalFormCons+ ∅ (lcons i t₂ t₃) = refl
          equalNormalFormCons+ • ∅ = eq₂ ∅
          equalNormalFormCons+ • • = eq₂ •
@@ -166,18 +167,22 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
          equalNormalFormCons+ (l• i) ∅ = refl
          equalNormalFormCons+ (l• i) • = eq₁ (l• i)
          equalNormalFormCons+ (l• i) (l• i₁) = refl
-         equalNormalFormCons+ (l• i) (cons t₂ t₃) =  ≡Trans (eq₃ (l• i) t₂ t₃) (ap₂ tcons (equalNormalFormCons+ (l• i) t₂) refl)
+         equalNormalFormCons+ (l• i) (cons t₂ t₃) =  ≡Trans (eq₃ (l• i) t₂ t₃)
+                                                            (ap₂ tcons (equalNormalFormCons+ (l• i) t₂) refl)
          equalNormalFormCons+ (l• i) (lcons i₁ t₂ t₃) = refl
          equalNormalFormCons+ (cons t₁ t₃) ∅ = refl
          equalNormalFormCons+ (cons t₁ t₃) • = eq₁ (cons t₁ t₃)
          equalNormalFormCons+ (cons t₁ t₃) (l• i) = refl
-         equalNormalFormCons+ (cons t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (cons t₁ t₃) t₂ t₄) (ap₂ tcons (equalNormalFormCons+ (cons t₁ t₃) t₂) refl)
+         equalNormalFormCons+ (cons t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (cons t₁ t₃) t₂ t₄)
+                                                                  (ap₂ tcons (equalNormalFormCons+ (cons t₁ t₃) t₂) refl)
          equalNormalFormCons+ (cons t₁ t₃) (lcons i t₂ t₄) = refl
          equalNormalFormCons+ (lcons i t₁ t₃) ∅ = refl
          equalNormalFormCons+ (lcons i t₁ t₃) • = eq₁ (lcons i t₁ t₃)
          equalNormalFormCons+ (lcons i t₁ t₃) (l• i₁) = refl
-         equalNormalFormCons+ (lcons i t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (lcons i t₁ t₃) t₂ t₄) (ap₂ tcons (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
+         equalNormalFormCons+ (lcons i t₁ t₃) (cons t₂ t₄) =  ≡Trans (eq₃ (lcons i t₁ t₃) t₂ t₄)
+                                                                     (ap₂ tcons (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
          equalNormalFormCons+ (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
+         
 
          module _ (eq₄ : {i : I} (t₁ : Ltree+) → tlcons i (elimLtree+ t₁) t• ≡ elimLtree+ (addLbl+ i t₁))
                   (eq₅ : {i : I} (t₂ : Ltree+) → tlcons i t• (elimLtree+ t₂) ≡ elimLtree+ (addLbl+ i t₂))
@@ -185,7 +190,8 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
                                                      ≡ tlcons i (tcons (elimLtree+ t₁) (elimLtree+ t₂)) (elimLtree+ t₃)) where
 
 
-                equalNormalFormLcons+ : {i : I} (t₁ t₂ : Ltree+) → elimLtree+ (lcons i t₁ t₂) ≡ elimLtree+ (normalFormLcons+ i t₁ t₂)
+                equalNormalFormLcons+ : {i : I} (t₁ t₂ : Ltree+)
+                                        → elimLtree+ (lcons i t₁ t₂) ≡ elimLtree+ (normalFormLcons+ i t₁ t₂)
                 
                 equalNormalFormLcons+ ∅ ∅ = refl
                 equalNormalFormLcons+ ∅ • = eq₄ ∅
@@ -216,6 +222,8 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tl• : I → A) (tcons : A → 
                 equalNormalFormLcons+ (lcons i t₁ t₃) (cons t₂ t₄) = ≡Trans (eq₆ (lcons i t₁ t₃) t₂ t₄)
                                                                             (ap₂ (tlcons _) (equalNormalFormCons+ (lcons i t₁ t₃) t₂) refl)
                 equalNormalFormLcons+ (lcons i t₁ t₃) (lcons i₁ t₂ t₄) = refl
+
+
   
                 equalNormalForm+ : (t : Ltree+) → elimLtree+ t ≡ elimLtree+ (normalForm+ t)
                 equalNormalForm+ ∅ = refl

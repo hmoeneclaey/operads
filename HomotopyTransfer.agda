@@ -108,8 +108,8 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
                                                      invRight = λ {(f , eqf) → refl} }}
 
 
-    fibreIsoProj₂ : (A : Set) → {{_ : FOSet A}} (g : End Y A) → ((x : A → X)
-                    → fibre p (g (p o x))) ≅ fibre (operadProj₂ A) g
+    fibreIsoProj₂ : (A : Set) → {{_ : FOSet A}} (g : End Y A) →
+                    ((x : A → X) → fibre p (g (p o x))) ≅ fibre (operadProj₂ A) g
 
     fibreIsoProj₂ A g = ≅Trans (record { isoFun = λ sec → (fibre.point o sec) , λ x → fibre.equal (sec x) ;
                                          isIso = record { inv = λ {(f , eqf) x → (f x) , (eqf x)} ;
