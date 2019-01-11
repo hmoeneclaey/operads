@@ -399,13 +399,28 @@ record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → 
 
 
 
---We construct the basic instance needed for FOSet to be a category
+--We construct some basic instance of FOSet
 
-
---instance
 HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
+
 HomFOId = record { isoHomFO = isoId ; 
                    orderPreserving = λ x y → ↔Refl }
+
+
+HomFOcanonical : {A : Set} {{_ : FOSet A}} → HomFO (funFO {A})
+
+HomFOcanonical = record { isoHomFO = isIsoFO ;
+                          orderPreserving = λ _ _ → ↔Refl }
+
+
+HomFOcanonicalInv : {A : Set} {{_ : FOSet A}} → HomFO (iso.inv (isIsoFO {A}))
+
+HomFOcanonicalInv {A} = record { isoHomFO = isoInv isIsoFO ;
+                                 orderPreserving = λ x y → ↔Trans (funFO {A} (iso.inv isIsoFO x) < y)
+                                                              (transport↔ (λ x₁ → x₁ << y) (iso.invLeft (isIsoFO {A}) _))
+                                                              (transport↔ (λ y₁ → funFO {A} (iso.inv isIsoFO x) < y₁)
+                                                                          {x = y} {y = funFO {A} (iso.inv isIsoFO y)}
+                                                                          (iso.invLeft (isIsoFO {A}) _)) }
 
 
 HomFOComp : {A B C : Set} {Afinite : FOSet A} {Bfinite : FOSet B} {Cfinite : FOSet C} 
@@ -539,13 +554,26 @@ PropHomFOAux {homf₁ = record { isoHomFO = iso₁ ; orderPreserving = ord₁ }}
              {record { isoHomFO = iso₂ ; orderPreserving = ord₂ }}
              refl refl = refl
 
+
 PropHomFO : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f : A → B} → isProp (HomFO f)
 
 PropHomFO {A} {B} = PropHomFOAux PropIso (PropOrderPreserving {A} {B})
 
 
 
+
 --We show that morphisms between FOSet are unique
 
 postulate
-  HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g
+  HomFOUniqueAux : {m : ℕ} {f : Fin m → Fin m} → ((x y : Fin m) → x << y ↔ f x << f y) → f ≡ Id
+
+postulate
+  HomFOUniqueCanonical : {m n : ℕ} {f g : Fin m → Fin n} (homf : HomFO f) (homg : HomFO g) → f ≡ g
+
+
+HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g
+
+HomFOUnique {f = f} {g = g}  homf homg = isoCancel (isoPostComp isIsoFO)
+                                        (isoCancel (isoPreComp (isoInv isIsoFO))
+                                                   (HomFOUniqueCanonical (HomFOComp (HomFOComp HomFOcanonicalInv homf) HomFOcanonical)
+                                                                         (HomFOComp (HomFOComp HomFOcanonicalInv homg) HomFOcanonical)))

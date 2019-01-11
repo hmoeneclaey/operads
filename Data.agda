@@ -154,6 +154,9 @@ postulate funext : ∀ {k l} {A : Set k} {B : A → Set l} → {f g : (a : A) �
 transport : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} → x ≡ y → B x → B y
 transport B refl x = x
 
+transport↔ : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} → x ≡ y → B x ↔ B y
+transport↔ B refl = ↔Refl
+
 ap : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
 ap f refl = refl
 
@@ -273,6 +276,13 @@ iso≡ext {f = f} {g = g} Hyp
                      invLeft = λ b → ≡Trans (invLeft b) (Hyp _) ;
                      invRight = λ a → ≡Trans (invRight a) (ap h (Hyp _)) }
 
+isoCancel : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} {x y : A} → iso f →  f x ≡ f y → x ≡ y
+isoCancel {f = f} {x} {y} record { inv = g ; invLeft = invLeft ; invRight = invRight } p
+        = ≡Trans {y = g (f x)}
+                 (invRight _)
+                 (≡Trans {y = g (f y)}
+                         (ap g p)
+                         (≡Sym (invRight _)))
 
 
 --Results about → and isomorphisms
@@ -286,10 +296,18 @@ postComp f g = f o g
 isoPreComp : ∀ {k l m} {X : Set k} {Y : Set l} {f : X → Y} {Z : Set m} → iso f → iso (preComp f {Z})
 isoPreComp {f = f} record { inv = g ;
                             invLeft = invLeft ;
-                            invRight = invRight } =
-                   record { inv = preComp g ;
+                            invRight = invRight }
+                 = record { inv = preComp g ;
                             invLeft = λ h → funext (λ _ → ap h (invRight _)) ;
                             invRight = λ h → funext (λ _ → ap h (invLeft _)) }
+
+isoPostComp :  ∀ {k l m} {X : Set k} {Y : Set l} {f : X → Y} {Z : Set m} → iso f → iso (postComp f {Z})
+isoPostComp {f = f} record { inv = g ;
+                             invLeft = invLeft ;
+                             invRight = invRight }
+                  = record { inv = postComp g ;
+                             invLeft = λ _ → funext (λ _ → invLeft _) ;
+                             invRight = λ _ → funext (λ _ → invRight _) }
 
 
 --Results about Σ and isomorphisms.
