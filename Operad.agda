@@ -4,6 +4,7 @@ module Operad where
 open import Agda.Primitive
 open import Data
 open import FiniteSet
+open import MorphismFiniteSet
 
 
 --In this file we define operads and morphisms between them

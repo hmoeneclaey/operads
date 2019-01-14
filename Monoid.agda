@@ -5,6 +5,7 @@ module Monoid where
 
 open import Data
 open import FiniteSet
+open import MorphismFiniteSet
 open import Operad
 open import FibrantUniverse
 open import LabelledTree

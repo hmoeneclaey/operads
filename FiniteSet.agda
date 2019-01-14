@@ -60,8 +60,28 @@ instance
 <Irefl (fsucc a) = <Irefl a
 
 <<Irefl : {A : Set} {{_ : FOSet A}} (a : A) → ¬ (a << a)
-<<Irefl {A} a = λ q → <Irefl (funFO a) q 
+<<Irefl {A} a = λ q → <Irefl (funFO a) q
 
+<MinFzero : {m : ℕ} {n : Fin (s m)} → ¬ (n << fzero)
+<MinFzero {n = fzero} = Id
+<MinFzero {n = fsucc n} = Id
+
+<IreflEqual : {n : ℕ} {x y : Fin n} → x ≡ y → ¬ (x << y)
+<IreflEqual {x = x} refl = <Irefl x
+
+<Total : {m : ℕ} {x y : Fin m} → ¬ (x << y) → ¬ (y << x) → x ≡ y
+<Total {x = fzero} {fzero} = λ _ _ → refl
+<Total {x = fzero} {fsucc y} p = efql (p *)
+<Total {x = fsucc x} {fzero} _ p = efql (p *)
+<Total {x = fsucc x} {fsucc y} p q = ap fsucc (<Total p q)
+
+isSucc : {m : ℕ} {x : Fin (s m)} → fzero << x → Σ (Fin m) (λ y → x ≡ fsucc y)
+isSucc {x = fzero} () 
+isSucc {x = fsucc a} _ = a , refl
+
+isFzero : {m : ℕ} {x : Fin (s m)} → ((y : Fin (s m)) → ¬ (y << x)) → x ≡ fzero
+isFzero {x = fzero} _ = refl
+isFzero {x = fsucc x} Hyp = efql (Hyp fzero *)
 
 
 
@@ -129,55 +149,55 @@ Fin+Right {s m} = fsucc o Fin+Right
 
 
 
-module ArithmeticForCanonicalSets where
+--module ArithmeticForCanonicalSets where
 
 
 --First we define the function canoncialΣ : Σ Fin Fin → Fin
 
-  canonicalΣ : {n : ℕ} (S : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (S x)) → Fin (finiteSum S)
-  canonicalΣ S (fzero , b) = Fin+Left b
-  canonicalΣ S (fsucc a , b) = Fin+Right (canonicalΣ (S o fsucc) (a , b))
+canonicalΣ : {n : ℕ} (S : Fin n → ℕ) → Σ (Fin n) (λ x → Fin (S x)) → Fin (finiteSum S)
+canonicalΣ S (fzero , b) = Fin+Left b
+canonicalΣ S (fsucc a , b) = Fin+Right (canonicalΣ (S o fsucc) (a , b))
 
 
   --We show that Fin n ∨ Fin m is isomorphic to Fin m + n
 
-  FinSucc : {m : ℕ} → Fin (s m) → Fin (s O) ∨ Fin m
-  FinSucc fzero = left fzero
-  FinSucc (fsucc a) = right a
+FinSucc : {m : ℕ} → Fin (s m) → Fin (s O) ∨ Fin m
+FinSucc fzero = left fzero
+FinSucc (fsucc a) = right a
 
-  isoFinSucc : {m : ℕ} → iso (FinSucc {m = m})
-  isoFinSucc = record { inv = ∨Elim (λ _ → fzero) fsucc ; 
+isoFinSucc : {m : ℕ} → iso (FinSucc {m = m})
+isoFinSucc = record { inv = ∨Elim (λ _ → fzero) fsucc ; 
                         invLeft = λ { (left fzero) → refl ; (right x) → refl} ; 
                         invRight = λ { fzero → refl ; (fsucc x) → refl} }
 
-  Fin+LeftRight : {m n : ℕ} → Fin m ∨ Fin n → Fin (m + n) 
-  Fin+LeftRight = ∨Elim Fin+Left Fin+Right
+Fin+LeftRight : {m n : ℕ} → Fin m ∨ Fin n → Fin (m + n) 
+Fin+LeftRight = ∨Elim Fin+Left Fin+Right
 
 
   --This equality is useful for inductive case
-  equalFin+LeftRight : {m n : ℕ} → (x : Fin (s m) ∨ Fin n) →
+equalFin+LeftRight : {m n : ℕ} → (x : Fin (s m) ∨ Fin n) →
                        (iso.inv isoFinSucc  o (∨Nat Id Fin+LeftRight) o ∨Assoc o (∨Nat FinSucc Id)) x
                        ≡ Fin+LeftRight x
 
-  equalFin+LeftRight (left fzero) = refl
-  equalFin+LeftRight (left (fsucc a)) = refl
-  equalFin+LeftRight (right a) = refl
+equalFin+LeftRight (left fzero) = refl
+equalFin+LeftRight (left (fsucc a)) = refl
+equalFin+LeftRight (right a) = refl
 
 
-  isoFin+LeftRight : {m n : ℕ} → iso (Fin+LeftRight {m = m} {n = n})
+isoFin+LeftRight : {m n : ℕ} → iso (Fin+LeftRight {m = m} {n = n})
 
-  isoFin+LeftRight {O} = record { inv = λ a → right a ; 
-                                  invLeft = λ b → refl ; 
-                                  invRight = λ { (left ()) ; (right a) → refl} }
+isoFin+LeftRight {O} = record { inv = λ a → right a ; 
+                                invLeft = λ b → refl ; 
+                                invRight = λ { (left ()) ; (right a) → refl} }
 
-  isoFin+LeftRight {s m} = iso≡ext equalFin+LeftRight 
-                           (isoComp {f = ∨Nat Id Fin+LeftRight o ∨Assoc o ∨Nat FinSucc Id} {g = ∨Elim (λ _ → fzero) fsucc} 
-                             (isoComp {f = ∨Assoc o ∨Nat FinSucc Id} {g = ∨Nat Id Fin+LeftRight}
-                                (isoComp {f = ∨Nat FinSucc Id} {g = ∨Assoc} 
-                                  (iso∨Nat isoFinSucc isoId) 
-                                  iso∨Assoc) 
-                                (iso∨Nat isoId isoFin+LeftRight)) 
-                             (isoInv isoFinSucc)) 
+isoFin+LeftRight {s m} = iso≡ext equalFin+LeftRight 
+                         (isoComp {f = ∨Nat Id Fin+LeftRight o ∨Assoc o ∨Nat FinSucc Id} {g = ∨Elim (λ _ → fzero) fsucc} 
+                         (isoComp {f = ∨Assoc o ∨Nat FinSucc Id} {g = ∨Nat Id Fin+LeftRight}
+                              (isoComp {f = ∨Nat FinSucc Id} {g = ∨Assoc} 
+                                (iso∨Nat isoFinSucc isoId) 
+                                iso∨Assoc) 
+                              (iso∨Nat isoId isoFin+LeftRight)) 
+                           (isoInv isoFinSucc)) 
 
 
 
@@ -185,38 +205,38 @@ module ArithmeticForCanonicalSets where
 --Note that we use extFun in equalCanonicalΣ, so the inverse might not behave well
 --Our strategy is to express canonicalΣ as a composition f o (Id ∨ CanonicalΣ) o g in the inductive case, with f and g iso
 
-  --Playing the role of g
-  functionAux : {n : ℕ} (S : Fin (s n) → ℕ) → Σ (Fin(s n)) (Fin o S) → Fin (S fzero) ∨ Σ (Fin n) (Fin o S o fsucc)
-  functionAux S (fzero , b) = left b
-  functionAux S (fsucc a , b) = right (a , b)
+--Playing the role of g
+functionAux : {n : ℕ} (S : Fin (s n) → ℕ) → Σ (Fin(s n)) (Fin o S) → Fin (S fzero) ∨ Σ (Fin n) (Fin o S o fsucc)
+functionAux S (fzero , b) = left b
+functionAux S (fsucc a , b) = right (a , b)
 
-  isoFunctionAux : {n : ℕ} (S : Fin (s n) → ℕ) → iso (functionAux S)
-  isoFunctionAux S = record { inv = λ { (left b) → fzero , b ; (right (a , b)) → fsucc a , b} ; 
-                              invLeft = λ { (left x) → refl ; (right (a , b)) → refl} ; 
-                              invRight = λ { (fzero , b) → refl ; (fsucc a , b) → refl} }
+isoFunctionAux : {n : ℕ} (S : Fin (s n) → ℕ) → iso (functionAux S)
+isoFunctionAux S = record { inv = λ { (left b) → fzero , b ; (right (a , b)) → fsucc a , b} ; 
+                            invLeft = λ { (left x) → refl ; (right (a , b)) → refl} ; 
+                            invRight = λ { (fzero , b) → refl ; (fsucc a , b) → refl} }
 
   
 
-  --We use function extensionnality, but we can probably deal without
-  equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) (x : Σ (Fin (s n)) (λ k → Fin (S k)))
+--We use function extensionnality, but we can probably deal without
+equalCanonicalΣ : {n : ℕ} (S : Fin (s n) → ℕ) (x : Σ (Fin (s n)) (λ k → Fin (S k)))
                     → (Fin+LeftRight  o (∨Nat Id (canonicalΣ (S o fsucc))) o (functionAux S)) x ≡ canonicalΣ S x
-  equalCanonicalΣ S (fzero , b) = refl
-  equalCanonicalΣ S (fsucc a , b) = refl
+equalCanonicalΣ S (fzero , b) = refl
+equalCanonicalΣ S (fsucc a , b) = refl
 
 
 
-  isIsoCanonicalΣ : {n : ℕ} (S : Fin n → ℕ) → iso (canonicalΣ S)
+isIsoCanonicalΣ : {n : ℕ} (S : Fin n → ℕ) → iso (canonicalΣ S)
 
-  isIsoCanonicalΣ {O} S = record { inv = λ () ; 
-                                   invLeft = λ () ; 
-                                   invRight = λ {(() , _)} }
+isIsoCanonicalΣ {O} S = record { inv = λ () ; 
+                                 invLeft = λ () ; 
+                                 invRight = λ {(() , _)} }
 
-  isIsoCanonicalΣ {s n} S = iso≡ext (equalCanonicalΣ S) 
-                     (isoComp {f = (∨Nat Id (canonicalΣ (S o fsucc)) o functionAux S)} {g = ∨Elim Fin+Left Fin+Right} 
-                        (isoComp {f = functionAux S} {g = ∨Nat (λ x → x) (canonicalΣ (S o fsucc))} 
-                           (isoFunctionAux S) 
-                           (iso∨Nat isoId (isIsoCanonicalΣ (S o fsucc)))) 
-                           isoFin+LeftRight) 
+isIsoCanonicalΣ {s n} S = iso≡ext (equalCanonicalΣ S) 
+                   (isoComp {f = (∨Nat Id (canonicalΣ (S o fsucc)) o functionAux S)} {g = ∨Elim Fin+Left Fin+Right} 
+                      (isoComp {f = functionAux S} {g = ∨Nat (λ x → x) (canonicalΣ (S o fsucc))} 
+                         (isoFunctionAux S) 
+                         (iso∨Nat isoId (isIsoCanonicalΣ (S o fsucc)))) 
+                         isoFin+LeftRight) 
 
 
 
@@ -225,56 +245,56 @@ module ArithmeticForCanonicalSets where
 
 --Now prove the order is the one we expect
 
-  Fin+LeftOrder : {m n : ℕ} → (b₁ b₂ : Fin m) 
-                  → Fin+Left {n = n} b₁ << Fin+Left {n = n} b₂ ↔ b₁ << b₂
-  Fin+LeftOrder fzero fzero = ↔Refl
-  Fin+LeftOrder fzero (fsucc b₂) = (λ _ → *) , λ _ → *
-  Fin+LeftOrder (fsucc b₁) fzero = (λ ()) , (λ ())
-  Fin+LeftOrder {m = s m} {n = n} (fsucc b₁) (fsucc b₂) = Fin+LeftOrder b₁ b₂
+Fin+LeftOrder : {m n : ℕ} → (b₁ b₂ : Fin m) 
+                → Fin+Left {n = n} b₁ << Fin+Left {n = n} b₂ ↔ b₁ << b₂
+Fin+LeftOrder fzero fzero = ↔Refl
+Fin+LeftOrder fzero (fsucc b₂) = (λ _ → *) , λ _ → *
+Fin+LeftOrder (fsucc b₁) fzero = (λ ()) , (λ ())
+Fin+LeftOrder {m = s m} {n = n} (fsucc b₁) (fsucc b₂) = Fin+LeftOrder b₁ b₂
 
 
-  Fin+OrderInf : {m n : ℕ} (b₁ : Fin m) (b₂ : Fin n) → Fin+Left b₁ < Fin+Right b₂
-  Fin+OrderInf fzero b₂ = *
-  Fin+OrderInf (fsucc b₁) b₂ = Fin+OrderInf b₁ b₂
+Fin+OrderInf : {m n : ℕ} (b₁ : Fin m) (b₂ : Fin n) → Fin+Left b₁ < Fin+Right b₂
+Fin+OrderInf fzero b₂ = *
+Fin+OrderInf (fsucc b₁) b₂ = Fin+OrderInf b₁ b₂
 
 
-  Fin+OrderSup : {m n : ℕ} (b₁ : Fin m) (b₂ : Fin n) → ¬ (Fin+Right b₁ < Fin+Left b₂)
-  Fin+OrderSup b₁ fzero = Id
-  Fin+OrderSup b₁ (fsucc b₂) = Fin+OrderSup b₁ b₂
+Fin+OrderSup : {m n : ℕ} (b₁ : Fin m) (b₂ : Fin n) → ¬ (Fin+Right b₁ < Fin+Left b₂)
+Fin+OrderSup b₁ fzero = Id
+Fin+OrderSup b₁ (fsucc b₂) = Fin+OrderSup b₁ b₂
 
 
-  Fin+RightOrder : {m n : ℕ} → (b₁ b₂ : Fin n) 
-                   → Fin+Right {m = m} b₁ << Fin+Right {m = m} b₂ ↔ b₁ << b₂
-  Fin+RightOrder {O} b₁ b₂ = ↔Refl
-  Fin+RightOrder {s m} b₁ b₂ = Fin+RightOrder {m} b₁ b₂
+Fin+RightOrder : {m n : ℕ} → (b₁ b₂ : Fin n) 
+                 → Fin+Right {m = m} b₁ << Fin+Right {m = m} b₂ ↔ b₁ << b₂
+Fin+RightOrder {O} b₁ b₂ = ↔Refl
+Fin+RightOrder {s m} b₁ b₂ = Fin+RightOrder {m} b₁ b₂
 
 
 
-  canonicalΣorder : {n : ℕ} (S : Fin n → ℕ) {a₁ a₂ : Fin n} {b₁ : Fin (S a₁)} {b₂ : Fin (S a₂)} 
-                    → (canonicalΣ S (a₁ , b₁) << canonicalΣ S (a₂ , b₂)) 
-                    ↔ ((a₁ < a₂) ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap S p) b₁ < b₂ ))
+canonicalΣorder : {n : ℕ} (S : Fin n → ℕ) {a₁ a₂ : Fin n} {b₁ : Fin (S a₁)} {b₂ : Fin (S a₂)} 
+                  → (canonicalΣ S (a₁ , b₁) << canonicalΣ S (a₂ , b₂)) 
+                  ↔ ((a₁ < a₂) ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap S p) b₁ < b₂ ))
 
-  canonicalΣorder S {fzero} {fzero} {b₁} {b₂} = ↔Trans (b₁ < b₂) 
-                                                       (Fin+LeftOrder b₁ b₂)  
-                                                       ((λ q → right (refl , q)) , λ { (left ()) ; (right (refl , q)) → q})
+canonicalΣorder S {fzero} {fzero} {b₁} {b₂} = ↔Trans (b₁ < b₂) 
+                                                     (Fin+LeftOrder b₁ b₂)  
+                                                     ((λ q → right (refl , q)) , λ { (left ()) ; (right (refl , q)) → q})
 
-  canonicalΣorder S {fzero} {fsucc a₂} {b₁} {b₂} = (λ _ → left *) , 
-                                                    λ _ → Fin+OrderInf b₁ _
+canonicalΣorder S {fzero} {fsucc a₂} {b₁} {b₂} = (λ _ → left *) , 
+                                                  λ _ → Fin+OrderInf b₁ _
 
-  canonicalΣorder S {fsucc a₁} {fzero} {b₁} {b₂} = (λ q → efql (Fin+OrderSup _ b₂ q)) , 
-                                                   λ { (left ()) ; (right (() , _)) }
+canonicalΣorder S {fsucc a₁} {fzero} {b₁} {b₂} = (λ q → efql (Fin+OrderSup _ b₂ q)) , 
+                                                 λ { (left ()) ; (right (() , _)) }
   
-  canonicalΣorder S {fsucc a₁} {fsucc a₂} {b₁} {b₂} 
-                           = ↔Trans (canonicalΣ (S o fsucc) (a₁ , b₁) << canonicalΣ (S o fsucc) (a₂ , b₂))
-                                    (Fin+RightOrder {m = S fzero} _ _) 
-                                    (↔Trans (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap (S o fsucc) p) b₁ << b₂))
-                                            (canonicalΣorder (S o fsucc) {a₁} {a₂}) 
-                                            (∨Nat↔ ↔Refl 
-                                                   (let C = λ (p : fsucc a₁ ≡ fsucc a₂) → transport Fin (ap S p) b₁ < b₂ 
-                                                    in ↔Trans (Σ (a₁ ≡ a₂) (C o ap fsucc)) 
-                                                               ((λ {(refl , q) → refl , q}) , 
-                                                                 λ {(refl , q) → refl , q}) 
-                                                               (injectiveEqual C injectiveFsucc))))
+canonicalΣorder S {fsucc a₁} {fsucc a₂} {b₁} {b₂} 
+                         = ↔Trans (canonicalΣ (S o fsucc) (a₁ , b₁) << canonicalΣ (S o fsucc) (a₂ , b₂))
+                                  (Fin+RightOrder {m = S fzero} _ _) 
+                                  (↔Trans (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport Fin (ap (S o fsucc) p) b₁ << b₂))
+                                          (canonicalΣorder (S o fsucc) {a₁} {a₂}) 
+                                          (∨Nat↔ ↔Refl 
+                                                 (let C = λ (p : fsucc a₁ ≡ fsucc a₂) → transport Fin (ap S p) b₁ < b₂ 
+                                                  in ↔Trans (Σ (a₁ ≡ a₂) (C o ap fsucc)) 
+                                                             ((λ {(refl , q) → refl , q}) , 
+                                                               λ {(refl , q) → refl , q}) 
+                                                             (injectiveEqual C injectiveFsucc))))
 
 
 
@@ -286,73 +306,73 @@ module ArithmeticForCanonicalSets where
 
 --We show that a finite union of finite sets is finite, and give an explicit order on Σ A B
 
-module FiniteUnionOfFiniteSets where
+--module FiniteUnionOfFiniteSets where
 
 --We only need three results from the module on canonical finite sets
-  open ArithmeticForCanonicalSets using (canonicalΣ; isIsoCanonicalΣ; canonicalΣorder)
+--  open ArithmeticForCanonicalSets using (canonicalΣ; isIsoCanonicalΣ; canonicalΣorder)
 
 
-  Σcardinal : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} → Fin (cardinal {A}) → ℕ
-  Σcardinal A ⦃ record { cardinal = |A| ; 
-                         funFO = f ; 
-                         isIsoFO = record { inv = g ; 
-                                            invLeft = invLeft ; 
-                                            invRight = invRight } } ⦄ B 
-                 = λ n → cardinal {B (g n)}
+Σcardinal : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} → Fin (cardinal {A}) → ℕ
+Σcardinal A ⦃ record { cardinal = |A| ; 
+                       funFO = f ; 
+                       isIsoFO = record { inv = g ; 
+                                          invLeft = invLeft ; 
+                                          invRight = invRight } } ⦄ B 
+               = λ n → cardinal {B (g n)}
 
 
-  Σfibre : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} 
-           → {a : A} → B a → Fin (Σcardinal A B (funFO a))
+Σfibre : (A : Set) {{Afinite : FOSet A}} (B : A → Set) {{Bfinite : {a : A} → FOSet (B a)}} 
+         → {a : A} → B a → Fin (Σcardinal A B (funFO a))
 
-  Σfibre A ⦃ record { cardinal = |A| ; 
-                      funFO = f ; 
-                      isIsoFO = record { inv = g ; invLeft = invLeft ; invRight = invRight } } ⦄ B {a = a} 
-               = λ b → transport (λ a → Fin (cardinal {B a})) (invRight a) (funFO {B a} b)
+Σfibre A ⦃ record { cardinal = |A| ; 
+                    funFO = f ;
+                    isIsoFO = record { inv = g ; invLeft = invLeft ; invRight = invRight } } ⦄ B {a = a} 
+             = λ b → transport (λ a → Fin (cardinal {B a})) (invRight a) (funFO {B a} b)
 
 
-  instance 
-    FOΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
+instance 
+  FOΣ : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} → FOSet (Σ A B)
 
-    FOΣ {A} {{Afinite}} {B} {{Bfinite}} 
-              = let S = Σcardinal A B in let F = Σfibre A B in
-                   record { cardinal = finiteSum S ; 
-                            funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} funFO F) ;
-                            isIsoFO = isoComp 
-                                      (isoΣfun (isIsoFO)
-                                      λ a → isoComp (isIsoFO {B a}) 
-                                                    (isoTransport (λ a → Fin (cardinal {B a})) (iso.invRight (isIsoFO {A}) a))) 
-                                      (isIsoCanonicalΣ S) }
+  FOΣ {A} {{Afinite}} {B} {{Bfinite}} 
+            = let S = Σcardinal A B in let F = Σfibre A B in
+                 record { cardinal = finiteSum S ; 
+                          funFO = (canonicalΣ S) o (Σfun {B₁ = B} {B₂ = λ n → Fin (S n)} funFO F) ;
+                          isIsoFO = isoComp 
+                                    (isoΣfun (isIsoFO)
+                                    λ a → isoComp (isIsoFO {B a}) 
+                                                  (isoTransport (λ a → Fin (cardinal {B a})) (iso.invRight (isIsoFO {A}) a))) 
+                                    (isIsoCanonicalΣ S) }
                  
 
 
 
 
-  --We give an explicit description of the order on Σ types
+--We give an explicit description of the order on Σ types
 
-  transportOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}}
-                   {a₁ a₂ : A} (p : a₁ ≡ a₂) {b₁ b₂ : B a₁}
-                   → b₁ << b₂ ↔ transport B p b₁ << transport B p b₂
+transportOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}}
+                 {a₁ a₂ : A} (p : a₁ ≡ a₂) {b₁ b₂ : B a₁}
+                 → b₁ << b₂ ↔ transport B p b₁ << transport B p b₂
 
-  transportOrder refl = ↔Refl
-
-
-  ΣfibreOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
-                {a : A} {b₁ b₂ : B a} 
-                → b₁ << b₂ ↔ Σfibre A B b₁ << Σfibre A B b₂
-
-  ΣfibreOrder {A} {B} {a} = let Aux = transportOrder {B = λ a₁ → Fin (cardinal {B a₁})} (iso.invRight (isIsoFO {A}) a) 
-                            in (∧left Aux , ∧right Aux)
+transportOrder refl = ↔Refl
 
 
-  Σord : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}}
-           → (a₁ : A) (b₁ : B a₁) (a₂ : A) (b₂ : B a₂) → Set
-  Σord {B = B} a₁ b₁ a₂ b₂ = (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
+ΣfibreOrder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
+              {a : A} {b₁ b₂ : B a} 
+              → b₁ << b₂ ↔ Σfibre A B b₁ << Σfibre A B b₂
 
-  Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
-           → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
-           → (a₁ , b₁) << (a₂ , b₂) ↔ Σord a₁ b₁ a₂ b₂
+ΣfibreOrder {A} {B} {a} = let Aux = transportOrder {B = λ a₁ → Fin (cardinal {B a₁})} (iso.invRight (isIsoFO {A}) a) 
+                          in (∧left Aux , ∧right Aux)
 
-  Σorder {A} {{Afinite}} {B} ⦃ Bfinite ⦄ {a₁} {a₂} {b₁} {b₂} 
+
+Σord : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}}
+         → (a₁ : A) (b₁ : B a₁) (a₂ : A) (b₂ : B a₂) → Set
+Σord {B = B} a₁ b₁ a₂ b₂ = (a₁ << a₂ ∨ Σ (a₁ ≡ a₂) (λ p → transport B p b₁ << b₂))
+
+Σorder : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
+         → {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂}  
+         → (a₁ , b₁) << (a₂ , b₂) ↔ Σord a₁ b₁ a₂ b₂
+
+Σorder {A} {{Afinite}} {B} ⦃ Bfinite ⦄ {a₁} {a₂} {b₁} {b₂} 
          = let S = Σcardinal A B in 
            let F = Σfibre A B in 
            let f : A → Fin (cardinal {A})
@@ -368,7 +388,7 @@ module FiniteUnionOfFiniteSets where
 
 
 
-open FiniteUnionOfFiniteSets using (FOΣ; Σord; Σorder)
+--open FiniteUnionOfFiniteSets using (FOΣ; Σord; Σorder)
 
 ord : (A : Set) {{_ : FOSet A}} → A → A → Set
 ord A x y = x << y 
@@ -382,198 +402,3 @@ ord A x y = x << y
                                                 (↔Sym (Σorder {B = B}) )
 
 
-
-
-
-
---Morphisms between FOSet
-
-record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → B) : Set where
-  field
-    isoHomFO : iso f
-    orderPreserving : (x y : A) → x << y ↔ f x << f y
-
---open HomFO {{...}} public
-
-
-
-
-
---We construct some basic instance of FOSet
-
-HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
-
-HomFOId = record { isoHomFO = isoId ; 
-                   orderPreserving = λ x y → ↔Refl }
-
-
-HomFOcanonical : {A : Set} {{_ : FOSet A}} → HomFO (funFO {A})
-
-HomFOcanonical = record { isoHomFO = isIsoFO ;
-                          orderPreserving = λ _ _ → ↔Refl }
-
-
-HomFOcanonicalInv : {A : Set} {{_ : FOSet A}} → HomFO (iso.inv (isIsoFO {A}))
-
-HomFOcanonicalInv {A} = record { isoHomFO = isoInv isIsoFO ;
-                                 orderPreserving = λ x y → ↔Trans (funFO {A} (iso.inv isIsoFO x) < y)
-                                                              (transport↔ (λ x₁ → x₁ << y) (iso.invLeft (isIsoFO {A}) _))
-                                                              (transport↔ (λ y₁ → funFO {A} (iso.inv isIsoFO x) < y₁)
-                                                                          {x = y} {y = funFO {A} (iso.inv isIsoFO y)}
-                                                                          (iso.invLeft (isIsoFO {A}) _)) }
-
-
-HomFOComp : {A B C : Set} {Afinite : FOSet A} {Bfinite : FOSet B} {Cfinite : FOSet C} 
-            {f : A → B} {g : B → C}
-            → HomFO {{Afinite}} {{Bfinite}} f
-            → HomFO {{Bfinite}} {{Cfinite}} g
-            → HomFO {{Afinite}} {{Cfinite}} (g o f)
-
-HomFOComp record { isoHomFO = isof ; orderPreserving = orderf } 
-          record { isoHomFO = isog ; orderPreserving = orderg } 
-        = record { isoHomFO = isoComp isof isog ; 
-                   orderPreserving = λ x y → ↔Trans _ (orderf _ _) (orderg _ _) }
-
-
-HomFOΣfun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
-              {B₁ : A₁ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {B₂ : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
-              {f : A₁ → A₂} (homf : HomFO f)
-              {F : {a₁ : A₁} → B₁ a₁ → B₂ (f a₁)} (homF : {a₁ : A₁} → HomFO (F {a₁}))
-              → HomFO (Σfun {B₂ = B₂} f F)
-
-HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} record { isoHomFO = isof ; orderPreserving = orderf } {F = F} homF
-               = record { isoHomFO = isoΣfun isof (λ a₁ → HomFO.isoHomFO {f = F {a₁}} (homF {a₁})) ; 
-                          orderPreserving = λ {(a₁ , b₁) (a₂ , b₂) 
-                                            → ↔Trans (Σord a₁ b₁ a₂ b₂) 
-                                                     (Σorder {B = B₁}) 
-                                                     (↔Trans (Σord {B = B₂} (f a₁) (F b₁) (f a₂) (F b₂)) 
-                                                              (∨Nat↔ (orderf _ _) 
-                                                                     (↔Trans (Σ (a₁ ≡ a₂) (λ p → transport B₂ (ap f p) (F b₁) << F b₂))
-                                                                        ((λ {(refl , q) → refl , ∧left (HomFO.orderPreserving {f = F {a₁}} homF b₁ b₂) q}) , 
-                                                                          λ {(refl , q) → refl , (∧right (HomFO.orderPreserving {f = F {a₁}} homF b₁ b₂) q)}) 
-                                                                        (injectiveEqual (λ p → transport B₂ p (F b₁) << F b₂) (injectiveIso isof)))) 
-                                                              (↔Sym (Σorder {B = B₂})))} }
-
-
-
---We construct the isomorphism needed for the definition of operads
-
-η₁ : (B : Fin (s O) → Set) {{_ : {x : Fin (s O)} → FOSet (B x)}} → B fzero → Σ (Fin (s O)) B
-η₁ B x = fzero , x
-
-η₂ : (A : Set) {{_ : FOSet A}} → A → Σ A (λ _ → Fin (s O))
-η₂ A a = a , fzero
-
-ψ : (A : Set) {{_ : FOSet A}} (B : A → Set) {{_ : {a : A} → FOSet (B a)}}
-    (C : Σ A B → Set) {{_ : {x : Σ A B} → FOSet (C x)}}
-    → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
-ψ A B C (a  , (b , c)) = ((a , b) , c)          
-
-
-
-
- 
-HomFOη₁ : {B : Fin (s O) → Set} {{Bfinite : {x : Fin (s O)} → FOSet (B x)}} → HomFO (η₁ B)
-
-HomFOη₁ {B} = record { isoHomFO = record { inv = λ {(fzero , q) → q} ; 
-                                             invLeft = λ {(fzero , _) → refl} ; 
-                                             invRight = λ _ → refl } ; 
-                         orderPreserving = λ x y → ΣorderSnd {B = B} } 
-
-
-
-HomFOη₂ : {A : Set} {{_ : FOSet A}} → HomFO (η₂ A)
-
-HomFOη₂ = record { isoHomFO = record { inv = λ { (a , _) → a} ; 
-                                       invLeft = λ { (a , fzero) → refl} ; 
-                                       invRight = λ _ → refl } ;
-                   orderPreserving = λ x y → ↔Trans (x << y ∨ Σ (x ≡ y) (λ _ → ord (Fin (s O)) fzero fzero)) 
-                                                   ((λ q → left q) ,
-                                                    (λ { (left q) → q ; (right (_ , ()) )}))
-                                                   (↔Sym (Σorder {B = λ _ → Fin (s O)})) } 
-
-
-
-HomFOψ : {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} 
-           {C : Σ A B → Set} {{_ : {x : Σ A B} → FOSet (C x)}}
-           → HomFO (ψ A B C)
-
-HomFOψ {A} {B} {C} = record { isoHomFO = record { inv = λ {((a , b) , c) → (a , (b , c))} ; 
-                                                    invLeft = λ {((a , b) , c) → refl} ; 
-                                                    invRight = λ {(a , (b , c)) → refl} } ;
-                                orderPreserving = λ { (a₁ , (b₁ , c₁)) (a₂ , (b₂ , c₂)) → 
-                                    ↔Trans (Σord a₁ (b₁ , c₁) a₂ (b₂ , c₂))
-                                      (Σorder {b₁ = (b₁ , c₁)} {b₂ = (b₂ , c₂)}) 
-                                      (↔Trans (Σord (a₁ , b₁) c₁ (a₂ , b₂) c₂)
-                                         (↔Trans (Σord a₁ b₁ a₂ b₂ ∨
-                                                 Σ ((a₁ , b₁) ≡ (a₂ , b₂)) (λ p → transport C p c₁ << c₂))
-                                                 (↔Trans
-                                                    (a₁ << a₂ ∨
-                                                      Σ (a₁ ≡ a₂) (λ p → Σord (transport B p b₁) (deptransport C p c₁) b₂ c₂))
-                                                    (∨Nat↔ ↔Refl 
-                                                           ((λ {(refl , q) → refl , ∧left (Σorder {a₁ = b₁} {b₁ = c₁}) q}) , 
-                                                             λ {(refl , q) → refl , ∧right (Σorder {a₁ = b₁} {b₁ = c₁}) q})) 
-                                                    ((λ { (left qa) → left (left qa) ; 
-                                                          (right (refl , left qb)) → left (right (refl , qb)) ; 
-                                                          (right (refl , right (refl , qc))) → right (refl , qc)}) , 
-                                                      λ { (left (left qa)) → left qa ; 
-                                                          (left (right (refl , qb))) → right (refl , (left qb)) ; 
-                                                          (right (refl , qc)) → right (refl , (right (refl , qc)))}))
-                                             (∨Nat↔ (↔Sym (Σorder {B = B})) 
-                                                     ↔Refl)) 
-                                             (↔Sym (Σorder {B = C})))} }
-
-
-
-
-
-
-
---We show that being a morphism of FOSet is a property
-
-Prop< : {n : ℕ} {a₁ a₂ : Fin n} → isProp (a₁ < a₂)
-Prop< {.(s _)} {fzero} {fzero} = Prop⊥
-Prop< {.(s _)} {fzero} {fsucc a₂} = Prop⊤
-Prop< {.(s _)} {fsucc a₁} {fzero} = Prop⊥
-Prop< {.(s _)} {fsucc a₁} {fsucc a₂} = Prop< {a₁ = a₁} {a₂ = a₂}
-
-Prop<< : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → isProp (a₁ << a₂)
-Prop<< {a₁ = a₁} {a₂ = a₂} = Prop< {a₁ = funFO a₁} {a₂ = funFO a₂}
-
-
-PropOrderPreserving : {A B : Set} {{Afinite : FOSet A}} {{_ : FOSet B}} {f : A → B}
-                      → isProp ((x y : A) → x << y ↔ f x << f y)
-PropOrderPreserving {A} {B} = Prop→ (Prop→ (Prop↔ (Prop<< {A}) (Prop<< {B}))) 
-
-
-PropHomFOAux : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f : A → B} {homf₁ homf₂ : HomFO f}
-               → HomFO.isoHomFO homf₁ ≡ HomFO.isoHomFO homf₂ → HomFO.orderPreserving homf₁ ≡ HomFO.orderPreserving homf₂
-               → homf₁ ≡ homf₂
-               
-PropHomFOAux {homf₁ = record { isoHomFO = iso₁ ; orderPreserving = ord₁ }}
-             {record { isoHomFO = iso₂ ; orderPreserving = ord₂ }}
-             refl refl = refl
-
-
-PropHomFO : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f : A → B} → isProp (HomFO f)
-
-PropHomFO {A} {B} = PropHomFOAux PropIso (PropOrderPreserving {A} {B})
-
-
-
-
---We show that morphisms between FOSet are unique
-
-postulate
-  HomFOUniqueAux : {m : ℕ} {f : Fin m → Fin m} → ((x y : Fin m) → x << y ↔ f x << f y) → f ≡ Id
-
-postulate
-  HomFOUniqueCanonical : {m n : ℕ} {f g : Fin m → Fin n} (homf : HomFO f) (homg : HomFO g) → f ≡ g
-
-
-HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g
-
-HomFOUnique {f = f} {g = g}  homf homg = isoCancel (isoPostComp isIsoFO)
-                                        (isoCancel (isoPreComp (isoInv isIsoFO))
-                                                   (HomFOUniqueCanonical (HomFOComp (HomFOComp HomFOcanonicalInv homf) HomFOcanonical)
-                                                                         (HomFOComp (HomFOComp HomFOcanonicalInv homg) HomFOcanonical)))

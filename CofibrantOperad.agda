@@ -87,12 +87,12 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P�
          {α : Nat P₁ P₂} {{homα : HomOperad α}} where
 
        HomOpSecCyl : HomOperad (secCylOp α)
-       HomOpSecCyl = record { homNat = refl ;
-                                homId = refl ;
-                                homγ = refl }
+       HomOpSecCyl = record { homNat = λ _ → refl ;
+                              homId = refl ;
+                              homγ = refl }
 
        HomOpProjCyl : HomOperad (projCylOp α)
-       HomOpProjCyl = record { homNat = refl ;
+       HomOpProjCyl = record { homNat = λ _ → refl ;
                                homId = refl ;
                                homγ = refl }
 

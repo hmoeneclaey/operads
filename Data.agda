@@ -109,6 +109,13 @@ efql ()
 
 
 --For Σ
+
+Σleft : ∀ {k l} {A : Set k} {B : A → Set l} → Σ A B → A
+Σleft (a , b) = a
+
+Σright : ∀ {k l} {A : Set k} {B : A → Set l} → (x : Σ A B) → B (Σleft x)
+Σright (a , b) = b
+
 {-
 ΣAssoc : ∀ {k l m} (A : Set k) (B : A → Set l) (C : Σ A B → Set m)
     → Σ A (λ a → Σ (B a) (λ b → C (a , b))) → Σ (Σ A B) C
@@ -157,6 +164,9 @@ transport B refl x = x
 transport↔ : ∀ {k l} {A : Set k} (B : A → Set l) {x y : A} → x ≡ y → B x ↔ B y
 transport↔ B refl = ↔Refl
 
+transport₂↔ : ∀ {k l m} {A : Set k} {B : Set l} (C : A → B → Set m) {a₁ a₂ : A} {b₁ b₂ : B} → a₁ ≡ a₂ → b₁ ≡ b₂ → C a₁ b₁ ↔ C a₂ b₂
+transport₂↔ C refl refl = ↔Refl
+
 ap : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
 ap f refl = refl
 
@@ -193,6 +203,13 @@ transportConst {p = refl} = refl
 +Assoc : {l m n : ℕ} → (l + m) + n ≡ l + (m + n)
 +Assoc {O} = refl
 +Assoc {s l} = ap s (+Assoc {l = l})
+
+
+
+--Results about → and equality
+
+≡fun : ∀ {k l} {A : Set k} {B : A → Set l} {f g : (a : A) → B a} {a : A} → f ≡ g → f a ≡ g a
+≡fun refl = refl
 
 
 
@@ -386,6 +403,13 @@ injectiveIso : ∀ {k l} {A : Set k} {B : Set l} {f : A → B} → iso f → inj
 injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight } {x} {y} p 
                   = ≡Trans {y = g (f x)} (invRight x) (≡Trans {y = g (f y)} (ap g p) (≡Sym (invRight y)))
 
+
+
+
+--We define surjective functions
+
+surjective : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) → Set (k ⊔ l)
+surjective {A = A} {B = B} f = (b : B) → Σ A (λ a → f a ≡ b)
 
 
 

@@ -3,6 +3,7 @@ module OperadCocylinder where
 open import Agda.Primitive
 open import Data
 open import FiniteSet
+open import MorphismFiniteSet
 open import Operad
 open import FibrantUniverse
 
@@ -32,11 +33,11 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P�
        instance
          OperadCocylinder : Operad (cocylinderOp α)
          OperadCocylinder = record
-                              { functor = λ { f (cyl x , y , p) → cyl functor f x , functor f y ,
-                                                                      [ (λ i → functor f (p $ i)) ,
-                                                                           ≡Trans (ap (functor f) (eqe₀ p))
-                                                                                  (≡Sym (HomOperad.homNat homα)) ,
-                                                                           ap (functor f) (eqe₁ p) ]}
+                              { functor = λ { f homf (cyl x , y , p) → cyl functor f homf x , functor f homf y ,
+                                                                      [ (λ i → functor f homf (p $ i)) ,
+                                                                           ≡Trans (ap (functor f homf) (eqe₀ p))
+                                                                                  (≡Sym (HomOperad.homNat homα homf)) ,
+                                                                           ap (functor f homf) (eqe₁ p) ]}
 
                               ; functorId = λ _ → ≡cocylinder (functorId _) (functorId _) (λ _ → functorId _)
 
@@ -58,15 +59,15 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P�
                               ; unitRight = λ d → ≡cocylinder (unitRight (cocylinder.piX o d)) (unitRight (cocylinder.piY o d))
                                                               (λ i → unitRight (λ a → cocylinder.path (d a) $ i))
 
-                              ; naturalityFiber = λ F c d → ≡cocylinder (naturalityFiber F (cocylinder.piX c) (cocylinder.piX o d))
-                                                                        (naturalityFiber F (cocylinder.piY c) (cocylinder.piY o d))
-                                                                        (λ i → naturalityFiber F (cocylinder.path c $ i)
-                                                                                                 (λ a → cocylinder.path (d a) $ i))
+                              ; naturalityFiber = λ F homF c d → ≡cocylinder (naturalityFiber F homF (cocylinder.piX c) (cocylinder.piX o d))
+                                                                             (naturalityFiber F homF (cocylinder.piY c) (cocylinder.piY o d))
+                                                                             (λ i → naturalityFiber F homF (cocylinder.path c $ i)
+                                                                                                     (λ a → cocylinder.path (d a) $ i))
                               
-                              ; naturalityBase = λ f c d → ≡cocylinder (naturalityBase f (cocylinder.piX c) (cocylinder.piX o d))
-                                                                       (naturalityBase f (cocylinder.piY c) (cocylinder.piY o d))
-                                                                       (λ i → naturalityBase f (cocylinder.path c $ i)
-                                                                                               (λ a → cocylinder.path (d a) $ i))
+                              ; naturalityBase = λ f homf c d → ≡cocylinder (naturalityBase f homf (cocylinder.piX c) (cocylinder.piX o d))
+                                                                            (naturalityBase f homf (cocylinder.piY c) (cocylinder.piY o d))
+                                                                            (λ i → naturalityBase f homf (cocylinder.path c $ i)
+                                                                                                  (λ a → cocylinder.path (d a) $ i))
                               
                               ; assoc = λ c d e → ≡cocylinder (assoc (cocylinder.piX c) (cocylinder.piX o d) (cocylinder.piX o e))
                                                               (assoc (cocylinder.piY c) (cocylinder.piY o d) (cocylinder.piY o e))
