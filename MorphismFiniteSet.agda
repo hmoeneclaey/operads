@@ -182,12 +182,58 @@ PropHomFO {A} {B} = PropHomFOAux PropIso (PropOrderPreserving {A} {B})
 
 --Some properties of morphism between canonical finite sets
 
-postulate
-  IsoCardinal : {m n : ℕ} {f : Fin m → Fin n} → iso f → n ≡ m
+IsoCardinal : {m n : ℕ} {f : Fin m → Fin n} → iso f → n ≡ m
+IsoCardinal = {!!}
 
-postulate
-  surjectiveInjective : {m : ℕ} → {f : Fin m → Fin m} → injective f → surjective f
+Fin- : (m : ℕ) (y : Fin m) → Set
+Fin- m y = Σ (Fin m) (λ x → ¬ (x ≡ y))  
 
+--injectiveFsucc : {m : ℕ} → injective (fsucc {m})
+--injectiveFsucc = ?
+
+funFin- : {m : ℕ} (y : Fin (s m)) → Fin m → Fin- (s m) y
+funFin- fzero fzero = fsucc fzero , λ ()
+funFin- fzero (fsucc x) = (fsucc (fsucc x)) , λ ()
+funFin- (fsucc y) fzero = fzero , λ ()
+funFin- (fsucc y) (fsucc x) = (fsucc (Σleft (funFin- y x))) , λ p → Σright (funFin- y x) (injectiveFsucc p)
+
+invFunFin- : {m : ℕ} (y : Fin (s m)) → Fin- (s m) y → Fin m
+invFunFin- fzero (fzero , neq) = efql (neq refl)
+invFunFin- fzero (fsucc x , neq) = x
+invFunFin- (fsucc fzero) (fzero , neq) = fzero
+invFunFin- (fsucc (fsucc y)) (fzero , neq) = fzero
+invFunFin- (fsucc fzero) (fsucc x , neq) = fsucc (invFunFin- fzero (x , λ eq → neq (ap fsucc eq)))
+invFunFin- (fsucc (fsucc y)) (fsucc x , neq) = fsucc (invFunFin- (fsucc y) (x , λ eq → neq (ap fsucc eq)))
+
+
+invLeftFunFin- : {m : ℕ} (y : Fin (s m)) (x : Fin- (s m) y) → x ≡ funFin- y (invFunFin- y x)
+invLeftFunFin- fzero (fzero , neq) = efql (neq refl)
+invLeftFunFin- fzero (fsucc fzero , neq) = equalΣ refl (funext (λ ()))
+invLeftFunFin- fzero (fsucc (fsucc x) , neq) = equalΣ refl (funext (λ ()))
+invLeftFunFin- (fsucc fzero) (fzero , neq) = equalΣ refl (funext (λ ()))
+invLeftFunFin- (fsucc (fsucc y)) (fzero , neq) = equalΣ refl (funext (λ ()))
+invLeftFunFin- (fsucc fzero) (fsucc x , neq) = equalΣ (ap (fsucc o Σleft)
+                                                      (invLeftFunFin- fzero (x , (λ eq → neq (ap fsucc eq)))))
+                                                      (funext ?)
+invLeftFunFin- (fsucc (fsucc y)) (fsucc x , neq) = equalΣ {!!} (funext (λ ()))
+
+invRightFunFin- : {m : ℕ} (y : Fin (s m)) (x : Fin m) → x ≡ invFunFin- y (funFin- y x)
+invRightFunFin- = {!!}
+
+isoFunFin- : {m : ℕ} {y : Fin (s m)} → iso (funFin- y)
+isoFunFin- {y = y} = record { inv = invFunFin- y ;
+                              invLeft = invLeftFunFin- y ;
+                              invRight = invRightFunFin- y }
+
+--surjectiveInjectiveAux : {m : ℕ} (y : Fin (s m)) → Fin m → Σ (Fin (s m)) (λ x → ¬ (x ≡ y))  
+--surjectiveInjectiveAux = {!!}
+
+surjectiveInjective : {m : ℕ} → {f : Fin m → Fin m} → injective f → surjective f
+surjectiveInjective {O} _ = λ ()
+surjectiveInjective {s m} {f} injf = let A = Σ (Fin (s m)) (λ x → ¬ (x ≡ f fzero)) in
+                                     let ffsucc : Fin m → A
+                                         ffsucc = {!!} in
+                                     {!!}
 
 
 
@@ -261,10 +307,10 @@ HomFOUniqueCanonical {f = f} {g = g} homf homg = let p = IsoCardinal (HomFO.isoH
                                                    (≡Trans {y = Id}
                                                            (HomFOUniqueAux λ x y → ↔Trans (f x << f y)
                                                                                           (HomFO.orderPreserving homf x y)
-                                                                                          (orderPreservingTransport p))
+                                                                                          (orderPreservingTransport p {x = f x} {y = f y}))
                                                      (≡Sym (HomFOUniqueAux (λ x y → ↔Trans (g x << g y)
                                                                                            (HomFO.orderPreserving homg x y)
-                                                                                           (orderPreservingTransport p)))))
+                                                                                           (orderPreservingTransport p {x = g x} {y = g y})))))
 
 
 HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g
