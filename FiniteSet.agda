@@ -53,6 +53,12 @@ instance
 
 
 
+-- Fin O is empty
+
+elimFinO : ∀ {k} {A : Set k} → Fin O → A
+elimFinO ()
+
+
 --Very basic facts about the order
 
 <Irefl : {n : ℕ} (a : Fin n) → ¬ (a < a)
@@ -79,6 +85,9 @@ isSucc : {m : ℕ} {x : Fin (s m)} → fzero << x → Σ (Fin m) (λ y → x ≡
 isSucc {x = fzero} () 
 isSucc {x = fsucc a} _ = a , refl
 
+postulate isSucc≡ : {m : ℕ} {x : Fin (s m)} → ¬ (fzero ≡ x) → Σ (Fin m) (λ y → x ≡ fsucc y)
+--isSucc≡
+
 isFzero : {m : ℕ} {x : Fin (s m)} → ((y : Fin (s m)) → ¬ (y << x)) → x ≡ fzero
 isFzero {x = fzero} _ = refl
 isFzero {x = fsucc x} Hyp = efql (Hyp fzero *)
@@ -86,10 +95,24 @@ isFzero {x = fsucc x} Hyp = efql (Hyp fzero *)
 
 
 
---Injectivity of successor
+--basic properties of _≡_ on Fin n
 
 injectiveFsucc : {n : ℕ} → injective (fsucc {n})
 injectiveFsucc {n} {x} {y} refl = refl
+
+≢FzeroFsucc : {n : ℕ} {x : Fin n} → ¬ (fsucc x ≡ fzero)
+≢FzeroFsucc ()
+
+≡FinDecidable : {m : ℕ} (x y : Fin m) → (x ≡ y) ∨ ¬ (x ≡ y)
+≡FinDecidable fzero fzero = left refl
+≡FinDecidable fzero (fsucc y) = right (λ eq → ≢FzeroFsucc (≡Sym eq))
+≡FinDecidable (fsucc x) fzero = right ≢FzeroFsucc
+≡FinDecidable (fsucc x) (fsucc y) = ∨Nat (λ {refl → refl}) (λ {neq refl → neq refl}) (≡FinDecidable x y)
+
+
+
+
+--We define finite sums of natural number
 
 finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
 finiteSum {O} _ = O

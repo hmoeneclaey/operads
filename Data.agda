@@ -215,12 +215,18 @@ transportConst {p = refl} = refl
 
 --Results about Σ and equality
 
+{-
 equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} 
          (p : a₁ ≡ a₂) → transport B p b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂) 
 equalΣ refl refl = refl
+-}
 
 equal∧ : ∀ {k l} {A : Set k} {B : Set l} {a₁ a₂ : A} {b₁ b₂ : B} → a₁ ≡ a₂ → b₁ ≡ b₂ → (a₁ , b₁) ≡ (a₂ , b₂)
 equal∧ refl refl = refl
+
+equalΣ : ∀ {k l} {A : Set k} {B : A → Set l} {x y : Σ A B}
+     → (p : Σleft x ≡ Σleft y) → transport B p (Σright x) ≡ Σright y → x ≡ y
+equalΣ {x = a , x} {a₁ , x₁} refl refl = refl
 
 
 --TODO
@@ -410,6 +416,10 @@ injectiveIso {f = f} record { inv = g ; invLeft = invLeft ; invRight = invRight 
 
 surjective : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) → Set (k ⊔ l)
 surjective {A = A} {B = B} f = (b : B) → Σ A (λ a → f a ≡ b)
+
+
+surjectivePostCompIso : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → B} {g : B → C} → iso g → surjective (g o f) → surjective f
+surjectivePostCompIso {g = g} isog surjgf b = let H = surjgf (g b) in Σleft H , isoCancel isog (Σright H)
 
 
 

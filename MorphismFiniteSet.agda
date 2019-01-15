@@ -4,7 +4,9 @@ open import Data
 open import FiniteSet
 
 
---Morphisms between FOSet
+{- We define morphisms between FOSet -}
+
+
 isOrderPreserving : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} (f : A → B) → Set
 isOrderPreserving {A} f = (x y : A) → x << y ↔ f x << f y
 
@@ -20,7 +22,8 @@ record HomFO {A B : Set} {{Afinite : FOSet A}} {{Bfinite : FOSet B}} (f : A → 
 
 
 
---We construct some basic instance of FOSet
+{- We construct some basic examples of morphisms of FOSet -}
+
 
 HomFOId : {A : Set} {{Afinite : FOSet A}} → HomFO (Id {A = A})
 
@@ -74,7 +77,8 @@ HomFOΣfun {B₁ = B₁} {B₂ = B₂} {f = f} record { isoHomFO = isof ; orderP
 
 
 
---We construct the isomorphism needed for the definition of operads
+{- We construct the isomorphism of finite sets needed for the definition of operads -}
+
 
 η₁ : (B : Fin (s O) → Set) {{_ : {x : Fin (s O)} → FOSet (B x)}} → B fzero → Σ (Fin (s O)) B
 η₁ B x = fzero , x
@@ -147,7 +151,7 @@ HomFOψ {A} {B} {C} = record { isoHomFO = record { inv = λ {((a , b) , c) → (
 
 
 
---We show that being a morphism of FOSet is a property
+{- We show that being a morphism of FOSet is a property -}
 
 Prop< : {n : ℕ} {a₁ a₂ : Fin n} → isProp (a₁ < a₂)
 Prop< {.(s _)} {fzero} {fzero} = Prop⊥
@@ -155,12 +159,14 @@ Prop< {.(s _)} {fzero} {fsucc a₂} = Prop⊤
 Prop< {.(s _)} {fsucc a₁} {fzero} = Prop⊥
 Prop< {.(s _)} {fsucc a₁} {fsucc a₂} = Prop< {a₁ = a₁} {a₂ = a₂}
 
+
 Prop<< : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → isProp (a₁ << a₂)
 Prop<< {a₁ = a₁} {a₂ = a₂} = Prop< {a₁ = funFO a₁} {a₂ = funFO a₂}
 
 
 PropOrderPreserving : {A B : Set} {{Afinite : FOSet A}} {{_ : FOSet B}} {f : A → B}
                       → isProp (isOrderPreserving f)
+                      
 PropOrderPreserving {A} {B} = Prop→ (Prop→ (Prop↔ (Prop<< {A}) (Prop<< {B}))) 
 
 
@@ -180,22 +186,39 @@ PropHomFO {A} {B} = PropHomFOAux PropIso (PropOrderPreserving {A} {B})
 
 
 
---Some properties of morphism between canonical finite sets
+{- 
+  Now we show some properties of morphism between canonical finite sets 
+  Our main goal is to show that there is at most one morphism between any two FOSet, but we will need a lot of intermediary results
+-}
 
-IsoCardinal : {m n : ℕ} {f : Fin m → Fin n} → iso f → n ≡ m
-IsoCardinal = {!!}
+
+
+{- First we define canonical finite set minus one element -}
+
+
+--Fin- m y is set theoretically Fin m - {y}
 
 Fin- : (m : ℕ) (y : Fin m) → Set
-Fin- m y = Σ (Fin m) (λ x → ¬ (x ≡ y))  
+Fin- m y = Σ (Fin m) (λ x → ¬ (x ≡ y))
 
---injectiveFsucc : {m : ℕ} → injective (fsucc {m})
---injectiveFsucc = ?
+
+≡Fin- : {m : ℕ} {y : Fin m} → {n₁ n₂ : Fin- m y} → Σleft n₁ ≡ Σleft n₂ → n₁ ≡ n₂
+≡Fin- {n₁ = a₁ , x₁} {a₂ , x₂} refl = equalΣ refl (funext (λ _ → Prop⊥))
+
+
+--We will show that Fin (s m) - {y} is isomorphic to Fin m
+
+
+--This is the isomorphism...
 
 funFin- : {m : ℕ} (y : Fin (s m)) → Fin m → Fin- (s m) y
 funFin- fzero fzero = fsucc fzero , λ ()
 funFin- fzero (fsucc x) = (fsucc (fsucc x)) , λ ()
 funFin- (fsucc y) fzero = fzero , λ ()
 funFin- (fsucc y) (fsucc x) = (fsucc (Σleft (funFin- y x))) , λ p → Σright (funFin- y x) (injectiveFsucc p)
+
+
+--...and its inverse
 
 invFunFin- : {m : ℕ} (y : Fin (s m)) → Fin- (s m) y → Fin m
 invFunFin- fzero (fzero , neq) = efql (neq refl)
@@ -206,43 +229,105 @@ invFunFin- (fsucc fzero) (fsucc x , neq) = fsucc (invFunFin- fzero (x , λ eq �
 invFunFin- (fsucc (fsucc y)) (fsucc x , neq) = fsucc (invFunFin- (fsucc y) (x , λ eq → neq (ap fsucc eq)))
 
 
+--We check this works
+
 invLeftFunFin- : {m : ℕ} (y : Fin (s m)) (x : Fin- (s m) y) → x ≡ funFin- y (invFunFin- y x)
 invLeftFunFin- fzero (fzero , neq) = efql (neq refl)
-invLeftFunFin- fzero (fsucc fzero , neq) = equalΣ refl (funext (λ ()))
-invLeftFunFin- fzero (fsucc (fsucc x) , neq) = equalΣ refl (funext (λ ()))
-invLeftFunFin- (fsucc fzero) (fzero , neq) = equalΣ refl (funext (λ ()))
-invLeftFunFin- (fsucc (fsucc y)) (fzero , neq) = equalΣ refl (funext (λ ()))
-invLeftFunFin- (fsucc fzero) (fsucc x , neq) = equalΣ (ap (fsucc o Σleft)
-                                                      (invLeftFunFin- fzero (x , (λ eq → neq (ap fsucc eq)))))
-                                                      (funext ?)
-invLeftFunFin- (fsucc (fsucc y)) (fsucc x , neq) = equalΣ {!!} (funext (λ ()))
+invLeftFunFin- fzero (fsucc fzero , neq) = ≡Fin- refl 
+invLeftFunFin- fzero (fsucc (fsucc x) , neq) = ≡Fin- refl
+invLeftFunFin- (fsucc fzero) (fzero , neq) = ≡Fin- refl
+invLeftFunFin- (fsucc (fsucc y)) (fzero , neq) = ≡Fin- refl 
+invLeftFunFin- (fsucc fzero) (fsucc x , neq) = ≡Fin- (ap (fsucc o Σleft)
+                                                         (invLeftFunFin- fzero (x , (λ eq → neq (ap fsucc eq)))))
+invLeftFunFin- (fsucc (fsucc y)) (fsucc x , neq) = ≡Fin- (ap (fsucc o Σleft)
+                                                             (invLeftFunFin- (fsucc y) (x , (λ eq → neq (ap fsucc eq)))))
+                                                    
+
 
 invRightFunFin- : {m : ℕ} (y : Fin (s m)) (x : Fin m) → x ≡ invFunFin- y (funFin- y x)
-invRightFunFin- = {!!}
+invRightFunFin- fzero fzero = refl
+invRightFunFin- fzero (fsucc x) = refl
+invRightFunFin- (fsucc fzero) fzero = refl
+invRightFunFin- (fsucc (fsucc y)) fzero = refl
+invRightFunFin- (fsucc fzero) (fsucc x) = ap fsucc (≡Trans {y = invFunFin- fzero (funFin- fzero x)}
+                                                   (invRightFunFin- fzero x)
+                                                   (ap (invFunFin- fzero)
+                                                       {x = funFin- fzero x}
+                                                       {y = (Σleft (funFin- fzero x) , _)}
+                                                       (≡Fin- refl)))
+invRightFunFin- (fsucc (fsucc y)) (fsucc x) = ap fsucc (≡Trans {y = invFunFin- (fsucc y) (funFin- (fsucc y) x)}
+                                                   (invRightFunFin- (fsucc y) x)
+                                                   (ap (invFunFin- (fsucc y))
+                                                       {x = funFin- (fsucc y) x}
+                                                       {y = (Σleft (funFin- (fsucc y) x) , _)}
+                                                       (≡Fin- refl)))
+
 
 isoFunFin- : {m : ℕ} {y : Fin (s m)} → iso (funFin- y)
-isoFunFin- {y = y} = record { inv = invFunFin- y ;
-                              invLeft = invLeftFunFin- y ;
+isoFunFin- {y = y} = record { inv = invFunFin- _ ;
+                              invLeft = invLeftFunFin- _ ;
                               invRight = invRightFunFin- y }
 
---surjectiveInjectiveAux : {m : ℕ} (y : Fin (s m)) → Fin m → Σ (Fin (s m)) (λ x → ¬ (x ≡ y))  
---surjectiveInjectiveAux = {!!}
+
+
+
+{- We prove some properties of morphisms between finite sets -}
 
 surjectiveInjective : {m : ℕ} → {f : Fin m → Fin m} → injective f → surjective f
 surjectiveInjective {O} _ = λ ()
-surjectiveInjective {s m} {f} injf = let A = Σ (Fin (s m)) (λ x → ¬ (x ≡ f fzero)) in
-                                     let ffsucc : Fin m → A
-                                         ffsucc = {!!} in
-                                     {!!}
+surjectiveInjective {s m} {f} injf = let ffsucc : Fin m → Fin- (s m) (f fzero)
+                                         ffsucc = λ x → (f (fsucc x)) , (λ eq → ≢FzeroFsucc (injf eq)) in
+                                     let surjectiveFfsucc : surjective ffsucc
+                                         surjectiveFfsucc = surjectivePostCompIso {g = invFunFin- (f fzero)}
+                                                                                  (isoInv (isoFunFin-))
+                                                                                  (surjectiveInjective
+                                                                                  (λ eq → injectiveFsucc (injf
+                                                                                          (ap Σleft
+                                                                                          (isoCancel (isoInv (isoFunFin- {y = f fzero})) eq))))) in
+                                     λ x → ∨Elim (λ {refl → fzero , refl})
+                                                 (λ neq → let a = Σleft (surjectiveFfsucc (x , neq)) in
+                                                          (fsucc a) , (ap Σleft (Σright (surjectiveFfsucc (x , neq)))))
+                                                 (≡FinDecidable x (f fzero))
+
+
+IsoCardinal : {m n : ℕ} {f : Fin m → Fin n} → iso f → n ≡ m
+
+IsoCardinal {O} {O} _ = refl
+
+IsoCardinal {O} {s n} isof = elimFinO (iso.inv isof fzero)
+
+IsoCardinal {s m} {O} {f} = elimFinO (f fzero)
+
+IsoCardinal {s m} {s n} {f} isof = let ffsucc : Fin m → Fin- (s n) (f fzero)
+                                       ffsucc = λ x → (f (fsucc x)) , λ eq → ≢FzeroFsucc (isoCancel isof eq) in
+                                   let isoFfsucc : iso ffsucc
+                                       isoFfsucc = let h = iso.inv isof in
+                                                   let funAux : (x : Fin (s n)) → ¬ (x ≡ f fzero) →  Σ (Fin m) (λ y → h x ≡ fsucc y)
+                                                       funAux = λ x  neq → isSucc≡ {x = h x}
+                                                                           λ eq → neq (≡Trans {y = f (h x)}
+                                                                                      (iso.invLeft isof _)
+                                                                                      (ap f (≡Sym eq))) in
+                                                   record { inv = λ { (x , neq) → Σleft (funAux x neq)};
+                                                            invLeft = λ {(x , neq) → ≡Fin- (isoCancel (isoInv isof)
+                                                                                           (≡Trans {y = fsucc (Σleft (funAux x neq))}
+                                                                                                   (Σright (funAux x neq))
+                                                                                                   (iso.invRight isof _)))} ;
+                                                            invRight = λ a → injectiveFsucc (≡Trans {y = h (f (fsucc a))}
+                                                                                                    (iso.invRight isof _)
+                                                                                                    (Σright (isSucc≡ (λ eq → ≢FzeroFsucc
+                                                                                                                     (isoCancel isof (≡Trans
+                                                                                                                     (iso.invLeft isof (f (fsucc a)))
+                                                                                                                     (ap f (≡Sym eq)))))))) } in
+                                   ap s (IsoCardinal {f = invFunFin- (f fzero) o ffsucc}
+                                                     (isoComp isoFfsucc (isoInv (isoFunFin- {y = f fzero}))))
 
 
 
---We show some properties of order preserving functions
+
+{- We show some properties of order preserving functions -}
 
 
-
---fsuccOrderPreserving : {m : ℕ} → isOrderPreserving (fsucc {m})
---fsuccOrderPreserving _ _ = ↔Refl
+--Order preserving functions are injetcive and surjective
 
 injectiveOrderPreserving : {m : ℕ} {f : Fin m → Fin m} → isOrderPreserving f → injective f
 injectiveOrderPreserving ordf {x = x} {y = y} p = <Total (λ ordxy → <IreflEqual p (∧left (ordf x y) ordxy))
@@ -251,6 +336,8 @@ injectiveOrderPreserving ordf {x = x} {y = y} p = <Total (λ ordxy → <IreflEqu
 surjectiveOrderPreserving : {m : ℕ} {f : Fin m → Fin m} → isOrderPreserving f → surjective f
 surjectiveOrderPreserving ordf = surjectiveInjective (injectiveOrderPreserving ordf) 
 
+
+--Order preserving function preserve the smallest element
 
 orderFzero : {m : ℕ} (f : Fin (s m) → Fin (s m)) → isOrderPreserving f → f fzero ≡ fzero
 
@@ -262,7 +349,12 @@ orderFzero f ordf = isFzero (λ y ordy → let a = Σleft (surjectiveOrderPreser
                                         <MinFzero {n = a} (∧right (ordf _ _) orda))
 
 
-HomFOfunction : {m : ℕ} (f : Fin (s m) → Fin (s m)) → isOrderPreserving f → Fin m → Fin m
+
+--The next three lemme show that there is only one funtion from Fin n to itself which is order preserving : the identity
+
+HomFOfunction : {m : ℕ} (f : Fin (s m) → Fin (s m))
+                → isOrderPreserving f → Fin m → Fin m
+
 HomFOfunction f ordf x = Σleft (isSucc {x = f (fsucc x)} (transport (λ y → y << f (fsucc x)) (orderFzero f ordf)
                                                                     (∧left (ordf fzero (fsucc x)) *))) 
 
@@ -273,45 +365,49 @@ HomFOUniqueAux1 f ordf {x} = Σright (isSucc {x = f (fsucc x)} (transport (λ y 
                                                                          (∧left (ordf fzero (fsucc x)) *))) 
 
 
-HomFOUniqueAux : {m : ℕ} {f : Fin m → Fin m} → isOrderPreserving f → f ≡ Id
+HomFOUniqueCstCardinal : {m : ℕ} {f : Fin m → Fin m} → isOrderPreserving f → f ≡ Id
 
-HomFOUniqueAux {O} {f = f} Hyp = funext (λ ()) 
+HomFOUniqueCstCardinal {O} {f = f} Hyp = funext (λ ()) 
 
-HomFOUniqueAux {s n} {f = f} ordf = funext (λ { fzero → orderFzero f ordf ;
-                                                (fsucc a) → let g = HomFOfunction f ordf in
-                                                            ≡Trans {y = fsucc (g a)}
-                                                                   (HomFOUniqueAux1 f ordf)
-                                                                   (ap fsucc (≡fun (HomFOUniqueAux {f = g} λ x y →
-                                                                             (↔Trans (f (fsucc x) << f (fsucc y))
-                                                                                     (ordf _ _)
-                                                                                     (transport₂↔ _<<_ {a₁ = f (fsucc x)}
-                                                                                                               {a₂ = fsucc (g x)}
-                                                                                                               {b₁ = f (fsucc y)}
-                                                                                                               {b₂ = fsucc (g y)}
+HomFOUniqueCstCardinal {s n} {f = f} ordf = funext (λ { fzero → orderFzero f ordf ;
+                                                      (fsucc a) → let g = HomFOfunction f ordf in
+                                                                  ≡Trans {y = fsucc (g a)}
+                                                                         (HomFOUniqueAux1 f ordf)
+                                                                         (ap fsucc (≡fun (HomFOUniqueCstCardinal {f = g} λ x y →
+                                                                                   (↔Trans (f (fsucc x) << f (fsucc y))
+                                                                                           (ordf _ _)
+                                                                                           (transport₂↔ _<<_ {a₁ = f (fsucc x)}
+                                                                                                             {a₂ = fsucc (g x)}
+                                                                                                             {b₁ = f (fsucc y)}
+                                                                                                             {b₂ = fsucc (g y)}
                                                                                                         (HomFOUniqueAux1 f ordf)
                                                                                                         (HomFOUniqueAux1 f ordf))))))})
 
 
 
---We show that morphisms between FOSet are unique
+{- We show that morphisms between FOSet are unique -}
 
 
 orderPreservingTransport : {m n : ℕ} (p : m ≡ n) {x y : Fin m} → x << y ↔ transport Fin p x << transport Fin p y
 orderPreservingTransport refl = ↔Refl
 
 
+--First we show for morphism between canonical finite sets, using the result for automorphism of canonical finite sets
+
 HomFOUniqueCanonical : {m n : ℕ} {f g : Fin m → Fin n} (homf : HomFO f) (homg : HomFO g) → f ≡ g
 
 HomFOUniqueCanonical {f = f} {g = g} homf homg = let p = IsoCardinal (HomFO.isoHomFO homf) in
                                                  isoCancel (isoPostComp (isoTransport Fin p))
                                                    (≡Trans {y = Id}
-                                                           (HomFOUniqueAux λ x y → ↔Trans (f x << f y)
+                                                           (HomFOUniqueCstCardinal λ x y → ↔Trans (f x << f y)
                                                                                           (HomFO.orderPreserving homf x y)
                                                                                           (orderPreservingTransport p {x = f x} {y = f y}))
-                                                     (≡Sym (HomFOUniqueAux (λ x y → ↔Trans (g x << g y)
+                                                     (≡Sym (HomFOUniqueCstCardinal (λ x y → ↔Trans (g x << g y)
                                                                                            (HomFO.orderPreserving homg x y)
                                                                                            (orderPreservingTransport p {x = g x} {y = g y})))))
+                                                                                           
 
+--The main theorem of this section
 
 HomFOUnique :  {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} {f g : A → B} (homf : HomFO f) (homg : HomFO g) → f ≡ g
 
