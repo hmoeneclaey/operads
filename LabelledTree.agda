@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module LabelledTree where
 
 
@@ -39,6 +41,7 @@ forgetLbl : Ltree+ → Ltree
 forgetLbl ∅ = ∅
 forgetLbl • = •
 forgetLbl (l• _) = •
+
 forgetLbl (cons t₁ t₂) = cons t₁ t₂
 forgetLbl (lcons _ t₁ t₂) = cons t₁ t₂
 
@@ -376,6 +379,21 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A) where
                                                      (λ { ∅ → eq₂ ; • → eq₂ ; (l• i) → eq₂ ; (cons t₂ t₃) → eq₂ ; (lcons i t₂ t₃) → eq₂})
                                                      (λ t₁ t₂ t₃ → eq₃) t
                 
+
+
+
+
+γLtree+ : (t : Ltree+) → (arity+ t → Ltree) → Ltree+
+γLtree+ ∅ f = addLbl e₁ (f ar∅+)
+γLtree+ • _ = •
+γLtree+ (l• i) _ = l• i
+γLtree+ (cons t₁ t₂) f = cons (γLtree+ t₁ (f o arConsL+)) (γLtree+ t₂ (f o arConsR+))
+γLtree+ (lcons i t₁ t₂) f = lcons i (γLtree+ t₁ (f o arlConsL+)) (γLtree+ t₂ (f o arlConsR+))
+
+γLtree : (t : Ltree) → (arity t → Ltree) → Ltree
+γLtree ∅ f = f ar∅
+γLtree • _ = •
+γLtree (cons t₁ t₂) f = cons (γLtree+ t₁ (f o arConsL)) (γLtree+ t₂ (f o arConsR))
 
 
 {-

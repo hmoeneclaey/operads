@@ -25,7 +25,7 @@ record ∞Mon (A : Set) {{_ : FOSet A}} : Set where
 
 
 
---Preliminary results about ∞Mon
+--Preliminary result about equality in ∞Mon
 
 ∞Mon≡Aux : {A : Set} {{_ : FOSet A}} {t : Qtree}
            {f₁ f₂ : Fin (Arity t) → A} {homf₁ : HomFO f₁} {homf₂ : HomFO f₂}
@@ -47,24 +47,26 @@ record ∞Mon (A : Set) {{_ : FOSet A}} : Set where
 instance
   ∞MonOp : Operad ∞Mon
   ∞MonOp = record
-             { functor = λ { f homf (t :: g :: homg)
-                                  → (t :: f o g :: HomFOComp homg homf) }
+             { functor = λ f homf → λ {(t :: g :: homg)
+                                     → (t :: f o g :: HomFOComp homg homf) }
                                   
-             ; functorId = λ { (t :: f :: homf) → ∞Mon≡ refl}
+             ; functorId = λ {(t :: f :: homf) → ∞Mon≡ refl}
              
              ; functorComp = λ { (t :: f :: homf) → ∞Mon≡ refl}
              
              ; id = [ ∅ ] :: Id :: HomFOId
              
-             ; γ = {!!}
+             ; γ = λ {(t :: f :: homf) D → (γQtree t (∞Mon.tree o D o f))
+                                        :: Σfun f (λ {a} → ∞Mon.∞arity (D (f a))) o (γΣfiniteAux t (∞Mon.tree o D o f))
+                                        :: HomFOComp (HomFOγ {t} {∞Mon.tree o D o f}) (HomFOΣfun homf (λ {a} → ∞Mon.∞hom (D (f a)))) }
              
-             ; unitLeft = {!!}
+             ; unitLeft = λ { (t :: f :: homf) → ∞Mon≡ (γQtreeUnitLeft t)}
              
-             ; unitRight = {!!}
+             ; unitRight = λ d → ∞Mon≡ (γQtreeUnitRight (∞Mon.tree o d))
              
-             ; naturalityFiber = {!!}
+             ; naturalityFiber = λ {F homF (t :: f :: homf) d → ∞Mon≡ refl}
              
-             ; naturalityBase = {!!}
+             ; naturalityBase = λ { f homf (t :: g :: homg) d → ∞Mon≡ refl}
              
-             ; assoc = {!!}
+             ; assoc = λ { (t :: f :: homf) d e → ∞Mon≡ (γQtreeAssoc t (∞Mon.tree o d o f) (∞Mon.tree o e o Σfun f (λ {a} → ∞Mon.∞arity (d (f a)))))}
              }
