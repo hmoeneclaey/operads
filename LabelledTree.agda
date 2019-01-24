@@ -396,6 +396,19 @@ module _ {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A) where
 γLtree (cons t₁ t₂) f = cons (γLtree+ t₁ (f o arConsL)) (γLtree+ t₂ (f o arConsR))
 
 
+γLtreeUnitLeft : {t : Ltree} → γLtree t (λ _ → ∅) ≡ t
+γLtreeUnitLeft = {!!}
+
+γLtreeUnitRight : {t : arity ∅ →  Ltree} → γLtree ∅ t ≡ t ar∅
+γLtreeUnitRight = {!!}
+
+γLtreeΣ : (t : Ltree) (s : arity t → Ltree) → arity (γLtree t s) → Σ (arity t) (λ a → arity (s a))
+γLtreeΣ = {!!}
+
+γLtreeAssoc : {t : Ltree} {s : arity t → Ltree} {v : Σ (arity t) (λ a → arity (s a)) → Ltree}
+              → γLtree (γLtree t s) (v o γLtreeΣ t s) ≡ γLtree t (λ a → γLtree (s a) (λ b → v (a , b)))
+γLtreeAssoc = {!!}             
+
 {-
 module test where
   test1 = normalForm (cons • ∅)

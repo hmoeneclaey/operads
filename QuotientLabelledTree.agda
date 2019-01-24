@@ -42,6 +42,9 @@ module _ {k} {P : Qtree → Set k} (d : (t : Ltree) → P [ t ] )
 
 
 
+--Now we give some alternative elimination principle for Qtree
+
+
 QtreeRec : ∀ {k} {A : Set k} (d : Ltree → A)
            → ({t : Ltree} → d t ≡ d (normalForm t))
            → ({t : Ltree} → (a : arity t) → d (graft t a (l• e₀)) ≡ d (graft t a •))
@@ -53,7 +56,7 @@ QtreeRec d eq₁ eq₂ eq₃ = elimQtree d (≡Trans transportConst eq₁)
                                      (λ a → ≡Trans transportConst (eq₃ a)) 
 
 
-
+{-
 
 
 subst : ∀ {k} {A : Set k} {n : ℕ}
@@ -113,7 +116,7 @@ QtreeRec-Finite {A = A} d eq₁ eq₂ eq₃ = elimQtree-Finite {P = λ _ → A} 
                                                                                     {p = subst≡Tree2 t k (≡GraftCons a {t₁} {t₂})})
                                                                                     (eq₃ t k a {t₁} {t₂})
 
-
+-}
 
 
 -- We define function on QTree ignoring label
@@ -132,8 +135,17 @@ module _  {k} {A : Set k} (t∅ : A) (t• : A) (tcons : A → A → A)
 
 
 
+elimQtree-Prop : ∀ {k} {P : Qtree → Set k}
+                 → ((t : Ltree) → P [ t ])
+                 → ({t : Qtree} → isProp (P t))
+                 → (t : Qtree) → P t
+elimQtree-Prop = {!!}
 
-
+elimQtree-PropFinite : ∀ {k} {A : Set} {{_ : FOSet A}} {P : (A → Qtree) → Set k}
+                       → ((t : A → Ltree) → P (λ k → [ t k ]))
+                       → ({t : A → Qtree} → isProp (P t))
+                       → (t : A → Qtree) → P t
+elimQtree-PropFinite = {!!}
 
 
 --We define arity of trees, as a natural number
@@ -148,8 +160,12 @@ Arity = QtreeRec-NoLabel (s O) O (_+_)
 
 
 arityToArity : (t : Ltree) → arity t → Fin (Arity [ t ])
-arityToArity = {!!}
+arityToArity .∅ ar∅ = fzero
+arityToArity .(cons _ _) (arConsL x) = {!!}
+arityToArity .(cons _ _) (arConsR x) = {!!}
 
+ArityToarity : (t : Ltree) → Fin (Arity [ t ]) → arity t
+ArityToarity = {!!}
 
 --module test where
 --  test1 : Arity [ ∅ ] ≡ s O
@@ -157,29 +173,44 @@ arityToArity = {!!}
 
 
 
-γQtree : (t : Qtree) → (Fin (Arity t) → Qtree) → Qtree
-γQtree = elimQtree (λ t → QtreeRec-Finite (λ s → [ γLtree t (s o (arityToArity t)) ])
+postulate γQtree : (t : Qtree) → (Fin (Arity t) → Qtree) → Qtree
+postulate γQtreeCompute : {t : Ltree} → {s : Fin (Arity [ t ]) → Ltree}
+                          → γQtree [ t ] (λ k → [ s k ]) ≡ [ γLtree t (s o arityToArity t) ]
+
+{-γQtree = elimQtree (λ t → QtreeRec-Finite (λ s → [ γLtree t (s o (arityToArity t)) ])
                                           {!!}
                                           {!!}
                                           {!!})
-                   {!!} {!!} {!!}
+                   {!!} {!!} {!!}-}
 
 
 
 γQtreeUnitLeft : (t : Qtree) → γQtree t (λ _ → [ ∅ ]) ≡ t
-γQtreeUnitLeft = {!!}
+γQtreeUnitLeft = elimQtree-Prop (λ t → ≡Trans γQtreeCompute (ap [_] γLtreeUnitLeft)) UIP
 
 γQtreeUnitRight : (t : Fin (s O) → Qtree) → γQtree [ ∅ ] t ≡ t fzero
-γQtreeUnitRight = {!!}
+γQtreeUnitRight = elimQtree-PropFinite (λ t → γQtreeCompute) UIP
 
 
-γΣfiniteAux : (t : Qtree) (s : Fin (Arity t) → Qtree) → Fin (Arity (γQtree t s)) → Σ (Fin (Arity t)) (λ k → Fin (Arity (s k)))
-γΣfiniteAux = {!!}
+γQtreeΣ : (t : Qtree) (s : Fin (Arity t) → Qtree) → Fin (Arity (γQtree t s)) → Σ (Fin (Arity t)) (λ k → Fin (Arity (s k)))
+γQtreeΣ = {!!}
 
-HomFOγ : {t : Qtree} {s : Fin (Arity t) → Qtree} → HomFO {{Afinite = canonicalFOSet}} (γΣfiniteAux t s)
+γQtreeΣCompute : {t : Ltree} {s : Fin (Arity [ t ]) → Ltree}
+                 → γQtreeΣ [ t ] (λ k → [ s k ]) ≡ Σfun (arityToArity t) (λ {a} → arityToArity (s (arityToArity t a))) o
+                                                     (γLtreeΣ t (s o arityToArity _)) o (ArityToarity _) o
+                                                     (transport (Fin o Arity) (γQtreeCompute {t} {s}))
+γQtreeΣCompute = {!!}
+
+HomFOγ : {t : Qtree} {s : Fin (Arity t) → Qtree} → HomFO {{Afinite = canonicalFOSet}} (γQtreeΣ t s)
 HomFOγ = {!!}
 
 γQtreeAssoc : (t : Qtree) (s : Fin (Arity t) → Qtree) (v : Σ (Fin (Arity t)) (λ k → Fin (Arity (s k))) → Qtree)
-              → γQtree (γQtree t s) (v o (γΣfiniteAux t s)) ≡ γQtree t (λ k → γQtree (s k) (λ l → v (k , l)))
-γQtreeAssoc = {!!}
+              → γQtree (γQtree t s) (v o (γQtreeΣ t s)) ≡ γQtree t (λ k → γQtree (s k) (λ l → v (k , l)))
+              
+γQtreeAssoc = elimQtree-Prop (λ t →
+                elimQtree-PropFinite (λ s →
+                  elimQtree-PropFinite (λ v → {!!})
+                  UIP)
+                (Prop→ UIP))
+              (Prop→ (Prop→ UIP))
 

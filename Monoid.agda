@@ -47,17 +47,17 @@ record ∞Mon (A : Set) {{_ : FOSet A}} : Set where
 instance
   ∞MonOp : Operad ∞Mon
   ∞MonOp = record
-             { functor = λ f homf → λ {(t :: g :: homg)
-                                     → (t :: f o g :: HomFOComp homg homf) }
+             { functor = λ f homf → λ { (t :: g :: homg)
+                                      → (t :: f o g :: HomFOComp homg homf) }
                                   
-             ; functorId = λ {(t :: f :: homf) → ∞Mon≡ refl}
+             ; functorId = λ { (t :: f :: homf) → ∞Mon≡ refl}
              
              ; functorComp = λ { (t :: f :: homf) → ∞Mon≡ refl}
              
              ; id = [ ∅ ] :: Id :: HomFOId
              
              ; γ = λ {(t :: f :: homf) D → (γQtree t (∞Mon.tree o D o f))
-                                        :: Σfun f (λ {a} → ∞Mon.∞arity (D (f a))) o (γΣfiniteAux t (∞Mon.tree o D o f))
+                                        :: Σfun f (λ {a} → ∞Mon.∞arity (D (f a))) o (γQtreeΣfiniteAux t (∞Mon.tree o D o f))
                                         :: HomFOComp (HomFOγ {t} {∞Mon.tree o D o f}) (HomFOΣfun homf (λ {a} → ∞Mon.∞hom (D (f a)))) }
              
              ; unitLeft = λ { (t :: f :: homf) → ∞Mon≡ (γQtreeUnitLeft t)}
