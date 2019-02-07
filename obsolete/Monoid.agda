@@ -1,69 +1,72 @@
---{-# OPTIONS --rewriting #-}
-
+{-# OPTIONS --rewriting #-}
 
 module Monoid where
 
+
 open import Data
-open import Interval
-
-
-{-
-postulate _↦_ : ∀ {k} {A : Set k} → A → A → Set k
-{-# BUILTIN REWRITE _↦_ #-}
--}
-
-
-
-postulate
-  Tree : Set
-  • : Tree
-  cons∅∅ : Tree
-  cons∅* : I → Tree → Tree
-  cons*∅ : I → Tree → Tree
-  cons** : I → Tree → I → Tree → Tree
-
---Now tons of equalities
-
---Eight cases for associativity  
-  assocTree1 : cons∅* e₀ cons∅∅ ≡ cons*∅ e₀ cons∅∅
-  assocTree2 : {t₃ : Tree} {i₃ : I} → cons∅* e₀ (cons∅* i₃ t₃) ≡ cons** e₀ (cons∅∅) i₃ t₃
-  assocTree3 : {t₂ : Tree} {i₂ : I} → cons∅* e₀ (cons*∅ i₂ t₂) ≡ cons*∅ e₀ (cons∅* i₂ t₂)
-  assocTree4 : {t₂ t₃ : Tree} {i₂ i₃ : I} → cons∅* e₀ (cons** i₂ t₂ i₃ t₃) ≡ cons** e₀ (cons∅* i₂ t₂) i₃ t₃
-  assocTree5 : {t₁ : Tree} {i₁ : I} → cons** i₁ t₁ e₁ cons∅∅ ≡ cons*∅ e₀ (cons*∅ i₁ t₁)
-  assocTree6 : {t₁ t₂ : Tree} {i₁ i₂ : I} → cons** i₁ t₁ e₀ (cons*∅ i₂ t₂) ≡ cons*∅ e₀ (cons** i₁ t₁ i₂ t₂)
-  assocTree7 : {t₁ t₃ : Tree} {i₁ i₃ : I} → cons** i₁ t₁ e₀ (cons∅* i₃ t₃) ≡ cons** e₀ (cons*∅ i₁ t₁) i₃ t₃
-  assocTree8 : {t₁ t₂ t₃ : Tree} {i₁ i₂ i₃ : I} → cons** i₁ t₁ e₀ (cons** i₂ t₂ i₃ t₃) ≡ cons** e₀ (cons** i₁ t₁ i₂ t₂) i₃ t₃
-
---Note that cons∅* e₀ • will be the identity
-  unitTree1 : cons*∅ e₀ • ≡ cons∅* e₀ •
-  unitTree2 : {t : Tree} {i : I} → cons** e₀ • i t ≡ cons** i t e₀ •
-
---We eliminate identity in the middle of the tree
-  idMidTree1 : {t₁ : Tree} {i i₁ : I} → cons*∅ i (cons** i₁ t₁ e₀ •) ≡ cons*∅ (i ⊔ i₁) t₁
-  idMidTree2 : {t₁ t₃ : Tree} {i i₁ i₃ : I} → cons** i (cons** i₁ t₁ e₀ •) i₃ t₃ ≡ cons** (i ⊔ i₁) t₁ i₃ t₃
-  idMidTree3 : {t₂ : Tree} {i i₂ : I} → cons∅* i (cons** i₂ t₂ e₀ •) ≡ cons∅* (i ⊔ i₂) t₂
-  idMidTree4 : {t₁ t₂ : Tree} {i i₁ i₂ : I} → cons** i₁ t₁ i (cons** i₂ t₂ e₀ •) ≡ cons** i₁ t₁ (i ⊔ i₂) t₂
-
---We eliminate idenity at the top of the tree
-  idTopTree1 : {i : I} → cons∅* i (cons∅* e₀ •) ≡ cons∅∅
-  idTopTree2 : {i : I} → cons*∅ i (cons∅* e₀ •) ≡ cons∅∅
-  idTopTree3 : {t₂ : Tree} {i i₂ : I} → cons** i (cons∅* e₀ •) i₂ t₂ ≡ cons∅* i₂ t₂
-  idTopTree4 : {t₁ : Tree} {i i₁ : I} → cons** i₁ t₁ i (cons∅* e₀ •) ≡ cons*∅ i₁ t₁
-
---We note that the elimination of identity at the bottom cannot be done in the style of a HIT
+open import FiniteSet
+open import MorphismFiniteSet
+open import Operad
+open import FibrantUniverse
+open import LabelledTree
+open import QuotientLabelledTree
 
 
 
---We postulate the elimination principle
 
-module _ {k} {P : Tree → Set k}
-         (e• : P •)
-         (econs∅∅ : P cons∅∅)
-         (econs∅* : (i : I) → {t : Tree} → P t → P (cons∅* i t)) 
-         (econs*∅ : (i : I) → {t : Tree} → P t → P (cons*∅ i t))
-         (econs** : (i₁ : I) → {t₁ : Tree} → P t₁ → (i₂ : I) → {t₂ : Tree} → P t₂ → P (cons** i₁ t₁ i₂ t₂))
-       where
-       postulate
-         TreeElim : (t : Tree) → P t
+--We define ∞Mon
+
+record ∞Mon (A : Set) {{_ : FOSet A}} : Set where
+  constructor _::_::_
+  field
+    tree : Qtree
+    ∞arity : Fin (Arity tree) → A
+    ∞hom : HomFO ∞arity
 
 
+
+--Preliminary result about equality in ∞Mon
+
+∞Mon≡Aux : {A : Set} {{_ : FOSet A}} {t : Qtree}
+           {f₁ f₂ : Fin (Arity t) → A} {homf₁ : HomFO f₁} {homf₂ : HomFO f₂}
+           → f₁ ≡ f₂ → (t :: f₁ :: homf₁) ≡ (t :: f₂ :: homf₂)
+
+∞Mon≡Aux {t = t} {f₁ = f₁} refl = ap (λ x → t :: f₁ :: x) PropHomFO
+
+
+∞Mon≡ : {A : Set} {{_ : FOSet A}} → {x₁ x₂ : ∞Mon A}
+        → ∞Mon.tree x₁ ≡ ∞Mon.tree x₂ → x₁ ≡ x₂
+
+∞Mon≡ {x₁ = t₁ :: f₁ :: homf₁} {t₂ :: f₂ :: homf₂} refl = ∞Mon≡Aux (HomFOUnique homf₁ homf₂)
+
+
+
+
+--We show that ∞Mon is an operad
+
+instance
+  ∞MonOp : Operad ∞Mon
+  ∞MonOp = record
+             { functor = λ f homf → λ { (t :: g :: homg)
+                                      → (t :: f o g :: HomFOComp homg homf) }
+                                  
+             ; functorId = λ { (t :: f :: homf) → ∞Mon≡ refl}
+             
+             ; functorComp = λ { (t :: f :: homf) → ∞Mon≡ refl}
+             
+             ; id = [ ∅ ] :: Id :: HomFOId
+             
+             ; γ = λ {(t :: f :: homf) D → (γQtree t (∞Mon.tree o D o f))
+                                        :: Σfun f (λ {a} → ∞Mon.∞arity (D (f a))) o (γQtreeΣfiniteAux t (∞Mon.tree o D o f))
+                                        :: HomFOComp (HomFOγ {t} {∞Mon.tree o D o f}) (HomFOΣfun homf (λ {a} → ∞Mon.∞hom (D (f a)))) }
+             
+             ; unitLeft = λ { (t :: f :: homf) → ∞Mon≡ (γQtreeUnitLeft t)}
+             
+             ; unitRight = λ d → ∞Mon≡ (γQtreeUnitRight (∞Mon.tree o d))
+             
+             ; naturalityFiber = λ {F homF (t :: f :: homf) d → ∞Mon≡ refl}
+             
+             ; naturalityBase = λ { f homf (t :: g :: homg) d → ∞Mon≡ refl}
+             
+             ; assoc = λ { (t :: f :: homf) d e → ∞Mon≡ (γQtreeAssoc t (∞Mon.tree o d o f) (∞Mon.tree o e o Σfun f (λ {a} → ∞Mon.∞arity (d (f a)))))}
+             }
