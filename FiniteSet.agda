@@ -116,7 +116,7 @@ injectiveFsucc {n} {x} {y} refl = refl
 
 finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
 finiteSum {O} _ = O
-finiteSum {s n} f = f (fzero) + finiteSum (f o fsucc)
+finiteSum {s n} f =  f (fzero) + finiteSum (f o fsucc)
 
 
 

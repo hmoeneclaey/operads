@@ -112,6 +112,10 @@ eqe₁ p = dPath.deq₁ p
 
 
 
+
+
+
+
 --Basic properties of paths
 
 module _ {k} {X : Set k} where
