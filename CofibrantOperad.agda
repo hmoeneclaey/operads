@@ -64,10 +64,13 @@ module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} wher
   FibOp = {A : Set} → {{_ : FOSet A}} → Fib (P A)
 
 
+
+module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} where
+
   --Note that being cofibrant is not a type (it is in Setω)
   
   CofibrantOp : ∀ {n₁ n₂} → Set (k ⊔ (lsuc n₁ ⊔ lsuc n₂)) 
-  CofibrantOp {n₁} {n₂} = {R₁ : (A : Set) → {{_ : FOSet A}} → Set n₁} → {{_ : Operad R₁}}
+  CofibrantOp {n₁} {n₂} = {R₁ : (A : Set) → {{_ : FOSet A}} → Set n₁} → {{_ : Operad R₁}} → {{_ : FibOp R₁}}
                   → {R₂ : (A : Set) → {{_ : FOSet A}} → Set n₂} → {{_ : Operad R₂}}
                   → (α : Nat R₂ R₁) → HomOperad α → TrivialFibrationOp α
                   → (β : Nat P R₁) → HomOperad β

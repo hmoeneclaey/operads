@@ -42,9 +42,9 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
   EndMorFun : arrowAction EndMor  
-  EndMorFun f {{homf}} (c₁ , c₂ , eq)
-            = functor f {{homf}} c₁ ,
-              functor f {{homf}} c₂ ,
+  EndMorFun f homf (c₁ , c₂ , eq)
+            = functor f homf c₁ ,
+              functor f homf c₂ ,
               λ d → eq (d o f) 
 
 
@@ -62,8 +62,8 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
                                              (ap (EndMor.π₂ c) (funext (λ a → EndMor.equal (d a) _))) )
                  ; unitLeft = λ _ → ≡EndMor refl refl
                  ; unitRight = λ _ → ≡EndMor refl refl
-                 ; naturalityFiber = λ _ _ _ → ≡EndMor refl refl
-                 ; naturalityBase = λ _ _ _ → ≡EndMor refl refl
+                 ; naturalityFiber = λ _ _ _ _ → ≡EndMor refl refl
+                 ; naturalityBase = λ _ _ _ _ → ≡EndMor refl refl
                  ; assoc = λ _ _ _ → ≡EndMor refl refl
                  }
 
@@ -72,7 +72,7 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
   operadProj₁ A (π₁ , _ , _) = π₁
 
   HomOpProj₁ : HomOperad operadProj₁ 
-  HomOpProj₁ = record { homNat = refl ;
+  HomOpProj₁ = record { homNat = λ _ → refl ;
                         homId = refl ;
                         homγ = refl }
 
@@ -81,7 +81,7 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
   operadProj₂ A (_ , π₂ , _) = π₂
 
   HomOpProj₂ : HomOperad operadProj₂ 
-  HomOpProj₂ = record { homNat = refl ;
+  HomOpProj₂ = record { homNat = λ _ → refl ;
                         homId = refl ;
                         homγ = refl }
 
