@@ -69,8 +69,8 @@ module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} wher
 
   --Note that being cofibrant is not a type (it is in Setω)
   
-  CofibrantOp : ∀ {n₁ n₂} → Set (k ⊔ (lsuc n₁ ⊔ lsuc n₂)) 
-  CofibrantOp {n₁} {n₂} = {R₁ : (A : Set) → {{_ : FOSet A}} → Set n₁} → {{_ : Operad R₁}} → {{_ : FibOp R₁}}
+  CofibrantOp : Setω --∀ {n₁ n₂} → Set (k ⊔ (lsuc n₁ ⊔ lsuc n₂)) 
+  CofibrantOp = ∀ {n₁} {n₂} {R₁ : (A : Set) → {{_ : FOSet A}} → Set n₁} → {{_ : Operad R₁}} → {{_ : FibOp R₁}}
                   → {R₂ : (A : Set) → {{_ : FOSet A}} → Set n₂} → {{_ : Operad R₂}}
                   → (α : Nat R₂ R₁) → HomOperad α → TrivialFibrationOp α
                   → (β : Nat P R₁) → HomOperad β
@@ -107,7 +107,7 @@ module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P�
 
 
 
-module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} (cofibP : ∀ {n₁ n₂} → CofibrantOp P {n₁ = n₁} {n₂ = n₂})
+module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}} (cofibP : CofibrantOp P)
                  {R₁ : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad R₁}} {{fib₁ : FibOp R₁}}
                  {R₂ : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R₂}} {{fib₂ : FibOp R₂}}
                  (α : Nat R₂ R₁) (homα : HomOperad α) (equivα : EquivOp α)

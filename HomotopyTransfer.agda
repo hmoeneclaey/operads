@@ -153,7 +153,7 @@ module _ {k} {l} {X : Set k} {Y : Set l} (p : X → Y) where
 
 
 module _ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
-         {{_ : Operad P}} (cofibP : ∀ {n₁ n₂} → CofibrantOp P {n₁ = n₁} {n₂ = n₂}) where
+         {{_ : Operad P}} (cofibP : CofibrantOp P) where
 
 
        module _ {l m} {X : Set l} {{_ : Fib X}} {Y : Set m} {{_ : Fib Y}}
