@@ -221,12 +221,99 @@ data δI : Set where
   δe₀ : δI
   δe₁ : δI
 
-border : δI → I
-border δe₀ = e₀
-border δe₁ = e₁
+Endpoints : δI → I
+Endpoints δe₀ = e₀
+Endpoints δe₁ = e₁
 
 
+module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
+  record baseEndpoint : Set (k ⊔ l) where
+    field
+      path : I → Y
+      de₀ : fibre f (path e₀)
+      de₁ : fibre f (path e₁)
+
+  mapToBaseEndpoint : (I → X) → baseEndpoint
+  mapToBaseEndpoint p = record { path = f o p ;
+                                 de₀ = (p e₀) , refl ;
+                                 de₁ = (p e₁) , refl }
+
+
+module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
+
+
+  ≡BaseEndpoint : {x y : baseEndpoint f}
+                  → (baseEndpoint.path x) ≡ (baseEndpoint.path y)
+                  → fibre.point (baseEndpoint.de₀ x) ≡ fibre.point (baseEndpoint.de₀ y)
+                  → fibre.point (baseEndpoint.de₁ x) ≡ fibre.point (baseEndpoint.de₁ y)
+                  → x ≡ y
+
+  ≡BaseEndpoint {record { path = p₁ ; de₀ = x₁ , eqx₁ ; de₁ = x₂ , eqx₂ }}
+                   {record { path = p₂ ; de₀ = x₃ , eqx₃ ; de₁ = y' , eqy' }} refl refl refl
+                   = ap₂
+                       (λ eq₁ eq₂ →
+                          record { path = p₁ ; de₀ = x₁ , eq₁ ; de₁ = x₂ , eq₂ })
+                       UIP UIP
+
+
+{-
+  ≡BaseEndpoint : {x y : baseEndpoint f}
+                  (eqpath : (i : I) → (baseEndpoint.path x) i ≡ (baseEndpoint.path y) i)
+                  → fibre.point (baseEndpoint.de₀ x) ≡ fibre.point (baseEndpoint.de₀ y)
+                  → fibre.point (baseEndpoint.de₁ x) ≡ fibre.point (baseEndpoint.de₁ y)
+                  → x ≡ y
+
+  ≡BaseEndpoint {record { path = p₁ ; de₀ = x₁ , eqx₁ ; de₁ = x₂ }} {record { path = p₂ ; de₀ = x₃ , eqx₃ ; de₁ = y' }} = λ eqpath refl refl → {!!}
+-}
+
+
+  ≅MapEndPoints : (mapToBaseEndpoint f) ≅Map < Endpoints / f >
+
+  ≅MapEndPoints = record
+                    { funTop = Id ;
+                      funBot =  λ { record { path = p ;
+                                             de₀ = (x , eqx) ;
+                                             de₁ = (y , eqy) }
+                                  → record { fun₁ = λ { δe₀ → x ; δe₁ → y} ;
+                                             fun₂ = p ;
+                                             eqPullExp = λ { δe₀ → ≡Sym eqx ; δe₁ → ≡Sym eqy} }} ;
+                      isoTop = isoId ;
+                      isoBot = record { inv = λ { record { fun₁ = u ;
+                                                           fun₂ = v ;
+                                                           eqPullExp = equv }
+                                                → record { path = v ;
+                                                           de₀ = (u δe₀) , (≡Sym (equv _)) ;
+                                                           de₁ = (u δe₁) , (≡Sym (equv _)) }} ;
+                                        invRight = λ { record { path = p ;
+                                                               de₀ = (x , eqx) ;
+                                                               de₁ = (y , eqy) } → ≡BaseEndpoint refl refl refl } ;
+                                        invLeft = λ { record { fun₁ = u ;
+                                                               fun₂ = v ;
+                                                               eqPullExp = equv }
+                                                            → ≡PullExp (funext (λ { δe₀ → refl ;
+                                                                                    δe₁ → refl})) refl} } ;
+                      commute = λ p → ≡PullExp (funext (λ { δe₀ → refl ; δe₁ → refl})) refl }
+
+
+  fibreBaseEndpoint : (x : baseEndpoint f) → Set (k ⊔ l)
+
+  fibreBaseEndpoint record { path = p ; de₀ = x ; de₁ = y } = dPath (fibre f o p) x y
+
+
+  ≅fibreBaseEndpoint : {x : baseEndpoint f}
+                    → fibreBaseEndpoint x ≅ fibre (mapToBaseEndpoint f) x
+                    
+  ≅fibreBaseEndpoint {record { path = p ;
+                               de₀ = x ;
+                               de₁ = y }}
+                   = record { isoFun = λ { [ p , eq₀ , eq₁ ] → (λ i → fibre.point (p i)) ,
+                                                                ≡BaseEndpoint (funext (λ i → fibre.equal (p i)))
+                                                                              (ap fibre.point eq₀)
+                                                                              (ap fibre.point eq₁)} ;
+                              isIso = record { inv = λ { (a , refl) → [ (λ i → (a i) , refl) , refl , refl ]} ;
+                                               invLeft = λ { (a , refl) → ≡fibre refl} ;
+                                               invRight = λ { [ p , refl , refl ] → ≡dPath (λ i → {!!}) }}} 
 
 
 
@@ -235,10 +322,13 @@ border δe₁ = e₁
 
 
 PseudoCofibration : ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
+
 PseudoCofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → (p : X → Y)
                       → Fibration p → Fibration (< u / p >)
 
+
 PseudoCofibEmpty : PseudoCofibration empty
+
 PseudoCofibEmpty = λ p fibp → ≅MapFibration ≅empty {{fibp}}
 
 
@@ -246,5 +336,6 @@ PseudoCofibEmpty = λ p fibp → ≅MapFibration ≅empty {{fibp}}
 --We define cofibrations
 
 Cofibration :  ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
+
 Cofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → (p : X → Y)
                 → TrivialFibrationBasis p → TrivialFibrationBasis (< u / p >)

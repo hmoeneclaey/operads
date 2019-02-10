@@ -109,6 +109,9 @@ eqe₁ : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} (p : dPath P x y) �
 eqe₁ p = dPath.deq₁ p
 
 
+postulate ≡dPath : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} {p q : dPath P x y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
+
+
 
 
 
