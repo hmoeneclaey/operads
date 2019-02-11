@@ -168,7 +168,8 @@ module _  {k l m n} {A : Set k} {B : Set l} {X : Set m} {Y : Set n}
 
 
 
--- Some properties about isomorphic maps
+
+--Homotopical properties are invariant by isomorpism of maps
 
 module _  {k l m n} {A : Set k} {B : Set l} {X : Set m} {Y : Set n}
           {u : A → B} {p : X → Y} (uisop : u ≅Map p) where
@@ -189,7 +190,11 @@ module _  {k l m n} {A : Set k} {B : Set l} {X : Set m} {Y : Set n}
                                           isBasis = ≅MapFibrantBasis {{baseu}} }
 
 
---We define the unique map from ⊥ to ⊤
+
+
+
+
+--We define the unique map from ⊥ to ⊤, and compute < ⊥ → ⊤ / f> iso to f
 
 empty : ⊥ → ⊤ {lzero}
 empty ()
@@ -215,16 +220,20 @@ empty ()
 
 
 
+
 --We define the border of the interval
 
 data δI : Set where
   δe₀ : δI
   δe₁ : δI
 
-Endpoints : δI → I
-Endpoints δe₀ = e₀
-Endpoints δe₁ = e₁
+Endpoint : δI → I
+Endpoint δe₀ = e₀
+Endpoint δe₁ = e₁
 
+
+
+--We define a map which will be isomorphic to <Endpoint / f>
 
 module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
@@ -238,6 +247,7 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
   mapToBaseEndpoint p = record { path = f o p ;
                                  de₀ = (p e₀) , refl ;
                                  de₁ = (p e₁) , refl }
+                                 
 
 
 module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
@@ -257,20 +267,11 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
                        UIP UIP
 
 
-{-
-  ≡BaseEndpoint : {x y : baseEndpoint f}
-                  (eqpath : (i : I) → (baseEndpoint.path x) i ≡ (baseEndpoint.path y) i)
-                  → fibre.point (baseEndpoint.de₀ x) ≡ fibre.point (baseEndpoint.de₀ y)
-                  → fibre.point (baseEndpoint.de₁ x) ≡ fibre.point (baseEndpoint.de₁ y)
-                  → x ≡ y
+  --We show the desired isomorphism of map
 
-  ≡BaseEndpoint {record { path = p₁ ; de₀ = x₁ , eqx₁ ; de₁ = x₂ }} {record { path = p₂ ; de₀ = x₃ , eqx₃ ; de₁ = y' }} = λ eqpath refl refl → {!!}
--}
+  ≅MapEndpoints : (mapToBaseEndpoint f) ≅Map < Endpoint / f >
 
-
-  ≅MapEndPoints : (mapToBaseEndpoint f) ≅Map < Endpoints / f >
-
-  ≅MapEndPoints = record
+  ≅MapEndpoints = record
                     { funTop = Id ;
                       funBot =  λ { record { path = p ;
                                              de₀ = (x , eqx) ;
@@ -296,9 +297,24 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
                       commute = λ p → ≡PullExp (funext (λ { δe₀ → refl ; δe₁ → refl})) refl }
 
 
+
+  --We compute the fibre of mapToBaseEndpoint
+
   fibreBaseEndpoint : (x : baseEndpoint f) → Set (k ⊔ l)
 
   fibreBaseEndpoint record { path = p ; de₀ = x ; de₁ = y } = dPath (fibre f o p) x y
+  
+
+  ≅fibreBaseInv : {x : baseEndpoint f} → fibre (mapToBaseEndpoint f) x → fibreBaseEndpoint x
+  
+  ≅fibreBaseInv {record { path = p ; de₀ = x ; de₁ = y }} (a , refl) = [ (λ i → (a i) , refl) , refl , refl ]
+
+
+  ≅fibreBaseInvAux : {x : baseEndpoint f}
+                     (a : fibre (mapToBaseEndpoint f) x)
+                     {i : I} → fibre.point a i ≡ fibre.point (≅fibreBaseInv a $ i)
+
+  ≅fibreBaseInvAux {record { path = p ; de₀ = x ; de₁ = y }} (a , refl) = refl
 
 
   ≅fibreBaseEndpoint : {x : baseEndpoint f}
@@ -311,9 +327,20 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
                                                                 ≡BaseEndpoint (funext (λ i → fibre.equal (p i)))
                                                                               (ap fibre.point eq₀)
                                                                               (ap fibre.point eq₁)} ;
-                              isIso = record { inv = λ { (a , refl) → [ (λ i → (a i) , refl) , refl , refl ]} ;
+                              isIso = record { inv = ≅fibreBaseInv ;
                                                invLeft = λ { (a , refl) → ≡fibre refl} ;
-                                               invRight = λ { [ p , refl , refl ] → ≡dPath (λ i → {!!}) }}} 
+                                               invRight = λ { [ q , refl , refl ] → (≡dPath (λ i →
+                                                                                            ≡fibre (≅fibreBaseInvAux ( fibre.point o q ,
+                                                                                                    ≡BaseEndpoint (funext (fibre.equal o q))
+                                                                                                                  refl refl))))}}}
+
+
+  --We show that mapToBaseEndpoint has the property we expect
+
+  instance
+    FibMapToBaseEndpoint : {{_ : Fibration f}} → Fibration (mapToBaseEndpoint f)
+    FibMapToBaseEndpoint = ≅Fib ≅fibreBaseEndpoint
+
 
 
 
@@ -323,13 +350,19 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
 
 PseudoCofibration : ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
 
-PseudoCofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → (p : X → Y)
-                      → Fibration p → Fibration (< u / p >)
+PseudoCofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → {p : X → Y}
+                      → {{_ : Fibration p}} → Fibration (< u / p >)
 
 
 PseudoCofibEmpty : PseudoCofibration empty
 
-PseudoCofibEmpty = λ p fibp → ≅MapFibration ≅empty {{fibp}}
+PseudoCofibEmpty = ≅MapFibration ≅empty
+
+
+
+PseudoCofibEndpoint : PseudoCofibration Endpoint
+
+PseudoCofibEndpoint = ≅MapFibration ≅MapEndpoints {{≅Fib ≅fibreBaseEndpoint}}
 
 
 
