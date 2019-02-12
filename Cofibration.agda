@@ -9,15 +9,18 @@ open import FibrantUniverse
 
 
 
---First we gather auxiliary results about fibrations
+--First we gather auxiliary results about the homotopical structure.
 
 
-proj : ∀ {k l} (X : Set k) (P : X → Set l) → Σ X P → X
-proj X P (x , _) = x
+--proj : ∀ {k l} (X : Set k) (P : X → Set l) → Σ X P → X
+--proj X P (x , _) = x
 
 ≡fibre : ∀ {k l} {X : Set k} {Y : Set l} {f : X → Y} {y : Y} {p q : fibre f y} → fibre.point p ≡ fibre.point q → p ≡ q
 ≡fibre {p = x₁ , _} {x₂ , _} refl = ap (λ eq → x₁ , eq) UIP
 
+
+
+{-
 ≅fibreProj : ∀ {k l} {X : Set k} {P : X → Set l} {x : X}
              → P x ≅ fibre (proj X P) x
 ≅fibreProj {x = x} = record { isoFun = λ p → (x , p) , refl ;
@@ -28,6 +31,85 @@ proj X P (x , _) = x
 instance
   projFibration : ∀ {k l} {X : Set k} {P : X → Set l} {{_ : {x : X} → Fib (P x)}} → Fibration (proj X P)
   projFibration = ≅Fib ≅fibreProj
+-}
+
+
+≅I→ : ∀ {k} {X : Set k} → (Σ X (λ x → Σ X (λ y → x ~~> y))) ≅ (I → X)
+≅I→ = record { isoFun = λ { (x , (y , p)) i → p $ i} ;
+               isIso = record { inv = λ p → (p e₀) , ((p e₁) , [ p , refl , refl ]) ;
+                                invLeft = λ _ → refl ;
+                                invRight = λ { (x , (y , [ p , refl , refl ])) → refl} } }
+
+instance
+  ICofib : ∀ {k} {X : Set k} {{_ : Fib X}} → Fib (I → X)
+  ICofib = ≅Fib ≅I→
+
+
+
+
+--Being contractible is fibrant
+
+
+≅ContrΣ : ∀ {k} {X : Set k} → Σ X (λ x → (y : X) → x ~~> y) ≅ Contr X
+≅ContrΣ = record { isoFun = λ { (x , p) → record { center = x ; path = p }} ;
+                   isIso = record { inv = λ { record { center = x ; path = p } → (x , p)} ;
+                                    invLeft = λ { record { center = _ ; path = _ } → refl} ;
+                                    invRight = λ { (_ , _) → refl} } }
+
+instance
+  FibContr : ∀ {k} {X : Set k} {{_ : Fib X}} → Fib (Contr X)
+  FibContr = ≅Fib ≅ContrΣ
+
+
+
+--We show easy lemmas about contractible types
+
+ 
+≃Contr : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
+         → {f : X → Y} → Equiv f → Contr Y → Contr X
+
+≃Contr {f = f} record { hinv₁ = _ ;
+                        hinvLeft = _ ;
+                        hinv₂ = g₂ ;
+                        hinvRight = hinvRight
+                      }
+               record { center = x ;
+                        path = path }
+             = record { center = g₂ x ;
+                        path = λ y → hap g₂ (path (f y)) # inv (hinvRight y) }
+
+
+Contr⊤Path : ∀ {k} {x y : ⊤ {k}} → Contr (x ~~> y)
+
+Contr⊤Path = record { center = hrefl ;
+                      path = λ y → cstPath (≡Path (λ i → refl)) }
+
+
+
+module _ {k} {X : Set k} (contrX : Contr X) {{_ : Fib X}} where
+
+
+  EquivContr⊤ : Equiv (λ (_ : X) → * {lzero})
+  
+  EquivContr⊤ = record { hinv₁ = λ _ → Contr.center contrX ;
+                         hinvLeft = λ _ → hrefl ;
+                         hinv₂ = λ _ → Contr.center contrX ;
+                         hinvRight = λ x → inv (Contr.path contrX x) }
+
+
+  ContrPath : {x y : X} → Contr (x ~~> y)
+  
+  ContrPath = ≃Contr (EquivHap EquivContr⊤) Contr⊤Path
+
+
+ContrdPath : ∀ {k l} {Y : Set k} {{_ : Fib Y}}
+             {P : Y → Set l} {{_ : {y : Y} → Fib (P y)}}
+             → ({y : Y} → Contr (P y)) → (p : I → Y)
+             → (x : P (p e₀)) → (y : P (p e₁)) → Contr (dPath (P o p) x y)
+             
+ContrdPath {P = P} contrP = J _ λ y p₁ p₂ → ContrPath contrP
+
+
 
 
 
@@ -91,7 +173,7 @@ module _ {k l m n} {A₁ : Set k} {B₁ : Set l} {A₂ : Set m} {B₂ : Set n}
        module _ {o} {P : PushProd u v → Set o}
                 (tinj₁ : (a : A₁) → (b : B₂) → P (inj₁ a b))
                 (tinj₂ : (b : B₁) → (a : A₂) → P (inj₂ b a))
-                (_ : (a₁ : A₁) → (a₂ : A₂) → transport P (eqPushProd a₁ a₂) (tinj₁ a₁ (v a₂)) ≡ tinj₂ (u a₁) a₂)where
+                (_ : (a₁ : A₁) → (a₂ : A₂) → transport P (eqPushProd a₁ a₂) (tinj₁ a₁ (v a₂)) ≡ tinj₂ (u a₁) a₂) where
 
               postulate
                 PushProdElim : (x  : PushProd u v) → P x
@@ -196,11 +278,11 @@ module _  {k l m n} {A : Set k} {B : Set l} {X : Set m} {Y : Set n}
 
 --We define the unique map from ⊥ to ⊤, and compute < ⊥ → ⊤ / f> iso to f
 
-empty : ⊥ → ⊤ {lzero}
-empty ()
+Empty : ⊥ → ⊤ {lzero}
+Empty ()
 
-≅empty : ∀ {k l} {X : Set k} {Y : Set l} {p : X → Y} → p ≅Map < empty / p >
-≅empty = record
+≅Empty : ∀ {k l} {X : Set k} {Y : Set l} {p : X → Y} → p ≅Map < Empty / p >
+≅Empty = record
            { funTop = λ x _ → x ;
              funBot = λ y → record { fun₁ = λ () ;
                                      fun₂ = λ _ → y ;
@@ -329,10 +411,10 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
                                                                               (ap fibre.point eq₁)} ;
                               isIso = record { inv = ≅fibreBaseInv ;
                                                invLeft = λ { (a , refl) → ≡fibre refl} ;
-                                               invRight = λ { [ q , refl , refl ] → (≡dPath (λ i →
-                                                                                            ≡fibre (≅fibreBaseInvAux ( fibre.point o q ,
-                                                                                                    ≡BaseEndpoint (funext (fibre.equal o q))
-                                                                                                                  refl refl))))}}}
+                                               invRight = λ { [ q , refl , refl ]
+                                                              → (≡dPath (λ i → ≡fibre (≅fibreBaseInvAux ( fibre.point o q ,
+                                                                                       ≡BaseEndpoint (funext (fibre.equal o q))
+                                                                                                     refl refl))))}}}
 
 
   --We show that mapToBaseEndpoint has the property we expect
@@ -341,11 +423,41 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
     FibMapToBaseEndpoint : {{_ : Fibration f}} → Fibration (mapToBaseEndpoint f)
     FibMapToBaseEndpoint = ≅Fib ≅fibreBaseEndpoint
 
+  
+  ≅BaseEndpoint : Σ (I → Y) (λ p → fibre f (p e₀) ∧ fibre f (p e₁)) ≅ baseEndpoint f
+  
+  ≅BaseEndpoint = record { isoFun = λ { (p , (x , y)) → record { path = p ;
+                                                                 de₀ = x ;
+                                                                 de₁ = y }} ;
+                           isIso = record { inv = λ { record { path = p ;
+                                                               de₀ = x ;
+                                                               de₁ = y } → (p , (x , y))} ;
+                                            invLeft = λ { record { path = _ ; de₀ = _ ; de₁ = _ } → refl} ;
+                                            invRight = λ { (_ , (_ , _)) → refl} } }
+
+
+  FibBaseEndpoint : {{_ : Fibration f}} → {{_ : Fib Y}} → Fib (baseEndpoint f)
+
+  FibBaseEndpoint = ≅Fib ≅BaseEndpoint
+
+
+  ContrMapToBaseEndpoint : {{_ : Fibration f}} → {{_ : Fib Y}} → ContrMap f → {y : baseEndpoint f} → Contr (fibreBaseEndpoint y)
+
+  ContrMapToBaseEndpoint contrf {record { path = p ; de₀ = x ; de₁ = y }} = ContrdPath {Y = Y} {P = fibre f} contrf p x y
+
+
+  TrivFibMapToBaseEndpoint : TrivialFibrationBasis f → TrivialFibrationBasis (mapToBaseEndpoint f)
+  
+  TrivFibMapToBaseEndpoint record { isFib = fibf ;
+                                    isContr = contrf ;
+                                    isBasis = fibY }
+                         = record { isFib = FibMapToBaseEndpoint {{fibf}} ;
+                                    isContr = ≅Contr ≅fibreBaseEndpoint (ContrMapToBaseEndpoint {{fibf}} {{fibY}} contrf) ; 
+                                    isBasis = FibBaseEndpoint {{fibf}} {{fibY}} }
 
 
 
-
---We define pseudo-cofibrations
+--We define pseudo-cofibrations, along with some example
 
 
 PseudoCofibration : ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
@@ -354,21 +466,30 @@ PseudoCofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → {p : X → Y}
                       → {{_ : Fibration p}} → Fibration (< u / p >)
 
 
-PseudoCofibEmpty : PseudoCofibration empty
+PseudoCofibEmpty : PseudoCofibration Empty
 
-PseudoCofibEmpty = ≅MapFibration ≅empty
-
+PseudoCofibEmpty = ≅MapFibration ≅Empty
 
 
 PseudoCofibEndpoint : PseudoCofibration Endpoint
 
-PseudoCofibEndpoint = ≅MapFibration ≅MapEndpoints {{≅Fib ≅fibreBaseEndpoint}}
+PseudoCofibEndpoint = ≅MapFibration ≅MapEndpoints
 
 
 
---We define cofibrations
+--We define cofibrations, along with some example
 
 Cofibration :  ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
 
-Cofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → (p : X → Y)
+Cofibration u = ∀ {k} {l} {X : Set k} → {Y : Set l} → {p : X → Y}
                 → TrivialFibrationBasis p → TrivialFibrationBasis (< u / p >)
+
+
+CofibEmpty : Cofibration Empty
+
+CofibEmpty tfibbp = ≅MapTrivialFibrationBasis ≅Empty tfibbp
+
+
+CofibEndpoint : Cofibration Endpoint
+
+CofibEndpoint tfibbp = ≅MapTrivialFibrationBasis ≅MapEndpoints (TrivFibMapToBaseEndpoint tfibbp)
