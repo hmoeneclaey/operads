@@ -56,6 +56,7 @@ instance
                                     invLeft = λ { record { center = _ ; path = _ } → refl} ;
                                     invRight = λ { (_ , _) → refl} } }
 
+
 instance
   FibContr : ∀ {k} {X : Set k} {{_ : Fib X}} → Fib (Contr X)
   FibContr = ≅Fib ≅ContrΣ
@@ -71,8 +72,7 @@ instance
 ≃Contr {f = f} record { hinv₁ = _ ;
                         hinvLeft = _ ;
                         hinv₂ = g₂ ;
-                        hinvRight = hinvRight
-                      }
+                        hinvRight = hinvRight }
                record { center = x ;
                         path = path }
              = record { center = g₂ x ;
@@ -206,7 +206,6 @@ u □ v = PushProdRec (λ a b → (u a) , b)
 
 
 
-
 -- We define isomorphisms of map, and show that several notions are invariant by them
 
 
@@ -247,7 +246,6 @@ module _  {k l m n} {A : Set k} {B : Set l} {X : Set m} {Y : Set n}
                                                                                                       eqx)))} ;
                                              invLeft = λ { (x , eqx) → ≡fibre (invLeftf _)} ;
                                              invRight = λ { (a , eqa) → ≡fibre (invRightf _) } } }
-
 
 
 
@@ -312,7 +310,6 @@ data δI : Set where
 Endpoint : δI → I
 Endpoint δe₀ = e₀
 Endpoint δe₁ = e₁
-
 
 
 --We define a map which will be isomorphic to <Endpoint / f>
@@ -457,7 +454,118 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
 
 
 
---We define pseudo-cofibrations, along with some example
+
+
+
+
+
+
+
+
+--We define the iteration of □, and then the inclusion of the border in any cube
+
+
+Prod : ∀ {k} (X : Set k) → ℕ → Set k
+Prod X O = ⊤
+Prod X (s n) = Prod X n ∧ X
+
+--We give a mutual inductive definition of the iterated Pushout-Product.
+--Note we give it only for Set, although a polymorphic version could be stated
+
+module _ {X Y : Set} (f : X → Y) where
+
+  IteratedPushProd : ℕ → Set
+  Iterated□ : (k : ℕ) → IteratedPushProd k → Prod Y k
+
+  IteratedPushProd O = ⊥
+  IteratedPushProd (s n) = PushProd (Iterated□ n) f
+  
+  Iterated□ O = Empty
+  Iterated□ (s n) = (Iterated□ n) □ f
+
+borderI : ℕ → Set
+borderI k = IteratedPushProd Endpoint k
+
+border : (k : ℕ) → borderI k → Prod I k
+border k = Iterated□ Endpoint k
+
+
+
+--Show the main property of _□_ and <_/_>
+
+module _  {k l m n p q} {X : Set k} {Y : Set l} {A : Set m} {B : Set n} {C : Set p} {D : Set q}
+          {u : A → B} {v : C → D} {p : X → Y} where
+
+       ≅Map□ : < (u □ v) / p > ≅Map < u / < v / p > >
+
+       ≅Map□ = record
+                 { funTop = λ f x y → f (x , y) ;
+                 
+                   funBot = λ { record { fun₁ = f ;
+                                         fun₂ = g ;
+                                         eqPullExp = eq }
+                              → record { fun₁ = λ a d → f (inj₁ a d) ;
+                                         fun₂ = λ b → record { fun₁ = λ c → f (inj₂ b c) ;
+                                                               fun₂ = λ d → g (b , d) ;
+                                                               eqPullExp = λ c → (eq _) } ;
+                                         eqPullExp = λ a → ≡PullExp (funext (λ c → ap f (≡Sym (eqPushProd a c))))
+                                                                    (funext (λ d → eq _)) }} ;
+                   
+                   isoTop = record { inv = λ {f (x , y) → f x y} ;
+                                     invLeft = λ f → refl ;
+                                     invRight = λ f → funext (λ {(x , y) → refl}) } ;
+                                     
+                   isoBot = record { inv = λ { record { fun₁ = f ;
+                                                        fun₂ = g ;
+                                                        eqPullExp = eq }
+                                             → record { fun₁ = PushProdRec f
+                                                                           (λ b c → PullExp.fun₁ (g b) c)
+                                                                           λ a c → ≡Sym (ap (λ F → PullExp.fun₁ F c) (eq a)) ; 
+                                                        fun₂ = λ {(b , d) → PullExp.fun₂ (g b) d} ; 
+                                                        eqPullExp = PushProdElim (λ a b → ap (λ F → PullExp.fun₂ F b) (eq a))
+                                                                                 (λ b c → PullExp.eqPullExp (g b) _)
+                                                                                 (λ _ _ → UIP) }} ;
+                                     invLeft = λ { record { fun₁ = f ;
+                                                            fun₂ = g ;
+                                                            eqPullExp = eq }
+                                                 → ≡PullExp refl
+                                                            refl} ;
+                                     invRight = λ { record { fun₁ = f ;
+                                                             fun₂ = g ;
+                                                             eqPullExp = eq }
+                                                  → ≡PullExp (funext (PushProdElim (λ _ _ → refl)
+                                                                                   (λ _ _ → refl)
+                                                                                   λ _ _ → UIP))
+                                                             (funext (λ { (_ , _) → refl}))} } ;
+                   
+                   commute = λ f → ≡PullExp refl refl }
+
+
+
+≅MapSym : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n}
+          {u : A → B} {v : C → D} → u ≅Map v → v ≅Map u
+
+≅MapSym {u = u} {v}
+        record { funTop = f ;
+                 funBot = g ;
+                 isoTop = isof ;
+                 isoBot = isog ;
+                 commute = commute }
+      = record { funTop = iso.inv isof ;
+                 funBot = iso.inv isog ;
+                 isoTop = isoInv isof ;
+                 isoBot = isoInv isog ;
+                 commute = λ a → let invg = iso.inv isog in
+                                 let invf = iso.inv isof in
+                                  ≡Trans {y = invg (g (u (invf a)))}
+                                         (ap invg (≡Trans {y = v (f (invf a))}
+                                                          (ap v (iso.invLeft isof _))
+                                                          (≡Sym (commute _))))
+                                         (≡Sym (iso.invRight isog _)) }
+
+
+
+--We define pseudo-cofibrations, and prove that δ(I k) → I k is an example
 
 
 PseudoCofibration : ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
@@ -476,8 +584,28 @@ PseudoCofibEndpoint : PseudoCofibration Endpoint
 PseudoCofibEndpoint = ≅MapFibration ≅MapEndpoints
 
 
+PseudoCofib□ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n}
+               {u : A → B} {v : C → D}
+               → PseudoCofibration u → PseudoCofibration v → PseudoCofibration (u □ v)
 
---We define cofibrations, along with some example
+PseudoCofib□ cofibu cofibv = ≅MapFibration (≅MapSym ≅Map□) {{cofibu {{cofibv}}}}
+
+
+PseudoCofibIterated□ : {A B : Set} {u : A → B} {k : ℕ} → PseudoCofibration u → PseudoCofibration (Iterated□ u k)
+
+PseudoCofibIterated□ {k = O} cofibu = PseudoCofibEmpty
+
+PseudoCofibIterated□ {k = s k} cofibu = PseudoCofib□ (PseudoCofibIterated□ cofibu) cofibu
+
+
+PseudoCofibBorder : {k : ℕ} → PseudoCofibration (border k)
+
+PseudoCofibBorder = PseudoCofibIterated□ PseudoCofibEndpoint
+
+
+
+--We define cofibrations, and prove that δ(I k) → I k is an example
+
 
 Cofibration :  ∀ {m} {n} {A : Set m} {B : Set n} (u : A → B) → Setω
 
@@ -493,3 +621,23 @@ CofibEmpty tfibbp = ≅MapTrivialFibrationBasis ≅Empty tfibbp
 CofibEndpoint : Cofibration Endpoint
 
 CofibEndpoint tfibbp = ≅MapTrivialFibrationBasis ≅MapEndpoints (TrivFibMapToBaseEndpoint tfibbp)
+
+
+Cofib□ : ∀ {k l m n} {A : Set k} {B : Set l} {C : Set m} {D : Set n}
+        {u : A → B} {v : C → D}
+        → Cofibration u → Cofibration v → Cofibration (u □ v)
+
+Cofib□ cofibu cofibv tfibp = ≅MapTrivialFibrationBasis (≅MapSym ≅Map□) (cofibu (cofibv tfibp))
+
+
+CofibIterated□ : {A B : Set} {u : A → B} {k : ℕ} → Cofibration u → Cofibration (Iterated□ u k)
+
+CofibIterated□ {k = O} cofibu = CofibEmpty
+
+CofibIterated□ {k = s k} cofibu = Cofib□ (CofibIterated□ cofibu) cofibu
+
+
+CofibBorder : {k : ℕ} → Cofibration (border k)
+
+CofibBorder = CofibIterated□ CofibEndpoint
+
