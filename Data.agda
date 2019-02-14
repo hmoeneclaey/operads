@@ -424,12 +424,22 @@ surjectivePostCompIso {g = g} isog surjgf b = let H = surjgf (g b) in Σleft H ,
 
 
 
-{-
+
 --We define pullback
 
-Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
-Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})
+module _  {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) where
 
+  record Pullback : Set (k ⊔ l ⊔ m) where
+    constructor _,_,_
+    field
+      proj₁ : A
+      proj₂ : B
+      eqPullback : f proj₁ ≡ g proj₂
+
+--Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
+--Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})
+
+{-
 module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C} where
 
   proj₁ : Pullback f g → A
@@ -441,9 +451,9 @@ module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C}
   equalProj : (x : Pullback f g) → f (proj₁ x) ≡ g (proj₂ x)
   equalProj ((a , b) , eq) = eq
 
-  equalPullback : {x y : Pullback f g}
+  ≡Pullback : {x y : Pullback f g}
                   → proj₁ x ≡ proj₁ y → proj₂ x ≡ proj₂ y → x ≡ y
-  equalPullback {(a₁ , b₁) , eq₁} {(a₂ , b₂) , eq₂} refl refl = equalΣ refl UIP
+  ≡Pullback {(a₁ , b₁) , eq₁} {(a₂ , b₂) , eq₂} refl refl = equalΣ refl UIP
 -}
 
 

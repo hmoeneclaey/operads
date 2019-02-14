@@ -456,12 +456,6 @@ module _ {k l} {X : Set k} {Y : Set l} {f : X → Y} where
 
 
 
-
-
-
-
-
-
 --We define the iteration of □, and then the inclusion of the border in any cube
 
 
