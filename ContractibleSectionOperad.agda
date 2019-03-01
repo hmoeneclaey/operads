@@ -8,6 +8,7 @@ open import Cofibration
 open import Operad
 open import CofibrantOperad
 open import LimitOperad
+open import LoopSpace
 
 
 
@@ -34,7 +35,7 @@ record SectionOp {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Opera
          isSection : (A : Set) {{_ : FOSet A}} → (c : Q A) → α A (map A c) ≡ c 
 
 
-sectionStronglyContractibleMapOp : (P : (A : Set) → {{_ : FOSet A}} → Set) → {{_ : Operad P}} → Setω
+sectionStronglyContractibleMapOp : ∀ {l} (P : (A : Set) → {{_ : FOSet A}} → Set l) → {{_ : Operad P}} → Setω
 sectionStronglyContractibleMapOp P = ∀ {k} {Q : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad Q}}
                                          {β : (A : Set) → {{_ : FOSet A}} → Q A → P A} (homβ : HomOperad β)
                                          → StronglyContractibleMapOp β → SectionOp β
@@ -88,6 +89,34 @@ module _ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
 
 
 
+--Now we define strongly contractible operads, and show that an operad with section of strongly contractible map acts on them
+
+
+StronglyContractibleOp : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
+StronglyContractibleOp P = (A : Set) {{_ : FOSet A}} → StronglyContractible (P A)
+
+StronglyContractibleOpTerminal : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k}
+                                 → StronglyContractibleOp P → StronglyContractibleMapOp (TerminalMon P)
+StronglyContractibleOpTerminal contrP A = StronglyContractibleTerminal (contrP A)
+
+
+module _ {l} {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
+         {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
+         (contrQ :  StronglyContractibleOp Q) (sectionP : sectionStronglyContractibleMapOp P) where
+
+
+       sectionProj : SectionOp (ProdOpProj₁ P Q)
+       sectionProj = sectionP HomProdOpProj₁ (StronglyContractiblePullbackOp (StronglyContractibleOpTerminal contrQ))
+       
+       actionStronglyContractible : Nat P Q
+       actionStronglyContractible = ProdOpProj₂ P Q ∘ SectionOp.map sectionProj
+       
+       HomActionStronglyContractible : HomOperad (actionStronglyContractible)
+       HomActionStronglyContractible = HomOpComp HomProdOpProj₂ (SectionOp.isMorphism sectionProj)
+
+
+
+
 
 --We show that an operad having section against strongly contractible map is cofibrant
 
@@ -95,8 +124,16 @@ module _ (∞Mon : (A : Set) → {{_ : FOSet A}} → Set) {{_ : Operad ∞Mon}}
          (∞MonSection : sectionStronglyContractibleMapOp ∞Mon) where
 
   Cofib∞Mon : CofibrantOp ∞Mon
+  
   Cofib∞Mon α homα tfibα β homβ = sectionLiftingOp homβ homα
                                   (∞MonSection (HomProj₁ homβ homα)
                                   (StronglyContractiblePullbackOp
                                     (StronglyContractibleTrivialFibrationOp tfibα)))
                                 
+
+  ActLoopSpace∞Mon : ∀ {k} {X : Set k} {{_ : Fib X}} {x : X}
+                     → Algebra ∞Mon (x ~~> x)
+                     
+  ActLoopSpace∞Mon {X = X} {x = x} = {!!} --record { algebraStruct = (PathOpToEnd x) ∘ actionStronglyContractible (λ A → StronglyContractiblePathOp) ∞MonSection ; 
+                                          --isAlg = HomOpComp (HomPathOpToEnd x) (HomActionStronglyContractible  (λ A → StronglyContractiblePathOp) ∞MonSection) }
+

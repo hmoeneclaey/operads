@@ -62,6 +62,9 @@ A ↔ B = (A → B) ∧ (B → A)
 
 infix 46 _↔_
 
+Terminal⊤ : ∀ {k} (X : Set k) → X → ⊤ {lzero}
+Terminal⊤ X = λ _ → *
+
 
 
 
@@ -435,6 +438,15 @@ module _  {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C
       proj₁ : A
       proj₂ : B
       eqPullback : f proj₁ ≡ g proj₂
+
+
+module _ {k l m} {A : Set k} {B : Set l} {C : Set m} {f : A → C} {g : B → C} where
+
+  ≡Pullback : {x y : Pullback f g}
+              → Pullback.proj₁ x ≡ Pullback.proj₁ y
+              → Pullback.proj₂ x ≡ Pullback.proj₂ y → x ≡ y
+                  
+  ≡Pullback {a₁ , b₁ , eq₁} {a₂ , b₂ , eq₂} refl refl = ap (λ eq → a₁ , b₁ , eq) UIP 
 
 --Pullback : ∀ {k l m} {A : Set k} {B : Set l} {C : Set m} (f : A → C) (g : B → C) → Set (k ⊔ l ⊔ m)
 --Pullback {A = A} {B = B} f g = Σ (A ∧ B) (λ {(a , b) → f a ≡ g b})

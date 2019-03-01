@@ -641,21 +641,76 @@ CofibBorder = CofibIterated□ CofibEndpoint
 
 --We define strongly contractible maps
 
-
-module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
-
-  Section : Set (k ⊔ l)
-  Section = (y : Y) → fibre f y
+Section : ∀ {k l} {X : Set k} {Y : Set l} (f : X → Y) → Set (k ⊔ l)
+Section {Y = Y} f = (y : Y) → fibre f y
 
 StronglyContractibleMap : ∀ {k l} {X : Set k} {Y : Set l} (f : X → Y) → Set (k ⊔ l)
 StronglyContractibleMap f = {k : ℕ} → Section (< border k / f >)
 
 
+
+--We that strongly contractible map are stable by pullback
+
+SectionPullbackExp : ∀ {k l m n p} {A : Set k} {B : Set l} {X : Set m} {Z : Set n} {Y : Set p}
+                     {u : A → B} {f : X → Z} {g : Y → Z}
+                     → Section < u / g > → Section < u / Pullback.proj₁ {f = f} {g = g} >
+                     
+SectionPullbackExp {u = u} {f} {g} sec<u/p>
+                   record { fun₁ = ϕ ;
+                            fun₂ = ψ ;
+                            eqPullExp = eqϕψ }
+                          = let πY = Pullback.proj₂ {f = f} {g = g} in
+                            let πX = Pullback.proj₁ {f = f} {g = g} in
+                            let Vaux = sec<u/p> (record { fun₁ = πY o ϕ ;
+                                                          fun₂ = f o ψ ;
+                                                          eqPullExp = λ a → ≡Trans {y = f (πX (ϕ a))}
+                                                                                   (ap f (eqϕψ a))
+                                                                                   (Pullback.eqPullback (ϕ a)) }) in
+                            let V = fibre.point Vaux in
+                            let gV≡fψ = ap PullExp.fun₂ (fibre.equal Vaux) in
+                            let Vu≡πYϕ = ap PullExp.fun₁ (fibre.equal Vaux) in
+                            (λ b → (ψ b) , V b , ≡Sym (ap (λ H → H b) gV≡fψ)) ,
+                            ≡PullExp (funext (λ a → ≡Pullback (eqϕψ a) (ap (λ H → H a) Vu≡πYϕ))) refl
+
+
+
 StronglyContractiblePullback : ∀ {k l m} {X : Set k} {Y : Set l} {Z : Set m} {f : X → Z} {g : Y → Z}
                                → StronglyContractibleMap g → StronglyContractibleMap (Pullback.proj₁ {f = f} {g = g})
-StronglyContractiblePullback = {!!}
+                               
+StronglyContractiblePullback contrg = SectionPullbackExp contrg
+
+
+
+--We show that trivial fibration with fibrant basis are strongly contractible
 
 StronglyContractibleTrivialFibration : ∀ {k l} {X : Set k} {Y : Set l} {f : X → Y}
                                        → TrivialFibrationBasis f → StronglyContractibleMap f
-StronglyContractibleTrivialFibration = {!!}
+                                       
+StronglyContractibleTrivialFibration tfibf = λ y → Contr.center (TrivialFibrationBasis.isContr (CofibBorder tfibf) {y})
 
+
+
+
+--We define strongly contractible types
+
+record Filling {k l m} {X : Set k} {Y : Set l} {Z : Set m} (u : X → Y) (v : X → Z) : Set (k ⊔ l ⊔ m) where
+  field
+    FillingMap : Y → Z
+    FillingCommute : (x : X) → FillingMap (u x) ≡ v x
+
+
+StronglyContractible : ∀ {k} (X : Set k) → Set k
+StronglyContractible X = {k : ℕ} → (u : borderI k → X) → Filling (border k) u
+
+
+
+--We show the correspondence between srongly contractible maps and types
+
+StronglyContractibleTerminal : ∀ {k} {X : Set k} → StronglyContractible X → StronglyContractibleMap (Terminal⊤ X)
+
+StronglyContractibleTerminal contrX record { fun₁ = f ;
+                                             fun₂ = _ ;
+                                             eqPullExp = _ }
+                                  = let g = Filling.FillingMap (contrX f) in
+                                    let eqg = Filling.FillingCommute (contrX f) in
+                                    g , ≡PullExp (funext (λ a → eqg a)) refl

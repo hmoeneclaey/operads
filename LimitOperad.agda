@@ -34,15 +34,19 @@ instance
             }
 
 
-TerminalNat : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Nat P Mon
-TerminalNat P _ _ = *
+TerminalMon : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Nat P Mon
+TerminalMon P A = Terminal⊤ (P A)
 
-Mon⊤ : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} → {{_ : Operad P}} → HomOperad (TerminalNat P)
-Mon⊤ = {!!}
+HomTerminalMon : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
+                 → HomOperad (TerminalMon P)
+HomTerminalMon = record { homNat = λ _ → refl ;
+                          homId = refl ;
+                          homγ = refl }
 
 
 
---We postulate the pullback of operad
+
+--We define the pullback of operad
 
 module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
                  {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
@@ -72,9 +76,40 @@ module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
 
       
        HomProj₁ : HomOperad (PullbackOpProj₁ α β)
-       HomProj₁ = ?
+       HomProj₁ = {!!}
 
        HomProj₂ : HomOperad (PullbackOpProj₂ α β)
-       HomProj₂ = ?
+       HomProj₂ = {!!}
 
 
+
+
+
+--We define the product of operad using pullback over the terminal object
+
+
+module _ {k l} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}}
+               (Q : (A : Set) → {{_ : FOSet A}} → Set l) {{_ : Operad Q}} where
+
+       ProdOp : (A : Set) {{_ : FOSet A}} → Set (k ⊔ l)
+       ProdOp = PullbackOp (TerminalMon P) (TerminalMon Q)
+
+       ProdOpProj₁ : Nat ProdOp P
+       ProdOpProj₁ = PullbackOpProj₁ (TerminalMon P) (TerminalMon Q)
+
+       ProdOpProj₂ : Nat ProdOp Q
+       ProdOpProj₂ = PullbackOpProj₂ (TerminalMon P) (TerminalMon Q)
+
+
+module _ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
+               {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}} where
+
+       instance
+         OperadProdOp : Operad (ProdOp P Q)
+         OperadProdOp = PullbackOperad HomTerminalMon HomTerminalMon
+
+       HomProdOpProj₁ : HomOperad (ProdOpProj₁ P Q)
+       HomProdOpProj₁ = HomProj₁ HomTerminalMon HomTerminalMon
+
+       HomProdOpProj₂ : HomOperad (ProdOpProj₂ P Q)
+       HomProdOpProj₂ = HomProj₂ HomTerminalMon HomTerminalMon    

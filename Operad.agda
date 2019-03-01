@@ -113,37 +113,6 @@ module _  {k l m} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {P₂ : (A : 
                           homγ = ≡Trans (ap (β _) homγα) homγβ }
 
 
-{-
---The monoid operad
-
-Mon : (A : Set) {{_ : FOSet A}} → Set
-Mon A = ⊤
-
-MonFun : arrowAction Mon
-MonFun _ = λ _ → *
-
-{-
-instance
-  CollMon : Collection Mon
-  CollMon = record { functor = MonFun ;
-                     functorId = λ _ → refl ;
-                     functorComp = λ _ → refl }
--}
-instance
-  postulate
-    OpMon : Operad Mon
-{-
-OpMon = record
-              { id = *
-              ; γ = λ _ _ → *
-              ; unitLeft = λ _ → refl
-              ; unitRight = λ _ → refl
-              ; naturalityFiber = λ _ _ _ → refl
-              ; naturalityBase = λ _ _ _ → refl
-              ; assoc = λ _ _ _ → refl
-              }
--}
--}
 
 
 
@@ -179,4 +148,10 @@ record Algebra {k l} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad 
 
 
 
-
+{-
+postulate
+  AlgebraTransport : ∀ {k} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
+                       {l} {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
+                       {m} {X : Set m} {α : Nat P Q}
+                       → HomOperad α → Algebra Q X → Algebra P X
+-}
