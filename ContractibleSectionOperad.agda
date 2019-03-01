@@ -1,4 +1,4 @@
-module Monoid where
+module ContractibleSectionOperad where
 
 open import Agda.Primitive
 open import Data
@@ -7,6 +7,7 @@ open import FiniteSet
 open import Cofibration
 open import Operad
 open import CofibrantOperad
+open import LimitOperad
 
 
 
@@ -16,12 +17,12 @@ open import CofibrantOperad
 
 --We define operads having section against strongly contractible morphism
 
-StronglyContractibleOp : ∀ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k}
+StronglyContractibleMapOp : ∀ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k}
                                     {Q : (A : Set) → {{_ : FOSet A}} → Set l}
                                     (α : (A : Set) → {{_ : FOSet A}} → P A → Q A)
                                     → Set (lsuc lzero ⊔ k ⊔ l)
 
-StronglyContractibleOp α = (A : Set) → {{_ : FOSet A}} → StronglyContractible (α A)
+StronglyContractibleMapOp α = (A : Set) → {{_ : FOSet A}} → StronglyContractibleMap (α A)
 
 
 record SectionOp {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
@@ -33,29 +34,16 @@ record SectionOp {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Opera
          isSection : (A : Set) {{_ : FOSet A}} → (c : Q A) → α A (map A c) ≡ c 
 
 
-sectionStronglyContractibleMap : (P : (A : Set) → {{_ : FOSet A}} → Set) → {{_ : Operad P}} → Setω
-sectionStronglyContractibleMap P = ∀ {k} {Q : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad Q}}
+sectionStronglyContractibleMapOp : (P : (A : Set) → {{_ : FOSet A}} → Set) → {{_ : Operad P}} → Setω
+sectionStronglyContractibleMapOp P = ∀ {k} {Q : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad Q}}
                                          {β : (A : Set) → {{_ : FOSet A}} → Q A → P A} (homβ : HomOperad β)
-                                         → StronglyContractibleOp β → SectionOp β
+                                         → StronglyContractibleMapOp β → SectionOp β
 
 
 
---We postulate the pullback of operad
 
-module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
-                 {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
-                 {R : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R}}
-                 (α : Nat P R) (β : Nat Q R) where
 
-       PullbackOp : (A : Set) → {{_ : FOSet A}} → Set (k ⊔ l ⊔ m)
-       PullbackOp A = Pullback (α A) (β A)
-
-       PullbackOpProj₁ : (A : Set) → {{_ : FOSet A}} → PullbackOp A → P A
-       PullbackOpProj₁ A = Pullback.proj₁
-       
-       PullbackOpProj₂ : (A : Set) → {{_ : FOSet A}} → PullbackOp A → Q A
-       PullbackOpProj₂ A = Pullback.proj₂
-
+--We show some properties about pullback of operads
 
 module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
                  {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
@@ -63,18 +51,12 @@ module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
                  {α : Nat P R} (homα : HomOperad α)
                  {β : Nat Q R} (homβ : HomOperad β) where
 
-       postulate
-         instance
-           PullbackOperad : Operad (PullbackOp α β)
-         HomProj₁ : HomOperad (PullbackOpProj₁ α β)
-         HomProj₂ : HomOperad (PullbackOpProj₂ α β)
-
-       sectionLiftingOp : SectionOp (PullbackOpProj₁ α β) → lifting β α
+       sectionLiftingOp : SectionOp {{PullbackOperad homα homβ }} (PullbackOpProj₁ α β) → lifting β α
        sectionLiftingOp record { map = δ ;
                                  isMorphism = homδ ;
                                  isSection = secβ}
                       = record { δ = (PullbackOpProj₂ α β) ∘ δ ;
-                                 homδ = HomOpComp HomProj₂ homδ ;
+                                 homδ = HomOpComp (HomProj₂ homα homβ) homδ ;
                                  equal = λ c → ≡Trans (≡Sym (Pullback.eqPullback (δ _ c)))
                                                       (ap (α _) (secβ _ c)) }
 
@@ -89,7 +71,7 @@ module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
                  {R : (A : Set) → {{_ : FOSet A}} → Set m} {{_ : Operad R}}
                  {α : Nat P R} {β : Nat Q R} where
 
-       StronglyContractiblePullbackOp : StronglyContractibleOp β → StronglyContractibleOp (PullbackOpProj₁ α β)
+       StronglyContractiblePullbackOp : StronglyContractibleMapOp β → StronglyContractibleMapOp (PullbackOpProj₁ α β)
        StronglyContractiblePullbackOp contrβ A = StronglyContractiblePullback (contrβ A)
 
 
@@ -98,7 +80,7 @@ module _ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
                {{fibQ : FibOp Q}}
                {α : Nat P Q} where
                  
-       StronglyContractibleTrivialFibrationOp : TrivialFibrationOp α → StronglyContractibleOp α
+       StronglyContractibleTrivialFibrationOp : TrivialFibrationOp α → StronglyContractibleMapOp α
        StronglyContractibleTrivialFibrationOp tfibα A = StronglyContractibleTrivialFibration
                                                         (record { isFib = TrivialFibration.isFib (tfibα A)  ;
                                                                   isContr = TrivialFibration.isContr (tfibα A) ;
@@ -110,7 +92,7 @@ module _ {k l} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
 --We show that an operad having section against strongly contractible map is cofibrant
 
 module _ (∞Mon : (A : Set) → {{_ : FOSet A}} → Set) {{_ : Operad ∞Mon}}
-         (∞MonSection : sectionStronglyContractibleMap ∞Mon) where
+         (∞MonSection : sectionStronglyContractibleMapOp ∞Mon) where
 
   Cofib∞Mon : CofibrantOp ∞Mon
   Cofib∞Mon α homα tfibα β homβ = sectionLiftingOp homβ homα
