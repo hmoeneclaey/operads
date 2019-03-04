@@ -170,6 +170,9 @@ transport↔ B refl = ↔Refl
 transport₂↔ : ∀ {k l m} {A : Set k} {B : Set l} (C : A → B → Set m) {a₁ a₂ : A} {b₁ b₂ : B} → a₁ ≡ a₂ → b₁ ≡ b₂ → C a₁ b₁ ↔ C a₂ b₂
 transport₂↔ C refl refl = ↔Refl
 
+transport₂ : ∀ {k l m} {A : Set k} {B : Set l} (C : A → B → Set m) {a₁ a₂ : A} {b₁ b₂ : B} → a₁ ≡ a₂ → b₁ ≡ b₂ → C a₁ b₁ → C a₂ b₂
+transport₂ C refl refl = Id
+
 ap : ∀ {k l} {A : Set k} {B : Set l} (f : A → B) {x y : A} → x ≡ y → f x ≡ f y
 ap f refl = refl
 

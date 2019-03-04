@@ -134,6 +134,8 @@ module _ (∞Mon : (A : Set) → {{_ : FOSet A}} → Set) {{_ : Operad ∞Mon}}
   ActLoopSpace∞Mon : ∀ {k} {X : Set k} {{_ : Fib X}} {x : X}
                      → Algebra ∞Mon (x ~~> x)
                      
-  ActLoopSpace∞Mon {X = X} {x = x} = {!!} --record { algebraStruct = (PathOpToEnd x) ∘ actionStronglyContractible (λ A → StronglyContractiblePathOp) ∞MonSection ; 
-                                          --isAlg = HomOpComp (HomPathOpToEnd x) (HomActionStronglyContractible  (λ A → StronglyContractiblePathOp) ∞MonSection) }
+  ActLoopSpace∞Mon {X = X} {x = x} = record { algebraStruct = (PathOpToEnd x) ∘
+                                                       actionStronglyContractible (λ A → StronglyContractiblePathOp) ∞MonSection ; 
+                                              isAlg = HomOpComp (HomPathOpToEnd x)
+                                                      (HomActionStronglyContractible  (λ A → StronglyContractiblePathOp) ∞MonSection) }
 

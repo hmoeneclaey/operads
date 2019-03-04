@@ -14,7 +14,7 @@ open import MorphismFiniteSet
 --First some definition about collections
 
 arrowAction : ∀ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) → Set (lsuc lzero ⊔ k)
-arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B} 
+arrowAction P = {A B : Set} {Afinite : FOSet A} {Bfinite : FOSet B}
                 (f : A → B) → HomFO {{Afinite}} {{Bfinite}} f 
                 → P A {{Afinite}} → P B {{Bfinite}}
 

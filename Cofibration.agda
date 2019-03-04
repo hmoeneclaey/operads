@@ -463,6 +463,7 @@ Prod : ∀ {k} (X : Set k) → ℕ → Set k
 Prod X O = ⊤
 Prod X (s n) = Prod X n ∧ X
 
+
 --We give a mutual inductive definition of the iterated Pushout-Product.
 --Note we give it only for Set, although a polymorphic version could be stated
 
@@ -704,7 +705,7 @@ StronglyContractible X = {k : ℕ} → (u : borderI k → X) → Filling (border
 
 
 
---We show the correspondence between srongly contractible maps and types
+--We show the correspondence between strongly contractible maps and types
 
 StronglyContractibleTerminal : ∀ {k} {X : Set k} → StronglyContractible X → StronglyContractibleMap (Terminal⊤ X)
 
