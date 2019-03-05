@@ -118,7 +118,7 @@ module _ {l} {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
 
 
 
---We show that an operad having section against strongly contractible map is cofibrant
+--We show that an operad having section against strongly contractible map is cofibrant and acts on loop spaces
 
 module _ (∞Mon : (A : Set) → {{_ : FOSet A}} → Set) {{_ : Operad ∞Mon}}
          (∞MonSection : sectionStronglyContractibleMapOp ∞Mon) where

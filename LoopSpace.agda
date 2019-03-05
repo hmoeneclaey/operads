@@ -98,6 +98,44 @@ inc₁morphism f = {!!}
 
 
 
+--We develop a bit of theory for total order.
+
+{-
+_≤_ : {A : Set} {{_ : FOSet A}} (a b : A) → Set
+a ≤ b = (a ≡ b) ∨ (a << b)
+
+isSuccessor : {A : Set} {{_ : FOSet A}} (a b : A) → Set
+isSuccessor {A} a b = (a << b) ∧ ((c : A) → a << c → b ≤ c)
+
+isSuccessorCorrect : {A : Set} {{_ : FOSet A}} {a b : A} → isSuccessor a b ↔ (inc₀ b ≡ inc₁ a)
+isSuccessorCorrect = {!!}
+-}
+
+module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)}} where
+
+  leftΣSucc : A → Succ (Σ A B)
+  leftΣSucc a = {!!}
+
+  ΣSucc : Succ A → Succ (Σ A B)
+  ΣSucc (left a) = leftΣSucc a
+  ΣSucc (right *) = right *
+
+  ΣSuccInc : (a : A) → Succ (B a) → Succ (Σ A B)
+  ΣSuccInc a (left b) = left (a , b)
+  ΣSuccInc a (right *) = ΣSucc (inc₁ a)
+  
+  ΣSuccMin : ΣSucc (min {A}) ≡ min {Σ A B}
+  ΣSuccMin = {!!}
+
+  ΣSuccIncMin : {a : A} → ΣSuccInc a (min {B a}) ≡ leftΣSucc a
+  ΣSuccIncMin = {!!}
+
+  ΣSuccIncInc₁ : {a : A} {b : B a} → inc₁ (a , b) ≡ ΣSuccInc a (inc₁ b)
+  ΣSuccIncInc₁ = {!!}
+
+--inc₀ (a , b) ≡ ΣSucc c ↔ ((c' : A) → c' < c → ((b : B c') → (c' , b) < (a , b))) ∧ ()
+
+
 --We define string of composable paths
 
 record composablePath {k} (X : Set k) (A : Set) {{_ : FOSet A}} : Set k where
@@ -106,39 +144,53 @@ record composablePath {k} (X : Set k) (A : Set) {{_ : FOSet A}} : Set k where
     path : (a : A) → point (inc₀ a) ~~> point (inc₁ a)
 
 
-≡ComposablePathAux : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} {P Q : composablePath X A}
-                     → composablePath.point P ≡ composablePath.point Q
-                     → ((a : A) (i : I) → composablePath.path P a $ i ≡ composablePath.path Q a $ i)
-                     → P ≡ Q
+module _ {k} {X : Set k} {A : Set} {{_ : FOSet A}} where
+
+
+  ≡ComposablePathAux : {P Q : composablePath X A}
+                       → composablePath.point P ≡ composablePath.point Q
+                       → ((a : A) (i : I) → composablePath.path P a $ i ≡ composablePath.path Q a $ i)
+                       → P ≡ Q
                      
-≡ComposablePathAux {P = P} refl eqPath = ap (λ H → record { point = composablePath.point P ; path = H })
-                                            (funext (λ a → ≡Path (eqPath a)))
+  ≡ComposablePathAux {P = P} refl eqPath = ap (λ H → record { point = composablePath.point P ; path = H })
+                                              (funext (λ a → ≡Path (eqPath a)))
 
 
-≡ComposablePath : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} {P Q : composablePath X A}
-                  → ((a : Succ A) → composablePath.point P a ≡ composablePath.point Q a)
-                  → ((a : A) (i : I) → composablePath.path P a $ i ≡ composablePath.path Q a $ i)
-                  → P ≡ Q
+  ≡ComposablePath : {P Q : composablePath X A}
+                    → ((a : Succ A) → composablePath.point P a ≡ composablePath.point Q a)
+                    → ((a : A) (i : I) → composablePath.path P a $ i ≡ composablePath.path Q a $ i)
+                    → P ≡ Q
                   
-≡ComposablePath eqPoint eqPath = ≡ComposablePathAux (funext eqPoint) eqPath
+  ≡ComposablePath eqPoint eqPath = ≡ComposablePathAux (funext eqPoint) eqPath
 
 
-firstPoint : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} → composablePath X A → X
-firstPoint p = composablePath.point p min
+  firstPoint : composablePath X A → X
+  firstPoint p = composablePath.point p min
 
-lastPoint : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} → composablePath X A → X
-lastPoint p = composablePath.point p max
+  lastPoint : composablePath X A → X
+  lastPoint p = composablePath.point p max
 
-composableHrefl : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} → X → composablePath X A
-composableHrefl x = record { point = λ _ → x ; path = λ _ → hrefl }
+  composableHrefl : X → composablePath X A
+  composableHrefl x = record { point = λ _ → x ; path = λ _ → hrefl }
 
-loopComposable : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} {x : X}
-                 → (A → x ~~> x) → composablePath X A
-loopComposable {x = x} f = record { point = λ _ → x ; path = f }
-
+  loopComposable : {x : X} → (A → x ~~> x) → composablePath X A
+  loopComposable {x = x} f = record { point = λ _ → x ; path = f }
 
 
---Now we show various functorialities of the string of composable paths
+module _ {k} {X : Set k} {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} where
+
+  ΣComposablePath : (a : A) → composablePath X (Σ A B) → composablePath X (B a)
+  ΣComposablePath a record { point = f ; path = F }
+                    = record { point = f o ΣSuccInc a ;
+                               path = λ b → endpointPath (F (a , b)) refl (ap f ΣSuccIncInc₁) }
+
+  ΣComposablePathHrefl : {a : A} {x : X} → ΣComposablePath a (composableHrefl x) ≡ composableHrefl x
+  ΣComposablePathHrefl = ≡ComposablePath (λ { (left _) → refl ; (right _) → refl}) (λ _ _ → refl)
+
+  
+
+
+--Now we show functoriality of the strings of composable paths
 
 module _ {k} {X : Set k} where
 
@@ -165,7 +217,7 @@ module _ {k} {X : Set k} where
   composablePathFunctComp homf homg record { point = h ; path = H } = ≡ComposablePath (λ { (left _) → refl ; (right _) → refl})
                                                                                       (λ _ _ → refl)
 
-
+ 
 
 module _ {k} {X : Set k} {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}}
          (f : A → B) (homf : HomFO f) where
@@ -179,6 +231,8 @@ module _ {k} {X : Set k} {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}}
        composablePathFunctHrefl : {x : X} → composablePathFunct f homf (composableHrefl x) ≡ composableHrefl x
        composablePathFunctHrefl = ≡ComposablePath (λ _ → refl) (λ _ _ → refl)
 
+       loopComposableFunct : {x : X} {a : B → x ~~> x} → composablePathFunct f homf (loopComposable a) ≡ loopComposable (a o f)
+       loopComposableFunct {a = a} = ≡ComposablePath (λ _ → refl) (λ _ _ → refl)
 
 
 --We define the path operad
@@ -219,6 +273,26 @@ module _ {k} {X : Set k} where
                                                                  (ap (λ p → p $ i) (eq x))) }
 
 
+
+  γPathOp : {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)}}
+            → PathOp X A → ((a : A) → PathOp X (B a)) → PathOp X (Σ A B)
+  γPathOp {A = A} {B = B}
+          =  λ c d → record { fun = λ {record { point = f ; path = F }
+                                    → endpointPath (PathOp.fun c (record { point = f o ΣSucc ;
+                                                                           path = λ a → endpointPath (PathOp.fun (d a)
+                                                                                        (ΣComposablePath a (record { point = f ; path = F })))
+                                                                                        (ap f ΣSuccIncMin) refl } ))
+                                      (ap (λ a → f a) ΣSuccMin) refl };
+                                                        
+                              equality = λ x → ≡Trans {y = PathOp.fun c (composableHrefl x)}
+                                                      (≡Path (λ i → ap (λ H → PathOp.fun c H $ i)
+                                                      (≡ComposablePath (λ _ → refl)
+                                                                       (λ a i → ≡Trans {y = PathOp.fun (d a) (composableHrefl x) $ i}
+                                                                                       (ap (λ H → PathOp.fun (d a) H $ i) (ΣComposablePathHrefl {B = B}))
+                                                                                       (ap (λ H → H $ i) (PathOp.equality (d a) x))))))
+                                                      (PathOp.equality c x) }
+
+
   instance
     OperadPathOp : Operad (PathOp X)
     
@@ -231,16 +305,18 @@ module _ {k} {X : Set k} where
                      ; functorComp = λ { {homf = homf} {homg = homg} record { fun = ϕ ; equality = _ }
                                          → ≡PathOp (λ p → ≡Path (λ i → ap (λ H → ϕ H $ i) (composablePathFunctComp homf homg p)))}
                      
-                     ; id = record { fun = λ { record { point = f ; path = F } → F fzero} ;
+                     ; id = record { fun = λ p → composablePath.path p fzero ;
                                      equality = λ _ → refl }
                      
-                     ; γ = {!!}
+                     ; γ = γPathOp
+                     
                      ; unitLeft = {!!}
                      ; unitRight = {!!}
                      ; naturalityFiber = {!!}
                      ; naturalityBase = {!!}
                      ; assoc = {!!}
                      }
+
 
 
 
@@ -254,7 +330,12 @@ module _ {k} {X : Set k} where
 
   HomPathOpToEnd : (x : X) → HomOperad (PathOpToEnd x)
   
-  HomPathOpToEnd = {!!}
+  HomPathOpToEnd x = record { homNat = λ { {f = f} homf {record { fun = ϕ ; equality = eq }}
+                                           → funext (λ a → ≡Path (λ i → (ap (λ H → ϕ H $ i) (loopComposableFunct f homf {a = a}))))} ;
+                                           
+                              homId = refl ;
+                              
+                              homγ = {!!} }
 
 
 
