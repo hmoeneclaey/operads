@@ -57,7 +57,7 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
                            {B₁ B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}} 
                            (F : {a : A} → B₁ a → B₂ a) (homF : {a : A} → HomFO (F {a}))
                            (c : P A) (d : (a : A) → P (B₁ a))
-                           → functor (Σfun (Id {A = A}) F) (HomFOΣfun HomFOId homF) (γ c d) ≡ γ c (λ a → functor (F {a}) homF (d a) )
+                           → functor (Σfun (Id {A = A}) F) (HomFOΣfun HomFOId homF) (γ c d) ≡ γ c (λ a → functor (F {a}) (homF {a}) (d a))
 
                 naturalityBase : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}} 
                           {B : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B a₂)}}

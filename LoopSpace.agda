@@ -133,7 +133,21 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
   ΣSuccIncInc₁ : {a : A} {b : B a} → inc₁ (a , b) ≡ ΣSuccInc a (inc₁ b)
   ΣSuccIncInc₁ = {!!}
 
---inc₀ (a , b) ≡ ΣSucc c ↔ ((c' : A) → c' < c → ((b : B c') → (c' , b) < (a , b))) ∧ ()
+
+
+ΣSuccη₂ : {A : Set} {{_ : FOSet A}} (a : Succ A) → ΣSucc a ≡ ∨Nat (η₂ A) Id a
+ΣSuccη₂ = {!!}
+
+ΣSuccΣFun : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}}
+            {B₁ : A₁ → Set} {B₂ : A₂ → Set} {{_ : {a₁ : A₁} → FOSet (B₁ a₁)}} {{_ : {a₂ : A₂} → FOSet (B₂ a₂)}}
+            {f : A₁ → A₂} (homf : HomFO f)
+            {F : {a : A₁} → B₁ a → B₂ (f a)} (HomF : {a : A₁} → HomFO (F {a}))
+            {a : Succ A₁} → ΣSucc {B = B₂} (∨Nat f Id a) ≡ ∨Nat (Σfun f F) Id (ΣSucc {B = B₁} a)
+ΣSuccΣFun = {!!}
+
+--  ΣSuccInc∨Nat : {a : A} → {b : Succ (B a)} → ∨Nat (Σfun Id F) (λ x → x) (ΣSuccInc a b) ≡ ΣSuccInc a (∨Nat F Id b)
+--  ΣSuccInc∨Nat = ?
+
 
 
 --We define string of composable paths
@@ -293,6 +307,59 @@ module _ {k} {X : Set k} where
                                                       (PathOp.equality c x) }
 
 
+  idPathOp : PathOp X (Fin (s O))
+  idPathOp = record { fun = λ p → composablePath.path p fzero ;
+                      equality = λ _ → refl }
+
+
+  UnitLeftPathOp : {A : Set} ⦃ _ : FOSet A ⦄ (c : PathOp X A) →
+                   γPathOp c (λ _ → idPathOp) ≡ PathOpFun (η₂ _) HomFOη₂ c
+
+  UnitLeftPathOp c = ≡PathOp (λ p → ≡Path (λ i → ap (λ H → PathOp.fun c H $ i)
+                                                    (≡ComposablePath (λ a → ap (composablePath.point p) (ΣSuccη₂ a)) --will be refl when ΣSucc is defined
+                                                    (λ _ _ → refl))))
+
+
+  UnitRightPathOp : {B : Fin (s O) → Set} ⦃ _ : {x : Fin (s O)} → FOSet (B x) ⦄
+                    (d : (x : Fin (s O)) → PathOp X (B x)) →
+                    γPathOp idPathOp d ≡ PathOpFun (η₁ B) HomFOη₁ (d fzero)
+
+  UnitRightPathOp d = ≡PathOp (λ p → ≡Path (λ i → ap (λ H → PathOp.fun (d fzero) H $ i)
+                                                     (≡ComposablePath (λ { (left a) → refl ;
+                                                                           (right *) → refl})
+                                                     (λ _ _ → refl))))
+
+
+
+  NaturalityFiberPathOp : {A : Set} ⦃ _ : FOSet A ⦄ {B₁ B₂ : A → Set} ⦃ _ : {a : A} → FOSet (B₁ a) ⦄ ⦃ _ : {a : A} → FOSet (B₂ a) ⦄
+                          (F : {a : A} → B₁ a → B₂ a) (homF : {a : A} → HomFO F)
+                          (c : PathOp X A) (d : (a : A) → PathOp X (B₁ a))
+                          → PathOpFun (Σfun Id F) (HomFOΣfun HomFOId homF) (γPathOp c d) ≡ γPathOp c (λ a → PathOpFun (F {a}) (homF {a}) (d a))
+
+  NaturalityFiberPathOp F homF c d = ≡PathOp (λ p → ≡Path (λ i → ap (λ H → PathOp.fun c H $ i)
+                                                                    (≡ComposablePath (λ a → ap (composablePath.point p)
+                                                                                     (≡Sym (≡Trans {y = ΣSucc (∨Nat Id Id a)}
+                                                                                                   {!!}
+                                                                                                   (ΣSuccΣFun HomFOId homF {a = a}))))
+                                                                    (λ a j → ap (λ H → PathOp.fun (d a) H $ j)
+                                                                                (≡ComposablePath (λ { (left _) → refl ;
+                                                                                                      (right *) → ap (composablePath.point p) {!!}})
+                                                                                                 (λ _ _ → refl))))))
+
+
+  NaturalityBasePathOp : {A₁ A₂ : Set} ⦃ _ : FOSet A₁ ⦄ ⦃ _ : FOSet A₂ ⦄ {B : A₂ → Set} ⦃ _ : {a₂ : A₂} → FOSet (B a₂) ⦄
+                         (f : A₁ → A₂) (homf : HomFO f)
+                         (c : PathOp X A₁) (d : (a₂ : A₂) → PathOp X (B a₂))
+                         → PathOpFun (Σfun f Id) (HomFOΣfun homf HomFOId) (γPathOp c (d o f)) ≡ γPathOp (PathOpFun f homf c) d
+
+  NaturalityBasePathOp f homf c d = ≡PathOp (λ p → ≡Path (λ i → ap (λ H → PathOp.fun c H $ i)
+                                                                (≡ComposablePath (λ a → ap (composablePath.point p) {!!})
+                                                                                 (λ a j → ap (λ H → PathOp.fun (d (f a)) H $ j)
+                                                                                             (≡ComposablePath (λ { (left _) → refl ;
+                                                                                                                   (right *) → ap (composablePath.point p) {!!}})
+                                                                                                              (λ _ _ → refl))))))
+
+
   instance
     OperadPathOp : Operad (PathOp X)
     
@@ -305,15 +372,18 @@ module _ {k} {X : Set k} where
                      ; functorComp = λ { {homf = homf} {homg = homg} record { fun = ϕ ; equality = _ }
                                          → ≡PathOp (λ p → ≡Path (λ i → ap (λ H → ϕ H $ i) (composablePathFunctComp homf homg p)))}
                      
-                     ; id = record { fun = λ p → composablePath.path p fzero ;
-                                     equality = λ _ → refl }
+                     ; id = idPathOp
                      
                      ; γ = γPathOp
                      
-                     ; unitLeft = {!!}
-                     ; unitRight = {!!}
-                     ; naturalityFiber = {!!}
-                     ; naturalityBase = {!!}
+                     ; unitLeft = UnitLeftPathOp 
+                     
+                     ; unitRight = UnitRightPathOp 
+                     
+                     ; naturalityFiber = {!!} --NaturalityFiberPathOp
+                     
+                     ; naturalityBase = {!!} --NaturalityBasePathOp
+                     
                      ; assoc = {!!}
                      }
 
@@ -335,7 +405,9 @@ module _ {k} {X : Set k} where
                                            
                               homId = refl ;
                               
-                              homγ = {!!} }
+                              homγ = λ {A} {B} {c} {d} → funext (λ p → ≡Path (λ i →
+                                     ap (λ H → PathOp.fun c H $ i) (≡ComposablePath (λ _ → refl) λ a j →
+                                     ap (λ H → PathOp.fun (d a) H $ j) (≡ComposablePath (λ _ → refl) λ _ _ → refl)))) } 
 
 
 
