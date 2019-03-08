@@ -53,7 +53,7 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
                             (d : (x : Fin(s O)) → P (B x))
                             → γ id d ≡ functor (η₁ B) HomFOη₁ (d fzero)
 
-                naturalityFiber : {A : Set} {{_ : FOSet A}} 
+                naturalityFiber : {A : Set} {{_ : FOSet A}}
                            {B₁ B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}} 
                            (F : {a : A} → B₁ a → B₂ a) (homF : {a : A} → HomFO (F {a}))
                            (c : P A) (d : (a : A) → P (B₁ a))
@@ -64,11 +64,20 @@ record Operad {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) : Set (lsuc k) w
                           (f : A₁ → A₂) (homf : HomFO f)
                           (c : P A₁) (d : (a₂ : A₂) → P (B a₂)) 
                           → functor (Σfun {B₂ = B} f Id) (HomFOΣfun homf HomFOId) (γ c (d o f)) ≡ γ (functor f homf c) d
+{-
+                assoc : (A : Set) (Afinite : FOSet A) (B : A → Set) (Bfinite : {a : A} → FOSet (B a)) 
+                        (C : Σ A B → Set) (Cfinite : {x : Σ A B} → FOSet (C x))
+                        (c : P A {{Afinite}}) (d : (a : A) → P (B a) {{Bfinite}}) (e : (x : Σ A B) → P (C x) {{Cfinite}}) 
+                        → γ {{FOΣ {{Afinite}} {{Bfinite}}}} {{Cfinite}} (γ {{Afinite}} {{Bfinite}} c d) e
+                        ≡ functor {Afinite = FOΣ {{Afinite}} {{FOΣ {{Bfinite}} {{Cfinite}}}}} {Bfinite = FOΣ {{FOΣ {{Afinite}} {{Bfinite}}}} {{Cfinite}}}
+                                   (ψ A {{Afinite}} B {{Bfinite}} C {{Cfinite}}) (HomFOψ {{Afinite}} {{Bfinite}} {{Cfinite}})
+                                   (γ {{Afinite}} {{FOΣ {{Bfinite}} {{Cfinite}}}} c (λ a → γ (d a) (λ b → e (a , b))))
 
+-}
                 assoc : {A : Set} {{Afinite : FOSet A}} {B : A → Set} {{Bfinite : {a : A} → FOSet (B a)}} 
                         {C : Σ A B → Set} {{Cfinite : {x : Σ A B} → FOSet (C x)}}
                         (c : P A) (d : (a : A) → P (B a)) (e : (x : Σ A B) → P (C x)) 
-                        → γ (γ c d) e ≡ functor (ψ A B C) HomFOψ (γ c (λ a → γ (d a) (λ b → e (a , b))))
+                        → γ (γ c d) e ≡ functor (ψ A B C) (HomFOψ) (γ c (λ a → γ (d a) (λ b → e (a , b))))
 
 
 open Operad {{...}} public
