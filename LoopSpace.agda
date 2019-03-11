@@ -75,6 +75,7 @@ isoFin⊤Succ = record { inv = invFin⊤Succ ;
 
 
 
+
 --We show that the successor of a finite set is a finite set, and construct the two injective morphisms from A to Succ A
 
 instance
@@ -93,17 +94,37 @@ inc₀ a = left a
 inc₁ : {A : Set} {{_ : FOSet A}} → A → Succ A
 inc₁ {A} a = iso.inv isIsoFO (fsucc (funFO a))
 
-inc₁morphism : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}}
-         → (f : A → B) → HomFO f → {a : A} → inc₁ (f a) ≡ ∨Nat f Id (inc₁ a)
-inc₁morphism f = {!!}
+
+--left a₁ << left a₂ → a₁ << a₂
 
 
 
 --We develop a bit of theory for total order.
 
+<Trans : {n : ℕ} {x y z : Fin n} → x << y → y << z → x << z
+<Trans {.(s _)} {fzero} {fzero} {z} ()
+<Trans {.(s _)} {fzero} {fsucc y} {fzero} _ () 
+<Trans {.(s _)} {fzero} {fsucc y} {fsucc z} _ _ = *
+<Trans {.(s _)} {fsucc x} {fzero} {z} () 
+<Trans {.(s _)} {fsucc x} {fsucc y} {fzero} _ ()
+<Trans {.(s _)} {fsucc x} {fsucc y} {fsucc z} = <Trans {x = x} {y} {z}
+
+<<Trans : {A : Set} {{_ : FOSet A}} {x y z : A} → x << y → y << z → x << z
+<<Trans {x = x} {y} {z} = <Trans {x = funFO x} {y = funFO y} {z = funFO z}
 
 _≤_ : {A : Set} {{_ : FOSet A}} (a b : A) → Set
 a ≤ b = (a ≡ b) ∨ (a << b)
+
+<<Total : ∀ {k} {X : Set k} {A : Set} {{_ : FOSet A}} {x y : A} → x << y → y ≤ x → X
+<<Total {x = x} eq₁ (left refl) = efql (<<Irefl x eq₁)
+<<Total {x = x} {y} eq₁ (right eq₂) = efql (<<Irefl x (<<Trans {x = x} {y = y} {z = x} eq₁ eq₂))
+
+≤Total : {A : Set} {{_ : FOSet A}} {x y : A} → ¬ (y << x) → x ≤ y
+≤Total = {!!}
+
+≤<Trans : {A : Set} {{_ : FOSet A}} {x y z : A} → x ≤ y → y << z → x << z
+≤<Trans (left refl) eq₂ = eq₂
+≤<Trans {x = x} {y} {z} (right eq₁) eq₂ = <<Trans {x = x} {y} {z} eq₁ eq₂ 
 
 isSuccessor : {A : Set} {{_ : FOSet A}} (a b : A) → Set
 isSuccessor {A} a b = (a << b) ∧ ((c : A) → a << c → b ≤ c)
@@ -111,23 +132,70 @@ isSuccessor {A} a b = (a << b) ∧ ((c : A) → a << c → b ≤ c)
 isMin : {A : Set} {{_ : FOSet A}} → A → Set
 isMin {A} a = (a₁ : A) → a ≤ a₁
 
+isMax : {A : Set} {{_ : FOSet A}} → A → Set
+isMax {A} a = (a₁ : A) → a₁ ≤ a
+
+fmaxIsMaxAux : {n : ℕ} {x : Fin n} → Fin⊤SuccAux x < fmax
+fmaxIsMaxAux {x = fzero} = *
+fmaxIsMaxAux {x = fsucc x} = fmaxIsMaxAux {x = x}
+
+fmaxIsMax : {n : ℕ} {x : Fin n} → Fin⊤Succ (left x) < fmax
+fmaxIsMax {x = fzero} = *
+fmaxIsMax {x = fsucc x} = fmaxIsMaxAux {x = x}
+
+maxIsMax : {A : Set} {{_ : FOSet A}} → isMax (max {A})
+maxIsMax (left x) = right (fmaxIsMax {x = funFO x})
+maxIsMax (right *) = left refl
+
+succIsSucc : {A : Set} {{_ : FOSet A}} → {a : A} → inc₀ a << inc₁ a
+succIsSucc = {!!}
+
+inc₀Order : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → a₁ << a₂ → inc₀ a₁ << inc₀ a₂
+inc₀Order eq = {!!}
+
+inc₀OrderConverse : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → inc₀ a₁ << inc₀ a₂ →  a₁ << a₂
+inc₀OrderConverse = {!!}
+
+inc₁Order : {A : Set} {{_ : FOSet A}} → {a₁ a₂ : A} → a₁ << a₂ → inc₁ a₁ << inc₁ a₂
+inc₁Order = {!!}
+
 --isSuccessorCorrect : {A : Set} {{_ : FOSet A}} {a b : A} → isSuccessor a b ↔ (inc₀ b ≡ inc₁ a)
 --isSuccessorCorrect = {!!}
+
+inc₁morphism : {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}}
+         → (f : A → B) → HomFO f → {a : A} → inc₁ (f a) ≡ ∨Nat f Id (inc₁ a)
+inc₁morphism f = {!!}
+
+
+minIsMin : {A : Set} {{_ : FOSet A}} → isMin (min {A})
+minIsMin {A} ⦃ record { cardinal = O ; funFO = f ; isIsoFO = isof } ⦄ = λ { (left x) → {!!} ; (right *) → left refl}
+minIsMin {A} ⦃ record { cardinal = s |A| ; funFO = f ; isIsoFO = isof } ⦄ (left x) =  {!!}
+minIsMin {A} ⦃ record { cardinal = s |A| ; funFO = f ; isIsoFO = isof } ⦄ (right *) =
+             maxIsMax ⦃ record { cardinal = s |A| ; funFO = f ; isIsoFO = isof } ⦄  (left (iso.inv isof fzero))
+
+
+isMinDef : {A : Set} {{_ : FOSet A}} {x : Succ A} → isMin x → x ≡ min {A}
+isMinDef = {!!}
+
+
 
 
 module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)}} where
 
+  ΣFirst : {a₁ a₂ : A} {b₁ : B a₁} {b₂ : B a₂} → a₁ << a₂ → ord (Σ A B) (a₁ , b₁) (a₂ , b₂)
+  ΣFirst {a₁} {a₂} {b₁} {b₂} eq = ∧right (Σorder {a₁ = a₁} {a₂} {b₁} {b₂}) (left eq)
+
+  ΣSecond : {a : A} {b₁ b₂ : B a} → b₁ << b₂ → ord (Σ A B) (a , b₁) (a , b₂)
+  ΣSecond {a} {b₁} {b₂} eq = ∧right (Σorder {a₁ = a} {a} {b₁} {b₂}) (right (refl , eq))
+
   leftΣSucc : A → Succ (Σ A B)
   leftΣSucc a = {!!}
 
-  isInf : (a : A) (x : Succ (Σ A B)) → Set
-  isInf a x = (a₁ : A) (b : B a₁) → a₁ << a → left (a₁ , b) << x
+  isInf : (a : Succ A) (x : Succ (Σ A B)) → Set
+  isInf a x = (a₁ : A) (b : B a₁) → left a₁ << a → left (a₁ , b) << x
 
-  leftΣSuccInf : (a : A) → isInf a (leftΣSucc a)
-  leftΣSuccInf = {!!}
-
-  leftΣSuccDef : {a : A} {x : Succ (Σ A B)} → isInf a x → ((y : Succ (Σ A B)) → isInf a y → x ≤ y ) → x ≡ leftΣSucc a 
-  leftΣSuccDef = {!!}
+  isInfFirst : (a a' : A) (b : B a')→ isInf (left a) (left (a' , b)) → a ≤ a'
+  isInfFirst a a' b isinf = ≤Total (λ eq → <<Irefl {A = Succ (Σ A B)} (left (a' , b)) (isinf a' b (inc₀Order {a₁ = a'} {a₂ = a} eq)) )
 
   ΣSucc : Succ A → Succ (Σ A B)
   ΣSucc (left a) = leftΣSucc a
@@ -136,12 +204,82 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
   ΣSuccInc : (a : A) → Succ (B a) → Succ (Σ A B)
   ΣSuccInc a (left b) = left (a , b)
   ΣSuccInc a (right *) = ΣSucc (inc₁ a)
-  
-  ΣSuccMin : ΣSucc (min {A}) ≡ min {Σ A B}
-  ΣSuccMin = {!!}
 
-  ΣSuccIncMin : {a : A} → ΣSuccInc a (min {B a}) ≡ leftΣSucc a
-  ΣSuccIncMin = {!!}
+  ΣSuccInf : (a : Succ A) → isInf a (ΣSucc a)
+  ΣSuccInf = {!!}
+
+  ΣSuccInfMin : {a : Succ A} {x : Succ (Σ A B)} → isInf a x → ΣSucc a ≤ x
+  ΣSuccInfMin = {!!}
+
+  ΣSuccDef : {a : Succ A} {x : Succ (Σ A B)} → isInf a x → ((y : Succ (Σ A B)) → isInf a y → x ≤ y) → x ≡ ΣSucc a 
+  ΣSuccDef = {!!}
+
+  ΣSuccOrder : {a₁ a₂ : Succ A} → a₁ ≤ a₂ → ΣSucc a₁ ≤ ΣSucc a₂
+  ΣSuccOrder (left refl) = left refl
+  ΣSuccOrder (right eq) = {!!} --≤Total (λ eq₂ → {!!})
+
+  ΣSuccIncOrder : {a : A} {b b' : Succ (B a)} → b ≤ b' → ΣSuccInc a b ≤ ΣSuccInc a b'
+  ΣSuccIncOrder (left refl) = left refl
+  ΣSuccIncOrder {a} {left b} {left b'} (right eq) = right (inc₀Order {A = Σ A B} {a₁ = (a , b)} {a₂ = (a , b')}
+                                                                     (ΣSecond (inc₀OrderConverse {a₁ = b} {a₂ = b'} eq)))
+  ΣSuccIncOrder {a} {left b} {right *} (right eq) = right (ΣSuccInf (inc₁ a) a b (succIsSucc {a = a}))
+  ΣSuccIncOrder {a} {right *} {left b'} (right eq) = <<Total {x = right *} {y = left b'} eq (maxIsMax (left b'))
+  ΣSuccIncOrder {a} {right *} {right *} (right eq) = left refl
+
+  ΣSuccIncOrderMinAux₁ : {a a' : A} {b : Succ (B a)} {b' : Succ (B a')} → a << a' → ΣSuccInc a b ≤ ΣSuccInc a' b'
+  ΣSuccIncOrderMinAux₁ {a} {a'} {b = left b} {left b'} eq = right (inc₀Order {A = Σ A B} {a₁ = a , b} {a₂ = a' , b'}
+                                                                             (ΣFirst eq))
+  ΣSuccIncOrderMinAux₁ {a} {a'} {b = left b} {right *} eq = right (ΣSuccInf (inc₁ a') a b (<<Trans {x = left a} {y = left a'} {z = inc₁ a'}
+                                                                                                   (inc₀Order {a₁ = a} {a₂ = a'} eq) (succIsSucc {a = a'})))
+  ΣSuccIncOrderMinAux₁ {a} {a'} {right *} {left b'} eq = ΣSuccInfMin {a = inc₁ a} {x = left (a' , b')}
+                                                                     (λ a₁ b eq₂ → inc₀Order {A = Σ A B} {a₁ = a₁ , b} {a₂ = a' , b'}
+                                                                                             (ΣFirst (inc₀OrderConverse {a₁ = a₁} {a₂ = a'}
+                                                                                             (≤<Trans {x = inc₀ a₁} {y = inc₀ a} {z = inc₀ a'}
+                                                                                                      {!!}
+                                                                                                      (inc₀Order {a₁ = a} {a₂ = a'} eq)))))
+  ΣSuccIncOrderMinAux₁ {a} {a'} {right *} {right *} eq = ΣSuccOrder {a₁ = inc₁ a} {a₂ = inc₁ a'} (right (inc₁Order {a₁ = a} {a₂ = a'} eq))
+
+  ΣSuccIncOrderMin : {a a' : A} {b' : Succ (B a')} → a ≤ a' → ΣSuccInc a min ≤ ΣSuccInc a' b'
+  ΣSuccIncOrderMin {b' = b'} (left refl) = ΣSuccIncOrder (minIsMin b')
+  ΣSuccIncOrderMin {b' = b'} (right eq) = ΣSuccIncOrderMinAux₁ {b = min} {b' = b'} eq
+
+
+{-
+  ΣSuccIncOrder : {a : A} → {x y : Succ (B a)} → x ≤ y → ΣSuccInc a x ≤ ΣSuccInc a y
+  ΣSuccIncOrder (left refl) = left refl
+  ΣSuccIncOrder {x = left b₁} {left b₂} (right eq) = right {!!}
+  ΣSuccIncOrder {x = left b} {right *} (right eq) = right {!!}
+  ΣSuccIncOrder {x = right *} (right eq) = right {!!}
+-}
+{-
+  ΣSuccIncOrderFirst : {a₁ a₂ : A} → {b₁ : Succ (B a₁)} → {b₂ : Succ (B a₂)} → a₁ << a₂ → ΣSuccInc a₁ b₁ ≤ ΣSuccInc a₂ b₂
+  ΣSuccIncOrderFirst {b₁ = left b₁} {left b₂} = {!!}
+  ΣSuccIncOrderFirst {a₁ = a₁} {a₂ = a₂} {b₁ = left b₁} {right *} eq = right (ΣSuccInf (inc₁ a₂) a₁ b₁ (<<Trans {x = left a₁} {y = left a₂} {z = inc₁ a₂}
+                                                                                                         (inc₀Order {a₁ = a₁} {a₂ = a₂} eq)
+                                                                                                         (succIsSucc {a = a₂}))) 
+  ΣSuccIncOrderFirst {b₁ = right *} {left x₂} = {!!}
+  ΣSuccIncOrderFirst {b₁ = right *} {right x₂} = {!!}
+-}
+
+  ΣSuccMin : ΣSucc (min {A}) ≡ min {Σ A B}
+  ΣSuccMin = isMinDef λ { (left (a , b)) → ΣSuccInfMin {min {A}} (λ a₁ b₁ eq → <<Total eq (minIsMin (left a₁))) ;
+                          (right *) → maxIsMax (ΣSucc min)}
+
+
+  ΣSuccIncMinAux : {a a' : A} {b : B a} {b' : Succ (B a')} → a << a' → left (a , b) << ΣSuccInc a' b'
+  ΣSuccIncMinAux {a} {a'} {b} {left b'} eq = inc₀Order {A = Σ A B} {a₁ = (a , b)} {a₂ = (a' , b')} (ΣFirst eq)
+  ΣSuccIncMinAux {a} {a'} {b} {right *} eq = ΣSuccInf (inc₁ a') a _ (<<Trans {x = left a} {y = left a'} {z = inc₁ a'}
+                                                                             (inc₀Order {a₁ = a} {a₂ = a'} eq)
+                                                                             (succIsSucc {a = a'}))
+  
+
+  ΣSuccIncMin : {a : A} → ΣSuccInc a (min {B a}) ≡ ΣSucc (left a)
+  ΣSuccIncMin {a} = ΣSuccDef {a = left a} {x = ΣSuccInc a (min {B a})}
+                             (λ a₁ b eq → ΣSuccIncMinAux {b' = min} (inc₀OrderConverse {a₁ = a₁} {a₂ = a} eq) )
+                             λ { (left (a' , b)) x → ΣSuccIncOrderMin {a = a} {a' = a'} {left b}
+                                                                   (isInfFirst a a' b x) ;
+                                 (right *) x → maxIsMax _}
+
 
   ΣSuccIncInc₁ : {a : A} {b : B a} → inc₁ (a , b) ≡ ΣSuccInc a (inc₁ b)
   ΣSuccIncInc₁ = {!!}
@@ -173,6 +311,8 @@ module _ {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)
   ΣSuccψInc₁ : (a : A) (b : Succ (B a)) → ΣSucc (ΣSuccInc a b) ≡ ∨Nat (ψ A B C) Id (ΣSuccInc a (ΣSucc b))
   ΣSuccψInc₁ a (left b) = {!!}
   ΣSuccψInc₁ a (right *) = ΣSuccψ (inc₁ a)
+
+
 
 
 --We define string of composable paths
