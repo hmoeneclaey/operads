@@ -1,3 +1,5 @@
+{-# OPTIONS --no-eta-equality #-}
+
 module OperadCocylinder where
 
 open import Agda.Primitive

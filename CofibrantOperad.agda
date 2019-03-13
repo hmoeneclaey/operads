@@ -6,6 +6,9 @@ open import FiniteSet
 open import Operad
 open import FibrantUniverse
 
+--We use the cocylinder factorisation for operads
+open import OperadCocylinder
+
 
 --We define fibrations / trivial fibrations / equivalence between operads
 
@@ -80,9 +83,6 @@ module _ {k} (P : (A : Set) → {{_ : FOSet A}} → Set k) {{_ : Operad P}} wher
 
 
 --Now we show that a cofibrant operads has weak lifting for equivalence between fibrant operads
-
---We use the cocylinder factorisation for operads
-open import OperadCocylinder
 
 
 module _ {k l} {P₁ : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P₁}} {{_ : FibOp P₁}}

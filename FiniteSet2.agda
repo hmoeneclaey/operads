@@ -474,7 +474,6 @@ transportDouble {p = refl} {refl} = refl
 
 --First we show that isInf interact well with fibre morphisms
        
-{-
 module _ {A : Set} {{_ : FOSet A}}
          {B₁ : A → Set} {B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}}
          {F : {a : A} → B₁ a → B₂ a} (homF : {a : A} → HomFO (F {a})) where
@@ -609,7 +608,7 @@ module _ {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}}
                                                    (right *) _ → maxIsMax _})
        ΣSuccΣFunBase {right *} = refl
 
--}
+
 
 
 

@@ -332,9 +332,6 @@ module _ {k l} {X : Set k} {Y : Set l} (f : X → Y) where
 
 
 
-
-
-
 --Results about equivalences
 
 

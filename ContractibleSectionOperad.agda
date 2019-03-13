@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module ContractibleSectionOperad where
 
 open import Agda.Primitive
@@ -120,7 +122,7 @@ module _ {l} {Q : (A : Set) → {{_ : FOSet A}} → Set l} {{_ : Operad Q}}
 
 --We show that an operad having section against strongly contractible map is cofibrant and acts on loop spaces
 
-module _ (∞Mon : (A : Set) → {{_ : FOSet A}} → Set) {{_ : Operad ∞Mon}}
+module _ {∞Mon : (A : Set) → {{_ : FOSet A}} → Set} {{_ : Operad ∞Mon}}
          (∞MonSection : sectionStronglyContractibleMapOp ∞Mon) where
 
   Cofib∞Mon : CofibrantOp ∞Mon

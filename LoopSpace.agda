@@ -1,5 +1,5 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS --no-eta-equality #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 module LoopSpace where
 
