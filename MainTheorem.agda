@@ -12,8 +12,14 @@ open import ContractibleSectionOperad
 --We list unwanted postulates
 --FibrantUniverse l.112
 --FiniteSet l.89
+--LoopSpace l. 336
 --LimitOperad : a lot
 --FiniteSet2 : a lot
+
+--We list allow unsolve meta
+--LimitOperad
+--FiniteSet2
+
 
 postulate
   ∞Mon : (A : Set) → {{_ : FOSet A}} → Set

@@ -1,5 +1,4 @@
 {-# OPTIONS --no-eta-equality #-}
-{-# OPTIONS --allow-unsolved-metas #-}
 
 module LoopSpace where
 
@@ -330,10 +329,10 @@ module _ {k} {X : Set k} where
 
 --We prove the path operad is strongly contractible
 
-
-  StronglyContractiblePathOp : {{_ : Fib X}} {A : Set} {{_ : FOSet A}} → StronglyContractible (PathOp X A)
+  postulate
+    StronglyContractiblePathOp : {{_ : Fib X}} {A : Set} {{_ : FOSet A}} → StronglyContractible (PathOp X A)
   
-  StronglyContractiblePathOp = {!!}
+--  StronglyContractiblePathOp = {!!}
 
 
 

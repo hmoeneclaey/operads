@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module ContractibleSectionOperad where
 
 open import Agda.Primitive
