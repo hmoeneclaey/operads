@@ -396,13 +396,16 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
                                                 (λ a₃ b eq₂ → ΣSuccInf a₂ a₃ b
                                                               (<<Trans {x = left a₃} {y = a₁} {z = a₂} eq₂ eq))
 
-  ΣSuccIncOrder : {a : A} {b b' : Succ (B a)} → b ≤ b' → ΣSuccInc a b ≤ ΣSuccInc a b'
-  ΣSuccIncOrder (left refl) = left refl
-  ΣSuccIncOrder {a} {left b} {left b'} (right eq) = right (inc₀Order {A = Σ A B} {a₁ = (a , b)} {a₂ = (a , b')}
+  ΣSuccIncOrder<< : {a : A}  {b b' : Succ (B a)} → b << b' → ΣSuccInc a b << ΣSuccInc a b'
+  ΣSuccIncOrder<< {a} {left b} {left b'} eq = (inc₀Order {A = Σ A B} {a₁ = (a , b)} {a₂ = (a , b')}
                                                                      (ΣSecond (inc₀OrderConverse {a₁ = b} {a₂ = b'} eq)))
-  ΣSuccIncOrder {a} {left b} {right *} (right eq) = right (ΣSuccInf (inc₁ a) a b (succIsSucc {a = a}))
-  ΣSuccIncOrder {a} {right *} {left b'} (right eq) = <<Total {x = right *} {y = left b'} eq (maxIsMax (left b'))
-  ΣSuccIncOrder {a} {right *} {right *} (right eq) = left refl
+  ΣSuccIncOrder<< {a} {left b} {right *} eq = (ΣSuccInf (inc₁ a) a b (succIsSucc {a = a}))
+  ΣSuccIncOrder<< {a} {right *} {left b'} eq = <<Total {x = right *} {y = left b'} eq (maxIsMax (left b'))
+  ΣSuccIncOrder<< {a} {right *} {right *} eq = efql (<<Irefl (max {B a}) eq)
+
+  ΣSuccIncOrder≤ : {a : A} {b b' : Succ (B a)} → b ≤ b' → ΣSuccInc a b ≤ ΣSuccInc a b'
+  ΣSuccIncOrder≤ (left refl) = left refl
+  ΣSuccIncOrder≤ {a} {b} {b'} (right eq) = right (ΣSuccIncOrder<< {b = b} {b' = b'} eq)
 
   ΣSuccIncOrderMinAux₁ : {a a' : A} {b : Succ (B a)} {b' : Succ (B a')} → a << a' → ΣSuccInc a b ≤ ΣSuccInc a' b'
   ΣSuccIncOrderMinAux₁ {a} {a'} {b = left b} {left b'} eq = right (inc₀Order {A = Σ A B} {a₁ = a , b} {a₂ = a' , b'}
@@ -418,7 +421,7 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
   ΣSuccIncOrderMinAux₁ {a} {a'} {right *} {right *} eq = ΣSuccOrder {a₁ = inc₁ a} {a₂ = inc₁ a'} (right (inc₁Order {a₁ = a} {a₂ = a'} eq))
 
   ΣSuccIncOrderMin : {a a' : A} {b' : Succ (B a')} → a ≤ a' → ΣSuccInc a min ≤ ΣSuccInc a' b'
-  ΣSuccIncOrderMin {b' = b'} (left refl) = ΣSuccIncOrder (minIsMin b')
+  ΣSuccIncOrderMin {b' = b'} (left refl) = ΣSuccIncOrder≤ (minIsMin b')
   ΣSuccIncOrderMin {b' = b'} (right eq) = ΣSuccIncOrderMinAux₁ {b = min} {b' = b'} eq
 
   ΣSuccMin : ΣSucc (min {A}) ≡ min {Σ A B}
@@ -442,24 +445,172 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
 
 
   ΣSuccIncInc₁ : {a : A} {b : B a} → inc₁ (a , b) ≡ ΣSuccInc a (inc₁ b)
-  ΣSuccIncInc₁ = {!!}
+  ΣSuccIncInc₁ {a} {b} = ≡Sym (Inc₁IsSuccessorDef {a = (a , b)}
+                              (ΣSuccIncOrder<< {a} {inc₀ b} {inc₁ b} (succIsSucc {a = b}) ,
+                               λ { (left (a' , b')) eq → ∨Elim (λ eq₂ → ΣSuccIncOrderMinAux₁ {b = inc₁ b} {b' = left b'} eq₂ )
+                                                               (λ { (refl , eq₂) → ΣSuccIncOrder≤ {a} {inc₁ b} {inc₀ b'}
+                                                                                                  (∧right (Inc₁IsSuccessor {a = b}) (inc₀ b')
+                                                                                                          (inc₀Order {a₁ = b} {a₂ = b'} eq₂))})
+                                                               (∧left (Σorder {a₁ = a} {a₂ = a'} {b₁ = b} {b₂ = b'})
+                                                                      (inc₀OrderConverse {a₁ = (a , b)} {a₂ = (a' , b')} eq)) ;
+                                   (right *) _ → maxIsMax (ΣSuccInc a (inc₁ b))}))
 
 
 
 
 --We examine the interaction of ΣSucc with morphisms
 
-ΣSuccΣFunBase : {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}}
-            {B : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B a₂)}}
-            {f : A₁ → A₂} (homf : HomFO f)
-            {a : Succ A₁} → ΣSucc {B = B} (∨Nat f Id a) ≡ ∨Nat (Σfun f Id) Id (ΣSucc {B = B o f} a)
-ΣSuccΣFunBase = {!!}
+--Auxilary results about tranpsort
 
-ΣSuccΣFunFibre : {A : Set} {{_ : FOSet A}}
-            {B₁ : A → Set} {B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}}
-            {F : {a : A} → B₁ a → B₂ a} (HomF : {a : A} → HomFO (F {a}))
-            {a : Succ A} → ΣSucc {B = B₂} a ≡ ∨Nat (Σfun Id F) Id (ΣSucc {B = B₁} a)
-ΣSuccΣFunFibre = {!!}
+module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)}} where
+
+  HomFOTransport : {a₁ a₂ : A} {p : a₁ ≡ a₂} → HomFO (transport B p)
+  HomFOTransport {p = refl} = HomFOId
+
+transportDouble : {A : Set} {B : A → Set} {x y : A} {p : x ≡ y} {q : y ≡ x} {b : B x}
+                  → transport B q (transport B p b) ≡ b
+transportDouble {p = refl} {refl} = refl
+
+
+--First we show that isInf interact well with fibre morphisms
+       
+{-
+module _ {A : Set} {{_ : FOSet A}}
+         {B₁ : A → Set} {B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}}
+         {F : {a : A} → B₁ a → B₂ a} (homF : {a : A} → HomFO (F {a})) where
+
+       HomFOSuccΣ' : HomFO (SuccNat (Σfun {A₁ = A} {A₂ = A} {B₁ = B₁} {B₂ = B₂} Id F))
+       HomFOSuccΣ' = HomFOSucc (HomFOΣfun HomFOId homF) 
+
+       ΣSuccFunFibreAux<< : {x : Succ (Σ A B₁)} {z : Succ (Σ A B₂)}
+                          → x << iso.inv (HomFO.isoHomFO HomFOSuccΣ') z
+                          → SuccNat (Σfun Id F) x << z  
+       ΣSuccFunFibreAux<< {x} {z} eq = transport (λ y → SuccNat (Σfun Id F) x << y)
+                                       {x = SuccNat (Σfun Id F) ((iso.inv (HomFO.isoHomFO HomFOSuccΣ')) z)} {y = z}
+                                       (≡Sym (iso.invLeft (HomFO.isoHomFO HomFOSuccΣ') z)) 
+                                       (∧left (HomFO.orderPreserving HomFOSuccΣ' x (iso.inv (HomFO.isoHomFO HomFOSuccΣ') z))
+                                          eq)
+
+       ΣSuccFunFibreAux<<Mirror : {x : Succ (Σ A B₁)} {z : Succ (Σ A B₂)}
+                                  → iso.inv (HomFO.isoHomFO HomFOSuccΣ') z << x
+                                  → z << SuccNat (Σfun Id F) x
+       ΣSuccFunFibreAux<<Mirror {x} {z} eq = transport (λ y → y << SuccNat (Σfun Id F) x)
+                                       {x = SuccNat (Σfun Id F) ((iso.inv (HomFO.isoHomFO HomFOSuccΣ')) z)} {y = z}
+                                       (≡Sym (iso.invLeft (HomFO.isoHomFO HomFOSuccΣ') z)) 
+                                       (∧left (HomFO.orderPreserving HomFOSuccΣ' (iso.inv (HomFO.isoHomFO HomFOSuccΣ') z) x)
+                                          eq)
+
+       ΣSuccFunFibreAux : {x : Succ (Σ A B₁)} {z : Succ (Σ A B₂)}
+                          → x ≤ SuccNat (Σfun Id (λ {a} → iso.inv (HomFO.isoHomFO (homF {a})))) z
+                          → SuccNat (Σfun Id F) x ≤ z  
+       ΣSuccFunFibreAux {x} {left (a , b)} (left refl) = left (ap (λ b₁ → left (a , b₁)) (≡Sym (iso.invLeft (HomFO.isoHomFO (homF {a})) b)))
+       ΣSuccFunFibreAux {x} {right *} (left refl) = left refl
+       ΣSuccFunFibreAux {x} {left (a , b)} (right eq) = right (ΣSuccFunFibreAux<< {x = x} {z = inc₀ (a , b)} eq)
+       ΣSuccFunFibreAux {x} {right x₄} (right eq) = right (ΣSuccFunFibreAux<< {x = x} {z = max} eq)
+
+       ΣSuccFibreAux : {a : A} {x : Succ (Σ A B₁)} → isInf (inc₀ a) x → isInf (inc₀ a) (SuccNat (Σfun Id F) x)
+       ΣSuccFibreAux {a} {x} infax a₁ b eq = ΣSuccFunFibreAux<<Mirror {x} {inc₀ (a₁ , b)}
+                                             (infax a₁ _ eq)
+
+
+
+module _ {A : Set} {{_ : FOSet A}}
+         {B₁ : A → Set} {B₂ : A → Set} {{_ : {a : A} → FOSet (B₁ a)}} {{_ : {a : A} → FOSet (B₂ a)}}
+         {F : {a : A} → B₁ a → B₂ a} (homF : {a : A} → HomFO (F {a})) where
+
+       ΣSuccΣFunFibre : {a : Succ A} → ΣSucc {B = B₂} a ≡ SuccNat (Σfun Id F) (ΣSucc {B = B₁} a)
+                      
+       ΣSuccΣFunFibre {left a} = ≡Sym (ΣSuccDef {a = inc₀ a}
+                                                          (ΣSuccFibreAux homF {a = a} {ΣSucc (inc₀ a)} (ΣSuccInf (inc₀ a)))
+                                                          λ { (left (a₁ , b)) infay → ΣSuccFunFibreAux homF {x = ΣSucc (inc₀ a)} {inc₀ (a₁ , b)}
+                                                                                                       (ΣSuccInfMin {a = inc₀ a}
+                                                                                                       (ΣSuccFibreAux {F = (λ {a} → iso.inv (HomFO.isoHomFO (homF {a})))}
+                                                                                                                      (HomFOInv homF) {a = a} {inc₀ (a₁ , b)} infay)) ;
+                                                              (right *) infay → maxIsMax _})
+       ΣSuccΣFunFibre {right *} = refl 
+
+
+
+--Now we show that it interacts well with base morphisms
+
+module _ {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}}
+         {B : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B a₂)}}
+         {f : A₁ → A₂} (homf : HomFO f) where
+
+       HomFOSuccΣ : HomFO (SuccNat (Σfun {A₁ = A₁} {A₂ = A₂} {B₁ = B o f} {B₂ = B} f Id))
+       HomFOSuccΣ = HomFOSucc (HomFOΣfun homf HomFOId)
+       
+       ΣSuccFunBaseAux<<' : {x : Succ (Σ A₁ (B o f))} {z : Σ A₂ B}
+                           → inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ a → isoId)) z) << x
+                           → inc₀ {A = Σ A₂ B} z << SuccNat (Σfun f Id) x
+       ΣSuccFunBaseAux<<' {x} {z} eq = transport (λ y → y << SuccNat (Σfun f Id) x)
+                                                 {x = SuccNat (Σfun f Id) (inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z))} {y = inc₀ z}
+                                                 (ap left (≡Sym (iso.invLeft (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z)))
+                                                 (∧left (HomFO.orderPreserving HomFOSuccΣ
+                                                        (inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z)) x)
+                                                        eq)
+
+       ΣSuccFunBaseAux<<Mirror : {x : Succ (Σ A₁ (B o f))} {z : Σ A₂ B}
+                           →  x << inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ a → isoId)) z)
+                           → SuccNat (Σfun f Id) x << inc₀ {A = Σ A₂ B} z
+       ΣSuccFunBaseAux<<Mirror {x} {z} eq = transport (λ y → SuccNat (Σfun f Id) x << y)
+                                                      {x = SuccNat (Σfun f Id) (inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z))} {y = inc₀ z}
+                                                      (ap left (≡Sym (iso.invLeft (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z)))
+                                                      ((∧left (HomFO.orderPreserving HomFOSuccΣ x
+                                                        (inc₀ (iso.inv (isoΣfun (HomFO.isoHomFO homf) (λ _ → isoId)) z)))
+                                                      eq))
+                          
+       ΣSuccFunBaseAux<< : {x : Succ (Σ A₁ (B o f))} {a₁ : A₂} {b : B a₁}
+                           → inc₀ {A = Σ A₁ (B o f)} (iso.inv (HomFO.isoHomFO homf) a₁ , transport B (iso.invLeft (HomFO.isoHomFO homf) a₁) b) << x
+                           → inc₀ {A = Σ A₂ B} (a₁ , b) << SuccNat (Σfun f Id) x
+       ΣSuccFunBaseAux<< {x} {a₁} {b} eq = ΣSuccFunBaseAux<<' {x = x} {z = (a₁ , b)} eq
+
+       ΣSuccFunBaseAux :  {a : A₁} {x : Succ (Σ A₁ (B o f))} → isInf (inc₀ a) x → isInf (inc₀ (f a)) (SuccNat {A = Σ A₁ (B o f)} {B = Σ A₂ B} (Σfun f Id) x)
+       ΣSuccFunBaseAux {a} {x} inffa =  let g = iso.inv (HomFO.isoHomFO homf) in
+                                    let ordf = HomFO.orderPreserving homf in
+                                    λ a₁ b eq → ΣSuccFunBaseAux<< {x = x} {a₁ = a₁} {b = b}
+                                                (inffa (g a₁)
+                                                   (transport B (iso.invLeft (HomFO.isoHomFO homf) a₁) b)
+                                                                (inc₀Order {a₁ = g a₁} {a₂ = a}
+                                                                           (∧right (ordf (g a₁) a)
+                                                                           (transport (λ x → x << f a) (iso.invLeft (HomFO.isoHomFO homf) a₁)
+                                    (inc₀OrderConverse {a₁ = a₁} {a₂ = f a} eq)))))
+
+
+module _ {A₁ A₂ : Set} {{_ : FOSet A₁}} {{_ : FOSet A₂}}
+         {B : A₂ → Set} {{_ : {a₂ : A₂} → FOSet (B a₂)}}
+         {f : A₁ → A₂} (homf : HomFO f) where 
+
+       ΣSuccFunBaseAux≤ : {x : Succ (Σ A₁ (B o f))} {a₁ : A₂} {b : B a₁}
+                          → x ≤ inc₀ {A = Σ A₁ (B o f)} (iso.inv (HomFO.isoHomFO homf) a₁ , transport B (iso.invLeft (HomFO.isoHomFO homf) a₁) b)
+                          → SuccNat (Σfun f Id) x ≤ left (a₁ , b)
+       ΣSuccFunBaseAux≤ {a₁ = a₁} {b} (left refl) = left (ap left (equalΣ (≡Sym (iso.invLeft (HomFO.isoHomFO homf) _))
+                                                         (transportDouble {p = iso.invLeft (HomFO.isoHomFO homf) a₁}
+                                                                          {q = ≡Sym (iso.invLeft (HomFO.isoHomFO homf) a₁)})))
+       ΣSuccFunBaseAux≤ {x} {a₁} {b} (right eq) = right (ΣSuccFunBaseAux<<Mirror homf {x = x} {z = a₁ , b} eq)
+
+       ΣSuccΣFunBase : {a : Succ A₁} → ΣSucc {B = B} (∨Nat f Id a) ≡ ∨Nat (Σfun f Id) Id (ΣSucc {B = B o f} a)
+       ΣSuccΣFunBase {left a} = let g = iso.inv (HomFO.isoHomFO homf) in
+                                let ordf = HomFO.orderPreserving homf in
+                                ≡Sym (ΣSuccDef {a = left (f a)}
+                                               (ΣSuccFunBaseAux {B = B} homf {a = a} {x = ΣSucc (inc₀ a)} (ΣSuccInf (inc₀ a)))
+                                               λ { (left (a₁ , b)) inffa → ΣSuccFunBaseAux≤ {x = ΣSucc (inc₀ a)} {a₁ = a₁} {b = b}
+                                                                           (ΣSuccInfMin {a = inc₀ a}
+                                                                                        (transport (λ x → isInf x (inc₀ (iso.inv (HomFO.isoHomFO homf) a₁ ,
+                                                                                                                 transport B (iso.invLeft (HomFO.isoHomFO homf) a₁) b)))
+                                                                                                            {x = inc₀ (g (f a))} {y = inc₀ a}
+                                                                                                   (≡Sym (ap left (iso.invRight (HomFO.isoHomFO homf) a)))
+                                                                                                   (ΣSuccFunBaseAux {B = B o f} (HomFOInv homf) {a = f a}
+                                                                                                      {x = inc₀ (a₁ , _)}
+                                                                           (ΣSuccFibreAux
+                                                                              {F = λ {a₂} → transport B (iso.invLeft (HomFO.isoHomFO homf) a₂)}
+                                                                              HomFOTransport
+                                                                              {a = f a} {x = inc₀ (a₁ , b)} inffa)))) ;
+                                                   (right *) _ → maxIsMax _})
+       ΣSuccΣFunBase {right *} = refl
+
+-}
+
 
 
 module _ {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)}} {C : Σ A B → Set} {{_ : {x : Σ A B} → FOSet (C x)}} where
