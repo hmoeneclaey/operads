@@ -109,8 +109,19 @@ eqe₁ : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} (p : dPath P x y) �
 eqe₁ p = dPath.deq₁ p
 
 
-postulate ≡dPath : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁} {p q : dPath P x y} → ((i : I) → p $ i ≡ q $ i) → p ≡ q
+module _ {k} {P : I → Set k} {x : P e₀} {y : P e₁} where
 
+
+  ≡dPathAux : {p q : (i : I) → P i} {eqp₀ : p e₀ ≡ x} {eqp₁ : p e₁ ≡ y} {eqq₀ : q e₀ ≡ x} {eqq₁ : q e₁ ≡ y}
+             → p ≡ q → [ p , eqp₀ , eqp₁ ] ≡ [ q , eqq₀ , eqq₁ ]
+             
+  ≡dPathAux {p = p} refl = ap₂ (λ e₁ e₂ → [ p , e₁ , e₂ ]) UIP UIP
+
+
+  ≡dPath : {p q : dPath P x y}
+           → ((i : I) → p $ i ≡ q $ i) → p ≡ q
+           
+  ≡dPath {p = [ p , deqp₀ , deqp₁ ]} {[ q , deqq₀ , deqq₁ ]} hyp = ≡dPathAux (funext (hyp))
 
 
 

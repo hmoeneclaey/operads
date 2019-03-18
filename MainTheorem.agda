@@ -10,13 +10,9 @@ open import ContractibleSectionOperad
 
 
 --We list unwanted postulates
---FibrantUniverse l.112
---FiniteSet l.89
---LoopSpace l. 336
---LimitOperad : a lot
---FiniteSet2 : a lot
+--LoopSpace l.336
 
---We list allow unsolve meta
+--We list allow-unsolve-meta
 --LimitOperad
 --FiniteSet2
 
@@ -39,7 +35,7 @@ X ≃ Y = Σ (X → Y) (λ f → Equiv f)
 
 
 
---We state the main theorem
+--We give the main theorems
 
 mainTheorem1 : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
                → X ≃ Y → Algebra ∞Mon Y → Algebra ∞Mon X

@@ -85,8 +85,9 @@ isSucc : {m : ℕ} {x : Fin (s m)} → fzero << x → Σ (Fin m) (λ y → x ≡
 isSucc {x = fzero} () 
 isSucc {x = fsucc a} _ = a , refl
 
-postulate isSucc≡ : {m : ℕ} {x : Fin (s m)} → ¬ (fzero ≡ x) → Σ (Fin m) (λ y → x ≡ fsucc y)
---isSucc≡
+isSucc≡ : {m : ℕ} {x : Fin (s m)} → ¬ (fzero ≡ x) → Σ (Fin m) (λ y → x ≡ fsucc y)
+isSucc≡ {x = fzero} ieq = efql (ieq refl)
+isSucc≡ {x = fsucc x} _ = x , refl
 
 isFzero : {m : ℕ} {x : Fin (s m)} → ((y : Fin (s m)) → ¬ (y << x)) → x ≡ fzero
 isFzero {x = fzero} _ = refl
