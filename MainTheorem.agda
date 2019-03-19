@@ -14,7 +14,6 @@ open import ContractibleSectionOperad
 
 --We list allow-unsolve-meta
 --LimitOperad
---FiniteSet2
 
 
 postulate

@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module FiniteSet2 where
 
 open import Data
@@ -251,6 +249,11 @@ maxIsMax : {A : Set} {{_ : FOSet A}} → isMax (max {A})
 maxIsMax (left x) = right (fmaxIsMax {x = funFO x})
 maxIsMax (right *) = left refl
 
+{-
+isMaxDef : {A : Set} {{_ : FOSet A}} {x : Succ A} → isMax x → x ≡ max
+isMaxDef = {!!}
+-}
+
 maxIsMax<< : {A : Set} {{_ : FOSet A}} → (a : A) → inc₀ a << max
 maxIsMax<< {A} a = fmaxIsMax {x = funFO {A} a} 
 
@@ -270,6 +273,12 @@ minIsMin {A} ⦃ record { cardinal = s |A| ; funFO = f ; isIsoFO = isof } ⦄ (r
 
 isMinDef : {A : Set} {{_ : FOSet A}} {x : Succ A} → isMin x → x ≡ min {A}
 isMinDef minx = ≤AntiSym (minx min) (minIsMin _)
+
+
+isMaxDef<< : {A : Set} {{_ : FOSet A}} {x : Succ A}
+             → ((a : A) → inc₀ a << x) → x ≡ max {A}
+isMaxDef<< {x = left a} hyp = efql (<<Irefl (inc₀ a) (hyp a))
+isMaxDef<< {x = right *} hyp = refl
 
 
 
@@ -374,8 +383,102 @@ module _ {A B : Set} {{_ : FOSet A}} {{_ : FOSet B}} (f : A → B) (homf : HomFO
 
 
 
---In this module we examine ΣSucc
+--We give some decidability results for finite sets
 
+decidable : ∀ {k} (X : Set k) → Set k
+decidable X = X ∨ ¬ X
+
+decidable→ : ∀ {k l} {X : Set k} {Y : Set l} → decidable X → decidable Y → decidable (X → Y)
+decidable→ (left x) (left y) = left (λ _ → y)
+decidable→ (left x) (right ny) = right (λ f → ny (f x))
+decidable→ (right nx) _ = left (λ x → efql (nx x))
+
+↔decidable : ∀ {k l} {X : Set k} {Y : Set l} → X ↔ Y → decidable X → decidable Y
+↔decidable (f , g) (left x) = left (f x)
+↔decidable (f , g) (right nx) = right (nx o g)
+
+decidable<<Canonical : {n : ℕ} (x y : Fin n) → decidable (x << y)
+decidable<<Canonical fzero fzero = right (λ ())
+decidable<<Canonical fzero (fsucc y) = left *
+decidable<<Canonical (fsucc x) fzero = right (λ ())
+decidable<<Canonical (fsucc x) (fsucc y) = decidable<<Canonical x y
+
+decidable∀Canonical : {n : ℕ} {P : Fin n → Set} → ({k : Fin n} → decidable (P k)) → decidable ((k : Fin n) → P k)
+decidable∀Canonical {O} _ = left (λ ())
+decidable∀Canonical {s n} hyp = ∨Elim (λ Pfzero → ∨Elim (λ Pfsucc → left (λ { fzero → Pfzero ; (fsucc k) → Pfsucc k}))
+                                                        (λ nPfsucc → right (λ secP → nPfsucc (λ k → secP (fsucc k))))
+                                                        (decidable∀Canonical (λ {k} → hyp {fsucc k})))
+                                      (λ nPfzero → right (λ secP → nPfzero (secP fzero)))
+                                      (hyp {fzero})
+
+module _ {A : Set} {{_ : FOSet A}} where
+
+  decidable<< : (x y : A) → decidable (x << y)
+  decidable<< x y = decidable<<Canonical (funFO x) (funFO y)
+
+  decidableFO∀ : {P : A → Set} → ({a : A} → decidable (P a)) → decidable ((a : A) → P a)
+  decidableFO∀ {P} decP = let |A| = cardinal {A} in
+                          let g = iso.inv (isIsoFO {A}) in
+                          ↔decidable {X = (k : Fin |A|) → P (g k)}
+                                     ((λ hyp a → transport P (≡Sym ((iso.invRight isIsoFO) a)) (hyp (funFO a))) ,
+                                      λ hyp k → hyp (g k))
+                                     (decidable∀Canonical {P = P o iso.inv isIsoFO} decP)
+
+
+
+--We define the the min of decidable parts of a FOSet
+
+
+minDecidablePredicateCanonical : {n : ℕ} (P : Fin (s n) → Set)
+                                 (decidP : (k : Fin (s n)) → decidable (P k))
+                                 (Pmax : P fmax)
+                                 → Σ (Fin (s n)) (λ k → P k ∧ ((l : Fin (s n)) → P l → k ≤ l))
+                                   
+minDecidablePredicateCanonical {O} P decidP Pmax = fzero , (Pmax , (λ _ _ → fzeroIsMin _))
+minDecidablePredicateCanonical {s n} P decidP Pmax = ∨Elim (λ Pfzero → fzero , (Pfzero , (λ l _ → fzeroIsMin _)))
+                                                             (λ nPfzero → let aux = minDecidablePredicateCanonical (P o fsucc)
+                                                                                (λ k → decidP _) Pmax in
+                                                             (fsucc (Σleft aux)) ,
+                                                             (∧left (Σright aux) ,
+                                                             λ { fzero Px → efql (nPfzero Px) ;
+                                                                 (fsucc l) Px → fsucc≤ (∧right (Σright aux) l Px)}))
+                                                             (decidP fzero)
+
+
+--An auxiliary result
+
+≡FmaxMax : {A : Set} {{Afinite : FOSet A}} → max {A} ≡ iso.inv (isIsoFO {Succ A}) fmax
+≡FmaxMax ⦃ Afinite = record { cardinal = O ; funFO = f ; isIsoFO = isof } ⦄ = refl
+≡FmaxMax ⦃ Afinite = record { cardinal = s |A| ; funFO = f ; isIsoFO = isof } ⦄ = ap (∨Nat (iso.inv isof) Id o ∨Nat fsucc Id) (invFun⊤SuccMax {|A|})
+
+
+module _ {A : Set} {{_ : FOSet A}} (P : Succ A → Set) (decidP : (x : Succ A) → decidable (P x)) (Pmax : P max) where
+
+  abstract
+    minDecidablePredicate : Σ (Succ A) (λ a → P a ∧ ((a' : Succ A) → P a' → a ≤ a'))
+    minDecidablePredicate = let |A| = cardinal {A} in
+                            let g = iso.inv (isIsoFO {Succ A}) in
+                            let hyp : {x y : Fin (s |A|)} → x ≤ y → g x ≤ g y
+                                hyp = λ {x} {y} eq → ≤Canonical (transport₂ _≤_ {a₁ = x} {a₂ = funFO (g x)} {b₁ = y} {b₂ = funFO (g y)}
+                                                                            (iso.invLeft (isIsoFO {Succ A}) x)
+                                                                            (iso.invLeft (isIsoFO {Succ A}) y) eq) in
+                            let hyp2 : {x y : Fin (s |A|)} → x < y → g x << g y
+                                hyp2 = λ {x} {y} eq → (transport₂ _<<_ {a₁ = x} {a₂ = funFO (g x)} {b₁ = y} {b₂ = funFO (g y)}
+                                                                           (iso.invLeft (isIsoFO {Succ A}) x)
+                                                                           (iso.invLeft (isIsoFO {Succ A}) y) eq) in
+                            let minDecAux : Σ (Fin (s |A|)) (λ k → P (g k) ∧ ((l : Fin (s |A|)) → P (g l) → k ≤ l))
+                                minDecAux = minDecidablePredicateCanonical {|A|} (P o g) (λ k → decidP _)
+                                                                                         (transport P {x = max} ≡FmaxMax Pmax) in
+                            g (Σleft minDecAux) ,
+                            ((∧left (Σright minDecAux)) ,
+                            λ a' Pa' → transport (λ x → g (Σleft minDecAux) ≤ x) {x = g (funFO a')} {y = a'}
+                                                 (≡Sym (iso.invRight isIsoFO a'))
+                                                 (hyp (∧right (Σright minDecAux) (funFO a') (transport P (iso.invRight isIsoFO a') Pa')))) 
+
+
+
+
+--In this module we examine ΣSucc
 
 module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)}} where
 
@@ -386,12 +489,9 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
 
   ΣSecond : {a : A} {b₁ b₂ : B a} → b₁ << b₂ → ord (Σ A B) (a , b₁) (a , b₂)
   ΣSecond {a} {b₁} {b₂} eq = ∧right (Σorder {a₁ = a} {a} {b₁} {b₂}) (right (refl , eq))
-
+ 
 
 --Here the main definition of ΣSucc
-
-  leftΣSucc : A → Succ (Σ A B)
-  leftΣSucc a = {!!}
 
   isInf : (a : Succ A) (x : Succ (Σ A B)) → Set
   isInf a x = (a₁ : A) (b : B a₁) → left a₁ << a → left (a₁ , b) << x
@@ -399,19 +499,46 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
   isInfFirst : (a a' : A) (b : B a') → isInf (left a) (left (a' , b)) → a ≤ a'
   isInfFirst a a' b isinf = ≤Total (λ eq → <<Irefl {A = Succ (Σ A B)} (left (a' , b)) (isinf a' b (inc₀Order {a₁ = a'} {a₂ = a} eq)) )
 
+  decidableIsInf : {a : A} {x : Succ (Σ A B)} → decidable (isInf (inc₀ a) x)
+  decidableIsInf {a} {x} = decidableFO∀ (λ {a₁} → decidableFO∀ (λ {b} → (decidable→
+                           (decidable<< (inc₀ a₁) (inc₀ a)) (decidable<< (inc₀ (a₁ , b)) x))))
+
+  maxIsInf : {a : A} → isInf (inc₀ a) max
+  maxIsInf a₁ b₁ _ = maxIsMax<< (a₁ , b₁)
+
+  abstract
+    leftΣSuccAux : (a : A) → Σ (Succ (Σ A B)) (λ x → isInf (inc₀ a) x ∧ ((y : Succ (Σ A B)) → isInf (inc₀ a) y → x ≤ y))
+    leftΣSuccAux a = minDecidablePredicate (isInf (inc₀ a))
+                                           (λ x → decidableIsInf {a} {x})
+                                           maxIsInf 
+
+    leftΣSucc : A → Succ (Σ A B)
+    leftΣSucc a = Σleft (leftΣSuccAux a)
+
+    leftΣSuccInf : (a : A) → isInf (inc₀ a) (leftΣSucc a)
+    leftΣSuccInf a = ∧left (Σright (leftΣSuccAux a))
+
+    leftΣSuccInfMin : (a : A) (x : Succ (Σ A B)) → isInf (inc₀ a) x → leftΣSucc a ≤ x  
+    leftΣSuccInfMin a = ∧right (Σright (leftΣSuccAux a))
+
   ΣSucc : Succ A → Succ (Σ A B)
   ΣSucc (left a) = leftΣSucc a
   ΣSucc (right *) = right *
 
   ΣSuccInf : (a : Succ A) → isInf a (ΣSucc a)
-  ΣSuccInf = {!!}
+  ΣSuccInf (left a) = leftΣSuccInf a
+  ΣSuccInf (right *) a₁ b₁ _ = maxIsMax<< (a₁ , b₁)
 
   ΣSuccInfMin : {a : Succ A} {x : Succ (Σ A B)} → isInf a x → ΣSucc a ≤ x
-  ΣSuccInfMin = {!!}
+  ΣSuccInfMin {left a} {x} = leftΣSuccInfMin a x
+  ΣSuccInfMin {right *} {x} infx = left (≡Sym (isMaxDef<< {x = x}
+                                       (λ { (a , b) → infx a b (maxIsMax<< a)})))
 
   ΣSuccDef : {a : Succ A} {x : Succ (Σ A B)} → isInf a x → ((y : Succ (Σ A B)) → isInf a y → x ≤ y) → x ≡ ΣSucc a 
   ΣSuccDef {a} {x} infx mininfx = ≤AntiSym (mininfx (ΣSucc a) (ΣSuccInf a))
-                                           (ΣSuccInfMin {a} {x} infx)
+                                          (ΣSuccInfMin {a} {x} infx)
+
+
 
 
 --We define ΣSuccInc
@@ -562,7 +689,6 @@ module _ {A : Set} {{_ : FOSet A}}
                                                                                                                       (HomFOInv homF) {a = a} {inc₀ (a₁ , b)} infay)) ;
                                                               (right *) infay → maxIsMax _})
        ΣSuccΣFunFibre {right *} = refl 
-
 
 
 --Now we show that it interacts well with base morphisms
@@ -787,4 +913,5 @@ module _ {A : Set} {{_ : FOSet A}} {B : A → Set} {{_ : {a : A} → FOSet (B a)
                                                                         (isInfFirst {A = Σ A B} {B = C} (a , b) (a₁ , b₁) c₁ infy) ;
                                    (right *) infy → maxIsMax _})
   ΣSuccψInc₁ a (right *) = ΣSuccψ (inc₁ a)
+
 
