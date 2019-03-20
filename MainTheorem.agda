@@ -9,9 +9,6 @@ open import HomotopyTransfer
 open import ContractibleSectionOperad
 
 
---We list unwanted postulates
---LoopSpace l.336
-
 --We list allow-unsolve-meta
 --LimitOperad
 

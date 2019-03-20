@@ -1,6 +1,8 @@
 {-# OPTIONS --no-eta-equality #-}
 {-# OPTIONS --rewriting #-}
 
+--takes ~1 min to typecheck
+
 module LoopSpace where
 
 open import Agda.Primitive
@@ -227,35 +229,38 @@ module _ {k} {X : Set k} {{_ : Fib X}} where
 
   compPath : ℕ → X → X → Set k
   compPath O x y = x ≡ y
-  compPath (s n) x z = Σ X (λ y → compPath n x y ∧ y ~~> z)
+  compPath (s n) x z = Σ X (λ y → x ~~> y ∧ compPath n y z)
 
+{-
+  compPathEval : {n : ℕ} {x y : X} → compPath n x y → Fin n → I → X
+  compPathEval = {!!}
+-}
 
   --Some fibrancy results 
 
-  ≅Sing : {y : X} → ⊤ {lzero} ≅ Σ X (λ x → compPath O x y)
+  ≅Sing : {x : X} → ⊤ {lzero} ≅ Σ X (λ y → compPath O x y)
   
-  ≅Sing {y} = record { isoFun = λ _ → y , refl ;
+  ≅Sing {x} = record { isoFun = λ _ → x , refl ;
                        isIso = record { inv = λ _ → * ;
-                                        invLeft = λ { (x , refl) → refl} ;
+                                        invLeft = λ { (_ , refl) → refl} ;
                                         invRight = λ _ → refl } }
 
 
-  ≅CompPathSucc : {n : ℕ} {z : X} → Σ X (λ y → (Σ X (λ x → compPath n x y)) ∧ y ~~> z) ≅ Σ X (λ x → compPath (s n) x z)
-  
-  ≅CompPathSucc = record { isoFun = λ { (y , ((x , p) , q)) → x , (y , (p , q))} ;
-                           isIso = record { inv = λ { (x , (y , (p , q))) → y , ((x , p) , q)} ;
-                                            invLeft = λ { (_ , (_ , (_ , _))) → refl} ;
-                                            invRight = λ { (_ , ((_ , _) , _)) → refl} } }
+  ≅CompPathSucc : {n : ℕ} {x : X} → Σ X (λ y → (x ~~> y) ∧ (Σ X (λ z → compPath n y z))) ≅ Σ X (λ z → compPath (s n) x z)
 
+  ≅CompPathSucc = record { isoFun = λ {(y , (p , (z , q))) → z , (y , (p , q))} ;
+                           isIso = record { inv = λ { (z , (y , (p , q))) → y , (p , (z , q))} ;
+                                            invLeft = λ {(_ , (_ , (_ , _))) → refl} ;
+                                            invRight = λ {(_ , (_ , (_ , _))) → refl} } }
 
   instance
-    FibCompPath : {n : ℕ} {y : X} → Fib (Σ X (λ x → compPath n x y))
+    FibCompPath : {n : ℕ} {x : X} → Fib (Σ X (λ y → compPath n x y))
     FibCompPath {O} = ≅Fib {X = ⊤ {lzero}} ≅Sing
     FibCompPath {s n} {y} = ≅Fib ≅CompPathSucc
 
 
-  ≅CompPath : ∀ {k} {n : ℕ} {y : X} {C : {x : X} → (p : compPath n x y) → Set k} →
-              ((p : Σ X (λ x → compPath n x y)) → C (Σright p)) ≅ ({x : X} → (p : compPath n x y) → C p)
+  ≅CompPath : ∀ {k} {n : ℕ} {x : X} {C : {y : X} → (p : compPath n x y) → Set k} →
+              ((p : Σ X (λ y → compPath n x y)) → C (Σright p)) ≅ ({y : X} → (p : compPath n x y) → C p)
               
   ≅CompPath = record { isoFun = λ f {x} p → f (x , p) ;
                        isIso = record { inv = λ { f (x , p) → f {x} p} ;
@@ -263,8 +268,8 @@ module _ {k} {X : Set k} {{_ : Fib X}} where
                                         invRight = λ _ → funext (λ { (_ , _) → refl}) } }
 
 
-  FibCompPathAux : ∀ {k} {n : ℕ} {y : X} {C : {x : X} → compPath n x y → Set k}
-                  → {{_ : {x : X} → {p : compPath n x y} → Fib (C p)}} → Fib ({x : X} → (p : compPath n x y) → C p)
+  FibCompPathAux : ∀ {k} {n : ℕ} {x : X} {C : {y : X} → compPath n x y → Set k}
+                  → {{_ : {y : X} → {p : compPath n x y} → Fib (C p)}} → Fib ({y : X} → (p : compPath n x y) → C p)
                   
   FibCompPathAux = ≅Fib ≅CompPath
 
@@ -273,19 +278,24 @@ module _ {k} {X : Set k} {{_ : Fib X}} where
 
   Hrefl : {n : ℕ} (x : X) → compPath n x x
   Hrefl {O} x = refl
-  Hrefl {s n} x = x , ((Hrefl {n} x) , hrefl)
+  Hrefl {s n} x = x , (hrefl , (Hrefl {n} x))
+
 
   JCompPath : ∀ {l} {n : ℕ} (C : {x y : X} → compPath n x y → Set l) {{_ : {x y : X} {p : compPath n x y} → Fib (C p)}}
               (d : (x : X) → C (Hrefl x)) {x y : X} (p : compPath n x y) → C p
+              
   JCompPath {n = O} C d {x} refl = d x
-  JCompPath {n = s n} C d (y , (p , q)) = JPath (λ {y} {z} q → {x : X} (p : compPath n x y) → C (y , (p , q)))
-                                                {{λ {y} {_} {q} → FibCompPathAux {C = λ {x} p → C (y , (p , q))}}}
-                                                (λ x p₁ → JCompPath (λ {x} {y} p₁ → C (y , (p₁ , hrefl))) (λ x₁ → d x₁) p₁) q p
+  JCompPath {n = s n} C d (y , (p , q)) = JPath (λ {x} {y₁} p₁ → {z : X} → (q₁ : compPath n y₁ z) → C (y₁ , (p₁ , q₁)))
+                                                {{FibCompPathAux}}
+                                                (λ x q₁ → JCompPath (λ {y} {z} q₁ → C (y , (hrefl , q₁))) d q₁) p q
+
 
   JCompPathCompute : ∀ {l} {n : ℕ} (C : {x y : X} → compPath n x y → Set l) {{_ : {x y : X} {p : compPath n x y} → Fib (C p)}}
               (d : (x : X) → C (Hrefl x)) {x : X} → JCompPath C d (Hrefl x) ≡ d x
+              
   JCompPathCompute {n = O} C d = refl
-  JCompPathCompute {n = s n} C d {x} = JCompPathCompute (λ p₁ → C (_ , (p₁ , hrefl))) d
+  JCompPathCompute {n = s n} C d {x} = JCompPathCompute (λ p₁ → C (_ , (hrefl , p₁))) d
+
 
 
   --Now we show we indeed have a family compPath with J eliminator
@@ -293,10 +303,75 @@ module _ {k} {X : Set k} {{_ : Fib X}} where
   ObjFamilyCompPath : ℕ → Set k
   ObjFamilyCompPath n = Σ X (λ x → Σ X (λ y → compPath n x y))
 
+
+  compPathEvalAux : {n : ℕ} {x y : X} → compPath n x y → Fin n → I → X
+  compPathEvalAux {s n} (y , (p , q)) fzero i = p $ i
+  compPathEvalAux {s n} (y , (p , q)) (fsucc k) i = compPathEvalAux q k i
+
+
+  compPathEval : {n : ℕ} → ObjFamilyCompPath n → Fin n → I → X
+  compPathEval (_ , (_ , p)) k i = compPathEvalAux p k i
+
+
+  endpointCompPath : {n : ℕ} {x₁ x₂ y₁ y₂ : X} → compPath n x₁ y₁ → x₁ ≡ x₂ → y₁ ≡ y₂ → compPath n x₂ y₂
+  endpointCompPath q refl refl = q
+
+
+  endpointCompPathCompute : {n : ℕ} {x₁ x₂ y₁ y₂ : X} {p : compPath n x₁ y₁} {q₁ : x₁ ≡ x₂} {q₂ : y₁ ≡ y₂} {k : Fin n} {i : I}
+                            → compPathEvalAux (endpointCompPath p q₁ q₂) k i ≡ compPathEvalAux p k i
+  endpointCompPathCompute {q₁ = refl} {refl} = refl
+
+
+  ≡compPathAux : {n : ℕ} {x z y₁ y₂ : X} (p : y₁ ≡ y₂) {p₁ : x ~~> y₁} {p₂ : x ~~> y₂}
+                 → ((i : I) → p₁ $ i ≡ p₂ $ i) → {q₁ : compPath n y₁ z} {q₂ : compPath n y₂ z}
+                 → endpointCompPath q₁ p refl ≡ q₂ → Equal (compPath (s n) x z) (y₁ , (p₁ , q₁)) (y₂ , (p₂ , q₂))
+  ≡compPathAux {y₁ = y₁} refl hyppath hypcpath = ap₂ (λ p q → y₁ , (p , q)) (≡Path hyppath) hypcpath
+
+
+  ≡compPath : {n : ℕ} {x y : X} {p q : compPath n x y} → ((k : Fin n) (i : I) → compPathEvalAux p k i ≡ compPathEvalAux q k i) → p ≡ q
+  ≡compPath {O} _ = UIP
+  ≡compPath {s n} {p = y₁ , (p₁ , q₁)} {q = y₂ , (p₂ , q₂)} Hyp
+           = let qaux = ≡Trans {y = p₁ $ e₁}(≡Sym (eqe₁ p₁))(≡Trans {y = p₂ $ e₁}(Hyp fzero e₁)(eqe₁ p₂)) in
+           ≡compPathAux qaux (Hyp fzero)
+                        (≡compPath (λ k₁ i → ≡Trans {y = compPathEvalAux q₁ k₁ i}
+                                                    (endpointCompPathCompute {p = q₁} {q₁ = qaux} {q₂ = refl} {k = k₁} {i = i})
+                                                    (Hyp (fsucc k₁) i)))
+
+
+  ≡ObjFamilyCompPathAux : {n : ℕ} {x y : ObjFamilyCompPath n}
+                 → Σleft x ≡ Σleft y
+                 → Σleft (Σright x) ≡ Σleft (Σright y)
+                 → ((k : Fin n) (i : I) → compPathEval x k i ≡ compPathEval y k i)
+                 → x ≡ y
+                 
+  ≡ObjFamilyCompPathAux {x = x₁ , (y₁ , p₁)} {x₂ , (y₂ , p₂)} refl refl Hyp = ap (λ p → x₁ , (y₁ , p)) (≡compPath Hyp)
+
+
+  evalMax : {n : ℕ} {p : ObjFamilyCompPath (s n)} → compPathEval p fmax e₁ ≡ Σleft (Σright p)
+  evalMax {O} {x , (z , (y , (p , refl)))} = eqe₁ p
+  evalMax {s n} {x , (z , (y , (p , q)))} = evalMax {p = (y , (z , q))}
+
+
+  ≡ObjFamilyCompPath : {n : ℕ} {x y : ObjFamilyCompPath n}
+                 → Σleft x ≡ Σleft y
+                 → ((k : Fin n) (i : I) → compPathEval x k i ≡ compPathEval y k i)
+                 → x ≡ y
+                 
+  ≡ObjFamilyCompPath {O} {x₁ , (y₁ , refl)} {x₂ , (y₂ , refl)} refl _ = refl
+  ≡ObjFamilyCompPath {s n} {x} {y} eq Hyp = ≡ObjFamilyCompPathAux eq (≡Trans {y = compPathEval x fmax e₁}
+                                                                             (≡Sym (evalMax {p = x}))
+                                                                             (≡Trans {y = compPathEval y fmax e₁}
+                                                                                     (Hyp fmax e₁)
+                                                                                     (evalMax {p = y}))) Hyp
+
+
   FamilyCompPath : ℕ → Family X
+  
   FamilyCompPath n = ObjFamilyCompPath n :: λ x → x , (x , (Hrefl x))
 
+
   hasJElimCompPath : {n : ℕ} → hasJElim (FamilyCompPath n)
+  
   hasJElimCompPath C d = (λ { (x , (y , p)) → JCompPath (λ {x₁} {y₁} p₁ → C (x₁ , (y₁ , p₁))) d p}) ,
                          λ x → JCompPathCompute (λ {x₁} {y₁} p₁ → C (x₁ , (y₁ , p₁))) d
 
@@ -359,15 +434,91 @@ module _ {k} {X : Set k} {{_ : Fib X}} where
 
   --First isomorphism between family
 
+  compPathFunPoint : {n : ℕ} → ObjFamilyCompPath {X = X} n → Fin (s n) → X
+  
+  compPathFunPoint (x , _) fzero = x
+  compPathFunPoint {s n} (x , (z , (y , (p , q)))) (fsucc k) = compPathFunPoint (y , (z , q)) k
+
+
+  compPathFunPath : {n : ℕ} → (p : ObjFamilyCompPath n)
+                    → (k : Fin n) → compPathFunPoint p (finc k) ~~> compPathFunPoint p (fsucc k)
+  
+  compPathFunPath (_ , (_ , (_ , (p , _)))) fzero = p
+  compPathFunPath (_ , (z , (y , (_ , q)))) (fsucc k) = compPathFunPath (y , (z , q)) k
+
+
   compPathFun : {n : ℕ} → ObjFamilyCompPath {X = X} n → composablePathCanonical n
-  compPathFun = {!!}
+  
+  compPathFun p = record { point = compPathFunPoint p ; path = compPathFunPath p }
+
+
+  InvCompPathFunAux : {n : ℕ} → (p : composablePathCanonical n) → compPath {X = X} n (composablePathCanonical.point p fzero) (composablePathCanonical.point p fmax)
+  InvCompPathFunAux {O} p = refl
+  InvCompPathFunAux {s n} record { point = f ; path = F } = (f (fsucc fzero)) , ((F fzero) , (InvCompPathFunAux (record { point = f o fsucc ; path = F o fsucc })))
+
+  InvCompPathFun : {n : ℕ} → composablePathCanonical n → ObjFamilyCompPath {X = X} n
+  InvCompPathFun p = (_ , (_ , InvCompPathFunAux p))
+
+
+  --We show inverse on the left
+  
+  CompPathFunInvLeftPoint : {n : ℕ} (p : composablePathCanonical n) (k₁ : Fin (s n))
+                            → composablePathCanonical.point p k₁ ≡ compPathFunPoint (InvCompPathFun p) k₁
+  CompPathFunInvLeftPoint record { point = f ; path = F } fzero = refl
+  CompPathFunInvLeftPoint {s n} record { point = f ; path = F } (fsucc k₁) = CompPathFunInvLeftPoint
+                                                                               (record { point = f o fsucc ; path = F o fsucc }) k₁
+
+
+  CompPathFunInvLeftPath : {n : ℕ}  (p : composablePathCanonical n) (k₁ : Fin n) (i : I)
+                           → (composablePathCanonical.path p k₁ $ i) ≡ (composablePathCanonical.path (compPathFun (InvCompPathFun p)) k₁ $ i)
+  CompPathFunInvLeftPath record { point = f ; path = F } fzero i = refl
+  CompPathFunInvLeftPath record { point = f ; path = F } (fsucc k₁) i = CompPathFunInvLeftPath
+                                                                         (record { point = f o fsucc ; path = F o fsucc }) k₁ i
+
+
+  CompPathFunInvLeft : {n : ℕ} (p : composablePathCanonical n) → p ≡ compPathFun (InvCompPathFun p)
+  
+  CompPathFunInvLeft p = ≡ComposablePathCanonical (CompPathFunInvLeftPoint p) (CompPathFunInvLeftPath p)
+
+
+  --We show inverse on the right
+
+  CompPathFunInvRightAux : {n : ℕ} {x y : X} (p : compPath n x y) (k₁ : Fin n) (i : I)
+                           → compPathEvalAux p k₁ i ≡ compPathEvalAux (InvCompPathFunAux (compPathFun (x , (y , p)))) k₁ i
+  CompPathFunInvRightAux {s n} (y , (p , q)) fzero i = refl
+  CompPathFunInvRightAux {s n} (y , (p , q)) (fsucc k) i = CompPathFunInvRightAux q k i
+
+  CompPathFunInvRight : {n : ℕ} (p :  ObjFamilyCompPath {X = X} n) → p ≡ InvCompPathFun (compPathFun p)
+  CompPathFunInvRight {n} (x , (y , p)) = ≡ObjFamilyCompPath refl (CompPathFunInvRightAux p)
+
+
+  --We show that compPathFun of Hrefl is Hrefl
+
+  ≡HreflAux₁ : {n : ℕ} {x : X} (k : Fin (s n)) → compPathFunPoint (x , (x , Hrefl x)) k ≡ x
+  ≡HreflAux₁ {n} fzero = refl
+  ≡HreflAux₁ {s n} (fsucc k) = ≡HreflAux₁ k
+
+  ≡HreflAux₂ : {n : ℕ} {x : X} (k : Fin n) (i : I) → compPathFunPath (x , (x , Hrefl x)) k $ i ≡ x
+  ≡HreflAux₂ {s n} fzero _ = refl
+  ≡HreflAux₂ {s n} (fsucc k) _ = ≡HreflAux₂ k _
+
+  ≡Hrefl : {n : ℕ} (x : X) → compPathFun {n} (x , (x , Hrefl x)) ≡ composableHreflCanonical x
+  ≡Hrefl _ = ≡ComposablePathCanonical ≡HreflAux₁ ≡HreflAux₂
+
+
+  --We conclude
+
 
   ≅CompPathCanonical₁ : {n : ℕ} → FamilyCompPath n ≅Family FamilyComposablePathCanonical n
   
-  ≅CompPathCanonical₁ = {!!}
+  ≅CompPathCanonical₁ = record { mapFam = compPathFun ;
+                                 isoMapFam = record { inv = InvCompPathFun ;
+                                                      invLeft = CompPathFunInvLeft ;
+                                                      invRight = CompPathFunInvRight } ;
+                                 pointFam = ≡Hrefl }
 
 
-  --Some auxialiary lemmas
+  --Some auxiliary lemmas
 
   Fin⊤SuccInc₁ : {n : ℕ} {k : Fin n} → fsucc k ≡ Fin⊤Succ (inc₁ k)
   Fin⊤SuccInc₁ {k = k} = ≡Trans {y = Fin⊤Succ (invFin⊤Succ (fsucc k))}
@@ -456,17 +607,20 @@ module _ {k} {X : Set k} {{_ : Fib X}} {A : Set} {{_ : FOSet A}} where
 
   module _ {l} (C : composablePath X A → Set l) {{_ : {p : composablePath X A} → Fib (C p)}}
            (d : (x : X) → C (composableHrefl x)) where
+           
+           JComposablePathAux = hasElimComposablePath C d
 
-         JComposablePathAux = hasElimComposablePath C d
-
-         JComposablePath : (p : composablePath X A) → C p
-         JComposablePath = Σleft JComposablePathAux
+           abstract
+             JComposablePath : (p : composablePath X A) → C p
+             JComposablePath = Σleft JComposablePathAux
   
-         JComposablePathCompute : (x : X) → JComposablePath (composableHrefl x) ≡ d x
-         JComposablePathCompute = Σright JComposablePathAux
+             JComposablePathCompute : (x : X) → JComposablePath (composableHrefl x) ≡ d x
+             JComposablePathCompute = Σright JComposablePathAux
 
 
-{-
+
+
+
   module _  {l m} {U : Set l} {V : Set m} {u : U → V} (pseudoCofibu : PseudoCofibration u) where
 
 
@@ -730,4 +884,4 @@ module _ {k} {X : Set k} where
 
 
 
--}
+
