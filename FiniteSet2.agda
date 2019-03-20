@@ -629,7 +629,7 @@ module _ {A : Set} {B : A → Set} {{_ : FOSet A}} {{_ : {a : A} → FOSet (B a)
   HomFOTransport : {a₁ a₂ : A} {p : a₁ ≡ a₂} → HomFO (transport B p)
   HomFOTransport {p = refl} = HomFOId
 
-transportDouble : {A : Set} {B : A → Set} {x y : A} {p : x ≡ y} {q : y ≡ x} {b : B x}
+transportDouble : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {p : x ≡ y} {q : y ≡ x} {b : B x}
                   → transport B q (transport B p b) ≡ b
 transportDouble {p = refl} {refl} = refl
 

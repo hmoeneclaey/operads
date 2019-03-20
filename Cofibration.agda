@@ -699,6 +699,14 @@ record Filling {k l m} {X : Set k} {Y : Set l} {Z : Set m} (u : X → Y) (v : X 
     FillingCommute : (x : X) → FillingMap (u x) ≡ v x
 
 
+≡Filling : ∀ {k l m} {X : Set k} {Y : Set l} {Z : Set m} {u : X → Y} {v : X → Z}
+           {x y : Filling u v} → Filling.FillingMap x ≡ Filling.FillingMap y → x ≡ y
+           
+≡Filling {x = record { FillingMap = f ; FillingCommute = eqf }}
+         {y = record { FillingMap = g ; FillingCommute = eqg }} refl
+       = ap (λ eq → record { FillingMap = f ; FillingCommute = eq }) (funext (λ _ → UIP))
+
+
 StronglyContractible : ∀ {k} (X : Set k) → Set k
 StronglyContractible X = {k : ℕ} → (u : borderI k → X) → Filling (border k) u
 
