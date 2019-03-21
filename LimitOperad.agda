@@ -72,7 +72,7 @@ module _ {k l m} {P : (A : Set) → {{_ : FOSet A}} → Set k} {{_ : Operad P}}
 
        instance
          PullbackOperad : Operad (PullbackOp α β)
-         PullbackOperad = ?
+         PullbackOperad = {!!}
 
       
        HomProj₁ : HomOperad (PullbackOpProj₁ α β)

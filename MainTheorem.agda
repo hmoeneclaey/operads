@@ -9,8 +9,8 @@ open import HomotopyTransfer
 open import ContractibleSectionOperad
 
 
---We list allow-unsolve-meta
---LimitOperad
+--We list unwanted postulates
+--LimitOperad : no definition of pullback
 
 
 postulate
@@ -39,7 +39,7 @@ mainTheorem1 : ∀ {k l} {X : Set k} {{_ : Fib X}} {Y : Set l} {{_ : Fib Y}}
 mainTheorem1 (f , equivf) algY = algebraInvariantEquiv (Cofib∞Mon ∞MonSection) equivf algY
 
 
-mainTheorem2 : ∀ {k} {X : Set k} {{_ : Fib X}} {x : X}
-               → Algebra ∞Mon (Ω X x)
+mainTheorem2 : ∀ {k} {X : Set k} {{_ : Fib X}} {x : X} → Algebra ∞Mon
+               (Ω X x)
 
 mainTheorem2 = ActLoopSpace∞Mon ∞MonSection
