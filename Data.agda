@@ -139,6 +139,10 @@ s m + n = s(m + n)
 
 infixl 46 _+_
 
+pred : ℕ → ℕ
+pred O = O
+pred (s n) = n
+
 
 
 
@@ -208,7 +212,7 @@ transportConst {p = refl} = refl
 
 +Assoc : {l m n : ℕ} → (l + m) + n ≡ l + (m + n)
 +Assoc {O} = refl
-+Assoc {s l} = ap s (+Assoc {l = l})
++Assoc {s l} {m} {n} = ap s (+Assoc {l = l} {m} {n})
 
 
 
