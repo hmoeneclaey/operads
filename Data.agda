@@ -159,7 +159,7 @@ UIP : ∀ {k} {A : Set k} {x y : A} {p q : x ≡ y} → p ≡ q
 UIP {p = refl} {q = refl} = refl
 
 postulate funext : ∀ {k l} {A : Set k} {B : A → Set l} → {f g : (a : A) → B a} → ((a : A) → f a ≡ g a) → f ≡ g 
-
+postulate funextImp : ∀ {k l} {A : Set k} {B : A → Set l} → {f g : {a : A} → B a} → ({a : A} → f {a} ≡ g {a}) → Equal ({a : A} → B a) f g 
 
 
 
@@ -579,6 +579,9 @@ Prop⊥ {()}
 
 Prop→ : ∀ {k l} {A : Set k} {B : A → Set l} → ({a : A} → isProp (B a)) → isProp ((a : A) → B a)
 Prop→ propB = funext (λ a → propB)
+
+PropImp→ : ∀ {k l} {A : Set k} {B : A → Set l} → ({a : A} → isProp (B a)) → isProp ({a : A} → B a)
+PropImp→ propB = funextImp propB
 
 Prop∧ : ∀ {k l} {A : Set k} {B : Set l} → isProp A → isProp B → isProp (A ∧ B)
 Prop∧ propA propB {x₁ , y₁} {x₂ , y₂} = equalΣ propA propB

@@ -119,6 +119,9 @@ finiteSum : {n : ℕ} (f : Fin n → ℕ) → ℕ
 finiteSum {O} _ = O
 finiteSum {s n} f = f (fzero) + finiteSum (f o fsucc)
 
+≡Sum1 : {n : ℕ} → finiteSum (λ (k : Fin n) → s O) ≡ n
+≡Sum1 {O} = refl
+≡Sum1 {s n} = ap s ≡Sum1
 
 
 

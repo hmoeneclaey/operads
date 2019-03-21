@@ -49,14 +49,14 @@ record AltOperad {k} (P : ℕ → Set k) : Set k where
 
     γAlt : {m n : ℕ} → P m → Fin m → P n → P (pred (m + n))
 
-    unitAlt₁ : {m : ℕ} {c : P m} → γAlt idAlt fzero c ≡ c
+    unitAlt₁ : {m : ℕ} (c : P m) → γAlt idAlt fzero c ≡ c
 
-    unitAlt₂ :  {m : ℕ} {c : P m} {k : Fin m} → γAlt c k idAlt ≡ c
+    unitAlt₂ :  {m : ℕ} (c : P m) {k : Fin m} → γAlt c k idAlt ≡ c
 
-    assocAlt₁ : {m n l : ℕ} {c : P m} {d : P (s n)} {e : P l} {k₁ : Fin m} {k₂ : Fin (s n)}
+    assocAlt₁ : {m n l : ℕ} (c : P m) (d : P (s n)) (e : P l) {k₁ : Fin m} {k₂ : Fin (s n)}
                → γAlt c k₁ (γAlt d k₂ e) ≡ transport P (≡AssocAlt₁ m n l) (γAlt (γAlt c k₁ d) (assocAltFin₁ k₁ k₂) e)
 
-    assocAlt₂ : {m n l : ℕ} {c : P (s m)} {d : P n} {e : P l} {k₁ k₂ : Fin (s m)} (eq : k₁ << k₂)
+    assocAlt₂ : {m n l : ℕ} (c : P (s m)) (d : P n) (e : P l) {k₁ k₂ : Fin (s m)} (eq : k₁ << k₂)
                 →  (γAlt (γAlt c k₁ d) (assocAltFin₂ n k₁ k₂ eq) e) ≡ transport P (≡AssocAlt₂ m n l) (γAlt (γAlt c k₂ e) (assocAltFin₃ l k₁ k₂ eq) d)
 
 open AltOperad {{...}} public

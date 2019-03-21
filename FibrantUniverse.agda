@@ -40,6 +40,11 @@ record dPath {k} (P : I → Set k) (x : P e₀) (y : P e₁) : Set k where
     deq₁ : dpath e₁ ≡ y
 
 
+mkPath : ∀ {k} {P : I → Set k} {x : P e₀} {y : P e₁}
+         (f : (i : I) → P i) → f e₀ ≡ x → f e₁ ≡ y → dPath P x y
+mkPath f eq₀ eq₁ = [ f , eq₀ , eq₁ ]
+
+
 postulate
   Fib : ∀ {k} → Set k → Set k
 
