@@ -8,6 +8,8 @@ open import FibrantUniverse
 
 
 
+--Main definition
+
 data Ltree+ : ℕ → Set where
   ∅+ : Ltree+ (s O)
   cons+ : {n : ℕ} → {S : Fin n → ℕ} → I → ((k : Fin n) → Ltree+ (S k)) → Ltree+ (finiteSum S)
@@ -28,7 +30,6 @@ idLtree = ∅
 
 --We show some tools to manipulate Ltree
 
-
 ≡cons+ : {n : ℕ} {S : Fin n → ℕ} {i₁ i₂ : I} {t₁ t₂ : (k : Fin n) → Ltree+ (S k)}
          → i₁ ≡ i₂ → ((k : Fin n) → t₁ k ≡ t₂ k)
          → cons+ i₁ t₁ ≡ cons+ i₂ t₂
@@ -41,7 +42,7 @@ idLtree = ∅
 
 
 
---We define ∩tree
+--We define i ∩ t for i : I and t a labelled tree
 
 _∩tree+_ : {n : ℕ} → I → Ltree+ n → Ltree+ n
 i ∩tree+ ∅+ = ∅+

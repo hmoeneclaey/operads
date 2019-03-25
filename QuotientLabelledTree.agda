@@ -127,3 +127,15 @@ instance
                                         (Prop→ (PropImp→ (PropImp→ (Prop→ UIP)))))
                                  (Prop→ (Prop→ (PropImp→ (PropImp→ (Prop→ UIP)))))
               }
+
+
+QtreeRecOperad : ∀ {k} {P : ℕ → Set k} {{_ : AltOperad P}}
+                 {α : {n : ℕ} → Ltree n → P n} (homα : HomAltOperad {{OpLtree}} α)
+                 {α⇒ : {n : ℕ} {t₁ t₂ : Ltree n} → t₁ ⇒ t₂ → α t₁ ≡ α t₂}
+                 → HomAltOperad {{OpQtree}} (QtreeRec α α⇒)
+QtreeRecOperad record { HomIdAlt = αId ;
+                        HomγAlt = αγ }
+             = record { HomIdAlt = αId ;
+                        HomγAlt = QtreeProp (λ t₁ → QtreeProp (λ t₂ → αγ t₁ t₂)
+                                            UIP) (PropImp→ (Prop→ UIP)) }
+

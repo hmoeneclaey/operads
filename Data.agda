@@ -212,8 +212,12 @@ transportConst {p = refl} = refl
 
 +Assoc : {l m n : ℕ} → (l + m) + n ≡ l + (m + n)
 +Assoc {O} = refl
-+Assoc {s l} {m} {n} = ap s (+Assoc {l = l} {m} {n})
++Assoc {s l} {m} {n} = ap s (+Assoc {l} {m} {n})
 
++Com : {m n : ℕ} → n + m ≡ m + n
++Com {O} {n} = +O
++Com {s m} {O} = ap s (≡Sym +O)
++Com {s m} {s n} = ap s (≡Trans (+Com {s m} {n}) (≡Trans (ap s (+Com {n} {m})) (+Com {m} {s n})))
 
 
 --Results about → and equality

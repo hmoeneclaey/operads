@@ -6,8 +6,6 @@ module AltOperad where
 open import Agda.Primitive
 open import Data
 open import FiniteSet
---open import FiniteSet3
-
 
 
 
@@ -24,10 +22,12 @@ postulate
 --Some Auxiliary equalities and definitions
 
 ≡AssocAlt₁ : (m n l : ℕ) → pred (m + n + l) ≡ pred (m + (n + l))
-≡AssocAlt₁ = {!!}
+≡AssocAlt₁ m n l = ap pred (+Assoc {m} {n} {l})
 
 ≡AssocAlt₂ : (m n l : ℕ) → pred (m + l + n) ≡ pred (m + n + l)
-≡AssocAlt₂ = {!!}
+≡AssocAlt₂ m n l = ≡Trans (≡AssocAlt₁ m l n)
+                          (≡Trans (ap (λ y → pred (m + y)) {x = l + n} {y = n + l} (+Com {n} {l}))
+                                  (≡Sym (≡AssocAlt₁ m n l))) 
 
 assocAltFin₁ : {m n : ℕ} → Fin m → Fin (s n) → Fin (m + n)
 assocAltFin₁ = {!!}
@@ -57,10 +57,14 @@ record AltOperad {k} (P : ℕ → Set k) : Set k where
                → γAlt c k₁ (γAlt d k₂ e) ≡ transport P (≡AssocAlt₁ m n l) (γAlt (γAlt c k₁ d) (assocAltFin₁ k₁ k₂) e)
 
     assocAlt₂ : {m n l : ℕ} (c : P (s m)) (d : P n) (e : P l) {k₁ k₂ : Fin (s m)} (eq : k₁ << k₂)
-                →  (γAlt (γAlt c k₁ d) (assocAltFin₂ n k₁ k₂ eq) e) ≡ transport P (≡AssocAlt₂ m n l) (γAlt (γAlt c k₂ e) (assocAltFin₃ l k₁ k₂ eq) d)
+                → (γAlt (γAlt c k₁ d) (assocAltFin₂ n k₁ k₂ eq) e)
+                ≡ transport P (≡AssocAlt₂ m n l) (γAlt (γAlt c k₂ e) (assocAltFin₃ l k₁ k₂ eq) d)
 
 open AltOperad {{...}} public
 
+
+
+--We define morphism of alternative operads
 
 
 record HomAltOperad {k l} {P : ℕ → Set k} {{_ : AltOperad P}}
@@ -70,4 +74,4 @@ record HomAltOperad {k l} {P : ℕ → Set k} {{_ : AltOperad P}}
        
          HomIdAlt : α idAlt ≡ idAlt
          
-         HomγAlt : {m n : ℕ} {c : P m} {k : Fin m} {d : P n} → α (γAlt c k d) ≡ γAlt (α c) k (α d)  
+         HomγAlt : {m n : ℕ} (c : P m) {k : Fin m} (d : P n) → α (γAlt c k d) ≡ γAlt (α c) k (α d)  

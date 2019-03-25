@@ -8,8 +8,59 @@ open import FiniteSet
 open import FibrantUniverse
 
 
-_⇒_ : {n : ℕ} → Ltree n → Ltree n → Set
-t ⇒ t' = {!!}
+--We define auxiliary things for reduction
+
+UnaryVertice : {n : ℕ} → Ltree n → Set
+UnaryVertice = {!!}
+
+redUnary : {n : ℕ} (t : Ltree n) → UnaryVertice t → Ltree n
+redUnary = {!!}
+
+data InternalVertice : {n : ℕ} → Ltree n → Set where
+  --TODO--
+
+cardinalInternalVertice : {n : ℕ} → Ltree n → ℕ
+cardinalInternalVertice = {!!}
+
+EvalLtree : {n : ℕ} {t : Ltree n} → InternalVertice t → I
+EvalLtree = {!!}
+
+redO : {n : ℕ} (t : Ltree n) → (k : InternalVertice t) → Ltree n
+redO = {!!}
+
+
+--We define the top and bottom tree of an internal vertice
+
+cardinal⊥Ltree : {n : ℕ} {t : Ltree n} → InternalVertice t → ℕ
+cardinal⊥Ltree = {!!}
+
+cardinal⊤Ltree : {n : ℕ} {t : Ltree n} → InternalVertice t → ℕ
+cardinal⊤Ltree = {!!}
+
+≡cardinal⊥⊤Ltree : {n : ℕ} {t : Ltree n} {k : InternalVertice t} → pred (cardinal⊥Ltree k + cardinal⊤Ltree k) ≡ n
+≡cardinal⊥⊤Ltree = {!!}
+
+leaf⊥Ltree : {n : ℕ} {t : Ltree n} (k : InternalVertice t) → Fin (cardinal⊥Ltree k)
+leaf⊥Ltree = {!!}
+
+⊥Ltree : {n : ℕ} {t : Ltree n} (k : InternalVertice t) → Ltree (cardinal⊥Ltree k)
+⊥Ltree = {!!}
+
+⊤Ltree : {n : ℕ} {t : Ltree n} (k : InternalVertice t) → Ltree (cardinal⊤Ltree k)
+⊤Ltree = {!!}
+
+⊥⊤γLtree : {n : ℕ} {t : Ltree n} {k : InternalVertice t}
+               → EvalLtree k ≡ e₁
+               → t ≡ transport Ltree (≡cardinal⊥⊤Ltree {k = k}) (γLtree (⊥Ltree k) (leaf⊥Ltree k) (⊤Ltree k))
+⊥⊤γLtree = {!!}
+
+
+
+--We define the rewriting on Ltree
+
+data _⇒_ {n : ℕ} : Ltree n → Ltree n → Set where
+  unary⇒ : {t : Ltree n} {e : UnaryVertice t} → t ⇒ redUnary t e
+  O⇒ : {t : Ltree n} {e : InternalVertice t} → EvalLtree e ≡ e₀ → t ⇒ redO t e
 
 infix 30 _⇒_
 
