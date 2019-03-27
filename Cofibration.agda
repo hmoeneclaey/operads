@@ -647,6 +647,11 @@ Section {Y = Y} f = (y : Y) → fibre f y
 StronglyContractibleMap : ∀ {k l} {X : Set k} {Y : Set l} (f : X → Y) → Set (k ⊔ l)
 StronglyContractibleMap f = {k : ℕ} → Section (< border k / f >)
 
+postulate
+  SectionStronglyContractibleMap : ∀ {k l} {X : Set k} {Y : Set l} {f : X → Y}
+                                   → StronglyContractibleMap f → Section f
+--SectionStronglyContractibleMap = {!!}
+
 
 
 --We that strongly contractible map are stable by pullback

@@ -16,11 +16,31 @@ UnaryVertice = {!!}
 redUnary : {n : ℕ} (t : Ltree n) → UnaryVertice t → Ltree n
 redUnary = {!!}
 
+
+data InternalVertice+ : {n : ℕ} → Ltree+ n → Set where
+  intRoot : {k : ℕ} {S : Fin k → ℕ} {i : I}
+            (t : (a : Fin k) → Ltree+ (S a)) → InternalVertice+ (cons+ i t)
+  intAbove : {k : ℕ} {S : Fin k → ℕ} {i : I}
+             (t : (a : Fin k) → Ltree+ (S a)) (a : Fin k) → InternalVertice+ (t a)→ InternalVertice+ (cons+ i t)
+
 data InternalVertice : {n : ℕ} → Ltree n → Set where
-  --TODO--
+  mkInternalVerice : {k : ℕ} {S : Fin k → ℕ} (t : (a : Fin k) → Ltree+ (S a))
+                     (a : Fin k) → InternalVertice+ (t a)→ InternalVertice (cons t) 
+
+
+cardinalInternalVertice+ : {n : ℕ} → Ltree+ n → ℕ
+cardinalInternalVertice+ ∅+ = O
+cardinalInternalVertice+ (cons+ i x) = s (finiteSum (λ k → cardinalInternalVertice+ (x k)))
 
 cardinalInternalVertice : {n : ℕ} → Ltree n → ℕ
-cardinalInternalVertice = {!!}
+cardinalInternalVertice ∅ = O
+cardinalInternalVertice (cons x) = finiteSum (λ k → cardinalInternalVertice+ (x k))
+
+
+instance
+  FOInternalVertice : {n : ℕ} {t : Ltree n} → FOSet (InternalVertice t)
+  FOInternalVertice = {!!}
+
 
 EvalLtree : {n : ℕ} {t : Ltree n} → InternalVertice t → I
 EvalLtree = {!!}
@@ -55,6 +75,31 @@ leaf⊥Ltree = {!!}
 ⊥⊤γLtree = {!!}
 
 
+Internalγ : {m n : ℕ} (t₁ : Ltree m) (k : Fin m) (t₂ : Ltree n) → InternalVertice (γLtree t₁ k t₂)
+Internalγ = {!!}
+
+Internalγe₁ : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n} → EvalLtree (Internalγ t₁ k t₂) ≡ e₁
+Internalγe₁ = {!!}
+
+≡Internalγ⊥ : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n} → m ≡ cardinal⊥Ltree (Internalγ t₁ k t₂)
+≡Internalγ⊥ = {!!}
+
+≡Internalγ⊤ : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n} → n ≡ cardinal⊤Ltree (Internalγ t₁ k t₂)
+≡Internalγ⊤ = {!!}
+
+≡Internalγ⊥Ltree : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n}
+                   → ⊥Ltree (Internalγ t₁ k t₂) ≡ transport Ltree (≡Internalγ⊥ {t₁ = t₁} {k} {t₂}) t₁
+≡Internalγ⊥Ltree = {!!}
+
+≡Internalγ⊤Ltree : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n}
+                   → ⊤Ltree (Internalγ t₁ k t₂) ≡ transport Ltree (≡Internalγ⊤ {t₁ = t₁} {k} {t₂}) t₂
+≡Internalγ⊤Ltree = {!!}
+
+≡leaf⊤Ltree : {m n : ℕ} {t₁ : Ltree m} {k : Fin m} {t₂ : Ltree n}
+              → leaf⊥Ltree (Internalγ t₁ k t₂) ≡ transport Fin (≡Internalγ⊥ {t₁ = t₁} {k} {t₂}) k
+≡leaf⊤Ltree = {!!}
+
+--⊥Ltree (Internalγ )
 
 --We define the rewriting on Ltree
 
@@ -62,7 +107,7 @@ data _⇒_ {n : ℕ} : Ltree n → Ltree n → Set where
   unary⇒ : {t : Ltree n} {e : UnaryVertice t} → t ⇒ redUnary t e
   O⇒ : {t : Ltree n} {e : InternalVertice t} → EvalLtree e ≡ e₀ → t ⇒ redO t e
 
-infix 30 _⇒_
+infix 32 _⇒_
 
 data _⇒*_ {n : ℕ} : Ltree n → Ltree n → Set where
   rewriteO : {t : Ltree n} → t ⇒* t
@@ -70,6 +115,9 @@ data _⇒*_ {n : ℕ} : Ltree n → Ltree n → Set where
 
 infix 30 _⇒*_
 
+
+μ∅⇒ : μ ⇒ ∅
+μ∅⇒ = {!!}
 
 γLtreeLeft⇒ : {m n : ℕ} {t₁ t₂ : Ltree m} {k : Fin m} {t : Ltree n}
               → t₁ ⇒ t₂ → γLtree t₁ k t ⇒ γLtree t₂ k t

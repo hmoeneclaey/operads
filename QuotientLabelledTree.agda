@@ -33,7 +33,10 @@ postulate
   Qtree : ℕ → Set
   [_] : {n : ℕ} → Ltree n → Qtree n
   Qtree⇒ : {n : ℕ} {t₁ t₂ : Ltree n} → t₁ ⇒ t₂ → [ t₁ ] ≡ [ t₂ ]
-  
+
+
+mkQtree : {n : ℕ} → Ltree n → Qtree n
+mkQtree t = [ t ]
 
 module _ {k} {n : ℕ} {P : Qtree n → Set k}
          (d : (t : Ltree n) → P [ t ])
