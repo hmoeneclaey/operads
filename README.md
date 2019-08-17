@@ -1,66 +1,42 @@
 # Formalising ∞-Monoids in Two-Level Type Theory 
 
+This repository contains a formalisation of ∞-monoids in a two-level type theory, with a proof that they are invariant by equivalence and that loop spaces are such monoids.
 
-## Data.agda
+## Complete Files
 
-Contains logical connectives, natural numbers, equality and isomorphisms, along with some basic properties.
+- 'Data.agda' : logical connectives, natural numbers, equality and basic properties
 
+Things about operads, without using the homotopy structure:
 
-## FiniteSet.agda
+- 'FiniteSet.agda' : define finite sets.
+- 'MorphismFiniteSet.agda' : define morphisms necessary for the definition of operad.
+- 'FiniteSet2.agda' : more on finite set, necessary for 'LoopSpace.agda'.
+- 'Operad.agda' : define operad.
+- 'LimitOperad.agda' : postulate pullback of operad. Can be proven easily but long to typecheck.
+- 'OperadCocyl.agda' : the cocylinder factorisation for operad.
 
-Contains a definition of (small) finite totally ordered sets as types isomorphic to a canonical finite type.
+About the homotopy structure:
 
-Main results :
+- 'FibrantUniverse.agda' : postulate the homotopy structure.
+- 'Cofibration.agda' : define cofibrations and pseudo-cofibrations.
+- 'LoopSpace.agda' : define the PathSpace operad, and show it is strongly contractible.
 
-     - The finite union of finite sets is finite
+Linking operads with the homotopy structure:
 
-     - Explicit description of the order on these unions
-
-
-## MorphismFiniteSet.agda
-
-Contains a definition of isomorphism between finite totally ordered sets, along with
-
-	 - the example of morphism needed for the definition of operads
-
-	 - a proof that there exists at most one isomorphism between two finite totally ordered sets.
-
-
-## Operad.agda
-
-Contains the definition of operads and their algebras.
+- 'CofibrantOperad.agda' : define cofibrant operads by LLP against trivial fibrations, show they have LLP against equivalences between fibrant operads.
+- 'HomotopyTransfer.agda' : show fibrant algebras for cofibrant operads invariant under equivalence.
+- 'ContractibleSectionOperad.agda' : shows an operad with section against strongly contractible morphism is cofibrant and acts on loop spaces.
+- 'MainTheorem.agda' : main result.
 
 
-## FibrantUniverse.agda
 
-Contains the definition of the fibrant structure. This is where almost all our postulates are (except strict function extensionnality).
+## Incomplete Files
 
-It contains basic definition of HoTT and
+In 'MainTheorem.agda', the operad ∞Mon is potulated with its property. The following files are incomplete and aim to complete this hole:
 
-      - definition of Fibrations and Trivial Fibrations
+- 'AltOperad'
+- 'LabelledTree'
+- 'RewritingLabelledTree.agda' 
+- 'QuotientLabelledTree.agda'
+- 'FiltrationLabelledTree.agda'
 
-      - Cofibrancy of finite sets
-
-
-## CofibrantOperad.agda
-
-Contains the homotopical structure on operads, notably :
-
-	 - definition of fibrant and cofibrant operads, of fibration, trivial fibration and equivalences of operads.
-
-	 - Prove cofibrant operads have a weak left lifting property against equivalences between fibrant operads.
-
-
-## OperadCocylinder.agda
-
-Auxiliary file for CofibrantOperad.agda, it takes ~2 min to typecheck.
-
-
-## HomotopyTransfer.agda
-
-Contains a proof that fibrant algebras for cofibrant operads are invariant under equivalence.
-
-
-## Cofibration.agda
-
-Contains the definitions of cofibration and pseudo-cofibration, together with a proof that the inclusion of its border in a cube is a cofibration and pseudo-cofibration.
