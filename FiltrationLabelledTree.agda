@@ -95,28 +95,50 @@ data _⇒₂_ : {k n : ℕ} → ≤Ltree k n → ≤Ltree (pred k) n → Set whe
 ≤LtreeAux₁ {s O} = left refl
 ≤LtreeAux₁ {s (s n)} = refl
 
-≤LtreeAux₂ : {n : ℕ} {S : Fin n → ℕ} {t : (k : Fin n) → Ltree+ (S k)}
-             → ((k : Fin n) → cardinalInternalVertice+ (t k) ≡ O)
-             → μ ≡ cons t
-≤LtreeAux₂ = {!!}
+≡finiteSum : {n : ℕ} {S S' : Fin n → ℕ}
+             → ((k : Fin n) → S k ≡ S' k) → finiteSum S ≡ finiteSum S'
+≡finiteSum = {!!}
+
+TransportLtree : {n : ℕ} {S S' : Fin n → ℕ}
+                 {t : (k : Fin n) → Ltree+ (S k)}
+                 {t' : (k : Fin n) → Ltree+ (S' k)}
+                 (p : (k : Fin n) → S k ≡ S' k)
+                  → ((k : Fin n) → transport Ltree+ (p k) (t k) ≡ t' k)
+                 → cons t ≡ transport Ltree (≡Sym (≡finiteSum p)) (cons t')
+TransportLtree = {!!}
+
+TransportLtreeConsAux : {m n k : ℕ}
+                     (q : m ≡ n)
+                     (p : finiteSum (λ (_ : Fin n) → s O) ≡ k) (q : finiteSum (λ (_ : Fin m) → s O) ≡ k)
+                     → transport Ltree p (cons (λ (_ : Fin n) → ∅+)) ≡  transport Ltree q (cons (λ (_ : Fin m) → ∅+))
+TransportLtreeConsAux refl refl refl = refl
+
+TransportLtreeCons : {m n k : ℕ}
+                     (p : finiteSum (λ (_ : Fin n) → s O) ≡ k) (q : finiteSum (λ (_ : Fin m) → s O) ≡ k)
+                     → transport Ltree p (cons (λ (_ : Fin n) → ∅+)) ≡  transport Ltree q (cons (λ (_ : Fin m) → ∅+))
+TransportLtreeCons p q = TransportLtreeConsAux (≡Trans (≡Sym ≡Sum1)
+                                               (≡Trans q (≡Trans (≡Sym p) ≡Sum1))) p q
+
+module _ {n : ℕ} {S : Fin n → ℕ} {t : (k : Fin n) → Ltree+ (S k)}
+         (hyp : (k : Fin n) → cardinalInternalVertice+ (t k) ≡ O) where
+
+       ≤LtreeAux₂S : (k : Fin n) → S k ≡ s O
+       ≤LtreeAux₂S = {!!}
+
+       ≤LtreeAux₃ : (k : Fin n) → transport Ltree+ (≤LtreeAux₂S k) (t k) ≡ ∅+
+       ≤LtreeAux₃ = {!!}
+
+       ≤LtreeAux₂ : μ ≡ cons t
+       ≤LtreeAux₂ = ≡Trans (TransportLtreeCons {n} {finiteSum S}
+                           (≡Sum1 {finiteSum S}) (≡Sym (≡finiteSum ≤LtreeAux₂S)))
+                           (≡Sym (TransportLtree  ≤LtreeAux₂S ≤LtreeAux₃))
 
 ≤LtreeO : {n : ℕ} {t : ≤Ltree O n} → ≤LtreeOProp (≤LtreeToLtree t)
 ≤LtreeO {.(s O)} {record { tree = ∅ ; size = _ }} = right refl
 ≤LtreeO {.(finiteSum S)} {record { tree = cons {S = S} x ; size = size }} = transport ≤LtreeOProp {x = μ}
                                                                                       (≤LtreeAux₂ λ k → O⊂ (⊂Trans (⊂finiteSum k) size))
                                                                                       ≤LtreeAux₁
-
-{-
-≤LtreeO : {t : ≤Ltree O O} → ≤LtreeToLtree t ≡ μ
-≤LtreeO {t = t} = {!!}
-
-
-≤LtreeOS : {t : ≤Ltree O (s O)} → (≤LtreeToLtree t ≡ μ) ∨ (≤LtreeToLtree t ≡ ∅)
-≤LtreeOS = {!!}
-
-≤LtreeOSS : {n : ℕ} {t : ≤Ltree O (s (s n))} → ≤LtreeToLtree t ≡ μ
-≤LtreeOSS = {!!}
--}
+                                                                                       
 
 ≤LtreeVertice+ : {n : ℕ} {t : Ltree+ n} → InternalVertice+ t → s O ⊂ cardinalInternalVertice+ t 
 ≤LtreeVertice+ {t = ∅+} () 

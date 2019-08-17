@@ -199,6 +199,10 @@ transportEqualPaths : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x
                       → p ≡ q → transport B p b ≡ transport B q b
 transportEqualPaths p q refl = refl
 
+transportInvariant : ∀ {k l} {A : Set k} {B : A → Set l} {x y : A} {b : B x} (p q : x ≡ y) 
+                     → transport B p b ≡ transport B q b
+transportInvariant p q = transportEqualPaths p q UIP
+
 transportConst : ∀ {k l} {A : Set k} {B : Set l} {x y : A} {p : x ≡ y} {b : B} → transport (λ _ → B) p b ≡ b
 transportConst {p = refl} = refl
 

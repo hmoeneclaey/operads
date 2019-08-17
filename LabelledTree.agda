@@ -65,7 +65,7 @@ infix 37 _∩tree_
 ≡∩tree₁ {t = cons x} = ≡cons (λ k → ≡∩tree+₁)
 
 μ : {n : ℕ} → Ltree n
-μ {n} = transport Ltree ≡Sum1 (cons {n} {λ _ → s O} λ _ → ∅+)
+μ {n} = transport Ltree ≡Sum1 (cons {n} λ _ → ∅+)
 
 
 
