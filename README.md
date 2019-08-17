@@ -26,7 +26,7 @@ About the homotopy structure:
 
 Linking operads with the homotopy structure:
 
-- `CofibrantOperad.agda` : defines cofibrant operads by LLP against trivial fibrations, show they have LLP against equivalences between fibrant operads.
+- `CofibrantOperad.agda` : defines cofibrant operads by LLP against trivial fibrations, shows they have LLP against equivalences between fibrant operads.
 - `HomotopyTransfer.agda` : shows algebras for cofibrant operads invariant under equivalences.
 - `ContractibleSectionOperad.agda` : shows an operad with sections against strongly contractible morphism is cofibrant and acts on loop spaces.
 - `MainTheorem.agda` : main result.
