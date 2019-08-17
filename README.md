@@ -1,8 +1,11 @@
 # Formalising ∞-Monoids in Two-Level Type Theory 
 
-This repository contains a definition of ∞-monoids using operads, with a proof that they are invariant by equivalences and that loop spaces are such monoids. To typecheck the project it is enough to load `MainTheorem.agda`.
+This repository contains a definition of ∞-monoids using operads, with a proof that they are invariant by equivalences and that loop spaces are such monoids.
 
-It does not use any library (except `Agda.Primive.agda` for levels in the universes).
+
+## Organisation
+
+To type-check this project, it is enough to load `MainTheorem.agda`, this takes ~5min on my computer. It does not use any standard library, except `Agda.Primive.agda` for levels in the universes.
 
 
 ## Complete Files
