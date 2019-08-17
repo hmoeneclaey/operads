@@ -1,42 +1,43 @@
 # Formalising ∞-Monoids in Two-Level Type Theory 
 
-This repository contains a formalisation of ∞-monoids in a two-level type theory, with a proof that they are invariant by equivalence and that loop spaces are such monoids.
+This repository contains a definition of ∞-monoids using operads, with a proof that they are invariant by equivalence and that loop spaces are such monoids. We do not use any library (except `Agda.Primive.agda` for levels in the universe).
+
 
 ## Complete Files
 
-- 'Data.agda' : logical connectives, natural numbers, equality and basic properties
+- `Data.agda` : very basic things, with function extensionality for strict equality postulated.
 
-Things about operads, without using the homotopy structure:
+About operads:
 
-- 'FiniteSet.agda' : define finite sets.
-- 'MorphismFiniteSet.agda' : define morphisms necessary for the definition of operad.
-- 'FiniteSet2.agda' : more on finite set, necessary for 'LoopSpace.agda'.
-- 'Operad.agda' : define operad.
-- 'LimitOperad.agda' : postulate pullback of operad. Can be proven easily but long to typecheck.
-- 'OperadCocyl.agda' : the cocylinder factorisation for operad.
+- `FiniteSet.agda` : define finite sets.
+- `MorphismFiniteSet.agda` : define morphisms of finite sets necessary for the definition of operad.
+- `FiniteSet2.agda` : more on finite set, necessary for `LoopSpace.agda`.
+- `Operad.agda` : define operad.
+- `LimitOperad.agda` : postulate pullback of operad, can be proven easily but long to typecheck.
+- `OperadCocyl.agda` : the cocylinder factorisation for operad.
 
 About the homotopy structure:
 
-- 'FibrantUniverse.agda' : postulate the homotopy structure.
-- 'Cofibration.agda' : define cofibrations and pseudo-cofibrations.
-- 'LoopSpace.agda' : define the PathSpace operad, and show it is strongly contractible.
+- `FibrantUniverse.agda` : postulate the homotopy structure.
+- `Cofibration.agda` : define cofibrations and pseudo-cofibrations.
+- `LoopSpace.agda` : define the PathSpace operad, and show it is strongly contractible.
 
 Linking operads with the homotopy structure:
 
-- 'CofibrantOperad.agda' : define cofibrant operads by LLP against trivial fibrations, show they have LLP against equivalences between fibrant operads.
-- 'HomotopyTransfer.agda' : show fibrant algebras for cofibrant operads invariant under equivalence.
-- 'ContractibleSectionOperad.agda' : shows an operad with section against strongly contractible morphism is cofibrant and acts on loop spaces.
-- 'MainTheorem.agda' : main result.
+- `CofibrantOperad.agda` : define cofibrant operads by LLP against trivial fibrations, show they have LLP against equivalences between fibrant operads.
+- `HomotopyTransfer.agda` : show fibrant algebras for cofibrant operads invariant under equivalence.
+- `ContractibleSectionOperad.agda` : shows an operad with section against strongly contractible morphism is cofibrant and acts on loop spaces.
+- `MainTheorem.agda` : main result.
 
 
 
 ## Incomplete Files
 
-In 'MainTheorem.agda', the operad ∞Mon is potulated with its property. The following files are incomplete and aim to complete this hole:
+In 'MainTheorem.agda', an operad ∞Mon that has section against strongly contractible morphisms is postulated. The following incomplete files aim to contruct it using labelled trees:
 
-- 'AltOperad'
-- 'LabelledTree'
-- 'RewritingLabelledTree.agda' 
-- 'QuotientLabelledTree.agda'
-- 'FiltrationLabelledTree.agda'
+- `AltOperad.agda`
+- `LabelledTree.agda`
+- `RewritingLabelledTree.agda` 
+- `QuotientLabelledTree.agda`
+- `FiltrationLabelledTree.agda`
 
