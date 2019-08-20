@@ -5,7 +5,7 @@ This repository contains a definition of ∞-monoids using operads, with a proof
 
 ## Organisation
 
-To type-check this project, it is enough to load `MainTheorem.agda`, this takes ~5min on my computer. It does not use any standard library, except `Agda.Primive.agda` for levels in the universes.
+To type-check this project, it is enough to load `MainTheorem.agda`, this takes ~5min on my computer. It does not use any standard library, except `Agda.Primitive.agda` for universe levels.
 
 
 ## Complete Files
@@ -15,7 +15,7 @@ To type-check this project, it is enough to load `MainTheorem.agda`, this takes 
 About operads:
 
 - `FiniteSet.agda` : defines finite sets.
-- `MorphismFiniteSet.agda` : defines morphisms of finite sets necessary for the definition of operad.
+- `MorphismFiniteSet.agda` : defines the morphisms of finite sets necessary for the definition of operad.
 - `FiniteSet2.agda` : more on finite sets, necessary for `LoopSpace.agda`.
 - `Operad.agda` : defines operads.
 - `LimitOperad.agda` : postulates pullback of operads, can be proven easily but long to typecheck.
@@ -38,7 +38,7 @@ Linking operads with the homotopy structure:
 
 ## Incomplete Files
 
-In 'MainTheorem.agda', an operad ∞Mon that has sections against strongly contractible morphisms is postulated. The following incomplete files aim to contruct it using labelled trees:
+In 'MainTheorem.agda', an operad ∞Mon that has sections against strongly contractible morphisms is postulated. The following incomplete files aim to construct it using labelled trees:
 
 - `AltOperad.agda`
 - `LabelledTree.agda`
